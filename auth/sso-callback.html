@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <script data-clerk-publishable-key="pk_test_bG92aW5nLXJhcHRvci0xLmNsZXJrLmFjY291bnRzLmRldiQ"
+    src="https://cdn.jsdelivr.net/npm/@clerk/clerk-js@latest/dist/clerk.browser.js"></script>
+</head>
+<body>
+<script src="clerk-config.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', async function() {
+  var base = window.EDUCOINS_BASE || '';
+  await window.Clerk.load();
+  await window.Clerk.handleRedirectCallback({
+    afterSignInUrl: base + '/dashboard/dashboard.html',
+    afterSignUpUrl: base + '/auth/registro.html',
+  });
+});
+</script>
+</body>
+</html>

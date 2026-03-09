@@ -1,0 +1,1518 @@
+/* ============================================
+   ARCHIVO: /dashboard/dashboard.css
+   DESCRIPCIÓN: Estilos del panel principal
+   ============================================
+   ÍNDICE
+   1.  Variables y reset
+   2.  Header fijo
+   3.  Layout sidebar + main
+   4.  Sidebar y navegación
+   5.  Main y page header
+   6.  Stats grid (4 tarjetas resumen)
+   7.  Sección misiones
+   8.  Ring de progreso SVG
+   9.  Grid de misiones
+   10. Bonus card
+   11. Grid de módulos
+   12. Grid de juegos
+   13. Toasts
+   14. Animaciones y utiles
+   15. Responsive
+   ============================================ */
+
+/* ============================================
+   1. VARIABLES Y RESET
+============================================ */
+:root {
+  --bg: #07071a;
+  --bg2: #0d0d2b;
+  --bg3: #12122e;
+  --violet: #7c3aed;
+  --violet-light: #a855f7;
+  --violet-dim: rgba(124, 58, 237, 0.15);
+  --cyan: #06b6d4;
+  --green: #22c55e;
+  --yellow: #facc15;
+  --orange: #f97316;
+  --red: #ef4444;
+  --pink: #ec4899;
+  --text: #e2e8f0;
+  --text-dim: #94a3b8;
+  --text-muted: #475569;
+  --border: rgba(124, 58, 237, 0.25);
+  --border-b: rgba(124, 58, 237, 0.5);
+  --card: rgba(13, 13, 43, 0.9);
+  --sidebar-w: 240px;
+  --header-h: 64px;
+  --radius: 14px;
+  --radius-sm: 8px;
+  --ease: 0.2s ease;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: 'Nunito', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  pointer-events: none;
+  background: repeating-linear-gradient(0deg, transparent, transparent 2px,
+      rgba(0, 0, 0, 0.04) 2px, rgba(0, 0, 0, 0.04) 4px);
+}
+
+/* ============================================
+   2. HEADER FIJO
+============================================ */
+.header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: var(--header-h);
+  z-index: 1000;
+  background: rgba(7, 7, 26, 0.92);
+  backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  padding: 0 1.25rem;
+  gap: 1rem;
+}
+
+.header-logo {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  text-decoration: none;
+  flex-shrink: 0;
+}
+
+.logo-box {
+  width: 36px;
+  height: 36px;
+  background: linear-gradient(135deg, var(--violet), var(--cyan));
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  animation: logoPulse 3s ease-in-out infinite;
+}
+
+@keyframes logoPulse {
+
+  0%,
+  100% {
+    box-shadow: 0 0 8px rgba(124, 58, 237, 0.4);
+  }
+
+  50% {
+    box-shadow: 0 0 20px rgba(124, 58, 237, 0.8), 0 0 35px rgba(6, 182, 212, 0.3);
+  }
+}
+
+.logo-name {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 0.6rem;
+  color: var(--violet-light);
+  display: block;
+}
+
+.logo-sub {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 0.38rem;
+  color: var(--cyan);
+  display: block;
+  margin-top: 3px;
+}
+
+.header-spacer {
+  flex: 1;
+}
+
+.sidebar-toggle-btn {
+  display: none;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text);
+  font-size: 1.3rem;
+}
+
+.header-energy {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: rgba(249, 115, 22, 0.1);
+  border: 1px solid rgba(249, 115, 22, 0.3);
+  border-radius: 20px;
+  padding: 0.35rem 0.875rem;
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: var(--orange);
+}
+
+.energy-bar-mini {
+  width: 70px;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.energy-fill-mini {
+  height: 100%;
+  background: linear-gradient(90deg, var(--orange), var(--yellow));
+  border-radius: 3px;
+  transition: width 1s ease;
+}
+
+.header-coins {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: rgba(250, 204, 21, 0.1);
+  border: 1px solid rgba(250, 204, 21, 0.3);
+  border-radius: 20px;
+  padding: 0.35rem 0.875rem;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 0.45rem;
+  color: var(--yellow);
+  animation: coinGlow 2.5s ease-in-out infinite;
+}
+
+@keyframes coinGlow {
+
+  0%,
+  100% {
+    box-shadow: none;
+  }
+
+  50% {
+    box-shadow: 0 0 10px rgba(250, 204, 21, 0.3);
+  }
+}
+
+.header-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--bg3);
+  border: 2px solid var(--violet);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  text-decoration: none;
+  transition: border-color var(--ease);
+}
+
+.header-avatar:hover {
+  border-color: var(--cyan);
+}
+
+/* ============================================
+   3. LAYOUT
+============================================ */
+.layout {
+  display: flex;
+  min-height: 100vh;
+  padding-top: var(--header-h);
+}
+
+/* ============================================
+   4. SIDEBAR
+============================================ */
+.sidebar {
+  width: var(--sidebar-w);
+  flex-shrink: 0;
+  background: var(--bg2);
+  border-right: 1px solid var(--border);
+  position: fixed;
+  top: var(--header-h);
+  left: 0;
+  bottom: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
+  z-index: 100;
+  transition: transform var(--ease);
+}
+
+.sidebar::-webkit-scrollbar {
+  width: 3px;
+}
+
+.sidebar::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 2px;
+}
+
+.sidebar-section {
+  padding: 1rem 0.75rem 0.5rem;
+}
+
+.sidebar-label {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 0.35rem;
+  color: var(--text-muted);
+  letter-spacing: 1.5px;
+  padding: 0 0.5rem;
+  margin-bottom: 0.5rem;
+  display: block;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.625rem 0.75rem;
+  border-radius: 10px;
+  text-decoration: none;
+  color: var(--text-dim);
+  font-size: 0.875rem;
+  font-weight: 700;
+  transition: all var(--ease);
+  position: relative;
+  margin-bottom: 2px;
+}
+
+.nav-item:hover {
+  background: var(--violet-dim);
+  color: var(--text);
+}
+
+.nav-item.active {
+  background: linear-gradient(135deg, rgba(124, 58, 237, 0.25), rgba(6, 182, 212, 0.1));
+  color: var(--violet-light);
+  border: 1px solid var(--border);
+}
+
+.nav-item.active::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3px;
+  height: 60%;
+  background: var(--violet);
+  border-radius: 0 2px 2px 0;
+}
+
+.nav-icon {
+  font-size: 1.1rem;
+  flex-shrink: 0;
+  width: 22px;
+  text-align: center;
+}
+
+.nav-badge {
+  margin-left: auto;
+  background: var(--violet);
+  color: white;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 0.35rem;
+  padding: 2px 6px;
+  border-radius: 10px;
+  min-width: 18px;
+  text-align: center;
+}
+
+.nav-badge.green {
+  background: var(--green);
+}
+
+.nav-badge.yellow {
+  background: rgba(250, 204, 21, 0.15);
+  color: var(--yellow);
+  border: 1px solid rgba(250, 204, 21, 0.4);
+}
+
+.sidebar-divider {
+  height: 1px;
+  background: var(--border);
+  margin: 0.5rem 0.75rem;
+}
+
+.sidebar-profile {
+  margin: auto 0 0;
+  padding: 1rem 0.75rem;
+  border-top: 1px solid var(--border);
+}
+
+.profile-mini {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 0.75rem;
+  text-decoration: none;
+  transition: border-color var(--ease);
+}
+
+.profile-mini:hover {
+  border-color: var(--violet);
+}
+
+.profile-avatar-big {
+  font-size: 1.8rem;
+}
+
+.profile-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.profile-name {
+  font-weight: 800;
+  font-size: 0.875rem;
+  color: var(--text);
+}
+
+.profile-rank {
+  font-size: 0.7rem;
+  color: var(--text-dim);
+  font-weight: 700;
+  margin-top: 2px;
+}
+
+.xp-mini-wrap {
+  margin-top: 0.5rem;
+}
+
+.xp-mini-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.65rem;
+  color: var(--text-muted);
+  font-weight: 700;
+  margin-bottom: 3px;
+}
+
+.xp-mini-track {
+  height: 4px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.xp-mini-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--violet), var(--cyan));
+  border-radius: 2px;
+  transition: width 1.2s ease;
+}
+
+/* ============================================
+   5. MAIN Y PAGE HEADER
+============================================ */
+.main {
+  margin-left: var(--sidebar-w);
+  flex: 1;
+  padding: 1.75rem 1.5rem;
+  background-image:
+    linear-gradient(rgba(124, 58, 237, 0.02) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(124, 58, 237, 0.02) 1px, transparent 1px);
+  background-size: 50px 50px;
+}
+
+.page-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 1.75rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.greeting-time {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 0.4rem;
+  color: var(--cyan);
+  display: block;
+  margin-bottom: 0.5rem;
+}
+
+.greeting-name {
+  font-family: 'Press Start 2P', monospace;
+  font-size: clamp(0.7rem, 2vw, 1rem);
+  color: white;
+  line-height: 1.5;
+}
+
+.greeting-sub {
+  font-size: 0.9rem;
+  color: var(--text-dim);
+  font-weight: 700;
+  margin-top: 0.4rem;
+}
+
+.highlight-yellow {
+  color: var(--yellow);
+}
+
+.page-date {
+  text-align: right;
+}
+
+.page-date strong {
+  display: block;
+  color: var(--text);
+  font-size: 0.875rem;
+  font-weight: 800;
+}
+
+.date-year {
+  display: block;
+  font-size: 0.8rem;
+  color: var(--text-dim);
+  font-weight: 700;
+  margin-top: 3px;
+}
+
+.racha-display {
+  display: block;
+  font-size: 0.8rem;
+  color: var(--text-dim);
+  font-weight: 700;
+  margin-top: 4px;
+}
+
+.racha-num {
+  color: var(--orange);
+  font-weight: 900;
+}
+
+/* ============================================
+   6. STATS GRID
+============================================ */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1rem;
+  margin-bottom: 1.75rem;
+}
+
+.stat-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.25rem;
+  position: relative;
+  overflow: hidden;
+  transition: transform var(--ease), box-shadow var(--ease);
+}
+
+.stat-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+}
+
+.stat-card::after {
+  content: '';
+  position: absolute;
+  top: -20px;
+  right: -20px;
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.stat-card:hover {
+  transform: translateY(-2px);
+}
+
+/* Colores por tipo de stat */
+.stat-coins::before {
+  background: linear-gradient(90deg, var(--yellow), var(--orange));
+}
+
+.stat-coins::after {
+  background: radial-gradient(circle, rgba(250, 204, 21, 0.15) 0%, transparent 70%);
+}
+
+.stat-coins:hover {
+  box-shadow: 0 0 20px rgba(250, 204, 21, 0.2);
+}
+
+.stat-xp::before {
+  background: linear-gradient(90deg, var(--violet), var(--cyan));
+}
+
+.stat-xp::after {
+  background: radial-gradient(circle, rgba(124, 58, 237, 0.15) 0%, transparent 70%);
+}
+
+.stat-xp:hover {
+  box-shadow: 0 0 20px rgba(124, 58, 237, 0.2);
+}
+
+.stat-energy::before {
+  background: linear-gradient(90deg, var(--orange), var(--yellow));
+}
+
+.stat-energy::after {
+  background: radial-gradient(circle, rgba(249, 115, 22, 0.15) 0%, transparent 70%);
+}
+
+.stat-energy:hover {
+  box-shadow: 0 0 20px rgba(249, 115, 22, 0.2);
+}
+
+.stat-racha::before {
+  background: linear-gradient(90deg, var(--red), var(--orange));
+}
+
+.stat-racha::after {
+  background: radial-gradient(circle, rgba(239, 68, 68, 0.12) 0%, transparent 70%);
+}
+
+.stat-racha:hover {
+  box-shadow: 0 0 20px rgba(239, 68, 68, 0.15);
+}
+
+.stat-icon {
+  font-size: 1.5rem;
+  display: block;
+  margin-bottom: 0.75rem;
+}
+
+.stat-label {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 0.38rem;
+  color: var(--text-muted);
+  display: block;
+  margin-bottom: 0.5rem;
+}
+
+.stat-value {
+  font-family: 'Press Start 2P', monospace;
+  font-size: clamp(0.75rem, 1.8vw, 1rem);
+  color: white;
+  display: block;
+  margin-bottom: 0.5rem;
+}
+
+.stat-sub {
+  font-size: 0.75rem;
+  color: var(--text-dim);
+  font-weight: 700;
+}
+
+.stat-sub.up {
+  color: var(--green);
+}
+
+.stat-bar-wrap {
+  margin-top: 0.75rem;
+}
+
+.stat-bar-track {
+  height: 6px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.stat-bar-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 1.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.bar-violet {
+  background: linear-gradient(90deg, var(--violet), var(--cyan));
+}
+
+.bar-orange {
+  background: linear-gradient(90deg, var(--orange), var(--yellow));
+}
+
+.bar-red {
+  background: linear-gradient(90deg, var(--red), var(--orange));
+}
+
+/* ============================================
+   7. SECCIONES
+============================================ */
+.section {
+  margin-bottom: 2rem;
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.25rem;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.section-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.section-title {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 0.6rem;
+  color: white;
+}
+
+.section-chip {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 0.35rem;
+  padding: 0.3rem 0.625rem;
+  border-radius: 20px;
+}
+
+.chip-violet {
+  background: var(--violet-dim);
+  color: var(--violet-light);
+  border: 1px solid var(--border-b);
+}
+
+.chip-green {
+  background: rgba(34, 197, 94, 0.1);
+  color: var(--green);
+  border: 1px solid rgba(34, 197, 94, 0.3);
+}
+
+.section-action {
+  font-size: 0.8rem;
+  font-weight: 800;
+  color: var(--violet-light);
+  text-decoration: none;
+  transition: color var(--ease);
+}
+
+.section-action:hover {
+  color: var(--cyan);
+}
+
+/* ============================================
+   8. RING DE PROGRESO
+============================================ */
+.missions-progress {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.25rem;
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.progress-ring-wrap {
+  flex-shrink: 0;
+  position: relative;
+  width: 72px;
+  height: 72px;
+}
+
+.progress-ring {
+  transform: rotate(-90deg);
+  width: 72px;
+  height: 72px;
+}
+
+.ring-track {
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.08);
+  stroke-width: 6;
+}
+
+.ring-fill {
+  fill: none;
+  stroke: var(--violet);
+  stroke-width: 6;
+  stroke-linecap: round;
+  stroke-dasharray: 188;
+  stroke-dashoffset: 188;
+  transition: stroke-dashoffset 1.5s cubic-bezier(0.4, 0, 0.2, 1);
+  filter: drop-shadow(0 0 4px rgba(124, 58, 237, 0.6));
+}
+
+.ring-text {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 0.65rem;
+  color: white;
+}
+
+.progress-info {
+  flex: 1;
+}
+
+.progress-title {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 0.5rem;
+  color: white;
+  margin-bottom: 0.5rem;
+}
+
+.progress-sub {
+  font-size: 0.85rem;
+  color: var(--text-dim);
+  font-weight: 700;
+  margin-bottom: 0.75rem;
+}
+
+.progress-bar-track {
+  height: 8px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.progress-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--violet), var(--cyan));
+  border-radius: 4px;
+  transition: width 1.5s ease;
+}
+
+.progress-reward {
+  flex-shrink: 0;
+  text-align: center;
+  background: var(--bg3);
+  border: 1px solid rgba(250, 204, 21, 0.3);
+  border-radius: 10px;
+  padding: 0.75rem 1rem;
+}
+
+.reward-label {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 0.35rem;
+  color: var(--text-muted);
+  display: block;
+  margin-bottom: 0.3rem;
+}
+
+.reward-value {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 0.8rem;
+  color: var(--yellow);
+}
+
+/* ============================================
+   9. GRID DE MISIONES
+============================================ */
+.missions-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.75rem;
+}
+
+.mission-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1rem 1.125rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  transition: all var(--ease);
+  border-left: 3px solid var(--m-color, var(--violet));
+}
+
+.mission-card:hover {
+  border-color: var(--m-color, var(--violet));
+  transform: translateX(2px);
+}
+
+.mission-card.done {
+  background: rgba(34, 197, 94, 0.05);
+  border-color: rgba(34, 197, 94, 0.3);
+  border-left-color: var(--green);
+}
+
+.mission-emoji {
+  font-size: 1.5rem;
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mission-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.mission-name {
+  font-size: 0.85rem;
+  font-weight: 800;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-bottom: 0.2rem;
+}
+
+.mission-card.done .mission-name {
+  color: var(--text-dim);
+  text-decoration: line-through;
+}
+
+.mission-meta {
+  font-size: 0.72rem;
+  color: var(--text-dim);
+  font-weight: 700;
+}
+
+.mission-reward-pill {
+  flex-shrink: 0;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 0.38rem;
+  color: var(--yellow);
+  background: rgba(250, 204, 21, 0.1);
+  border: 1px solid rgba(250, 204, 21, 0.25);
+  border-radius: 20px;
+  padding: 0.25rem 0.5rem;
+  white-space: nowrap;
+}
+
+.mission-card.done .mission-reward-pill {
+  color: var(--green);
+  background: rgba(34, 197, 94, 0.1);
+  border-color: rgba(34, 197, 94, 0.3);
+}
+
+.mission-done-check {
+  position: absolute;
+  top: 0.625rem;
+  right: 0.75rem;
+  font-size: 0.9rem;
+}
+
+/* ============================================
+   10. BONUS CARD
+============================================ */
+.bonus-card {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  background: linear-gradient(135deg, rgba(250, 204, 21, 0.06), rgba(249, 115, 22, 0.06));
+  border: 1px dashed rgba(250, 204, 21, 0.4);
+  border-radius: var(--radius);
+  padding: 1rem 1.25rem;
+  margin-top: 0.75rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.bonus-icon {
+  font-size: 2rem;
+}
+
+.bonus-text {
+  flex: 1;
+}
+
+.bonus-title {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 0.45rem;
+  color: var(--yellow);
+  margin-bottom: 0.3rem;
+}
+
+.bonus-desc {
+  font-size: 0.8rem;
+  color: var(--text-dim);
+  font-weight: 700;
+}
+
+.bonus-amount {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 0.7rem;
+  color: var(--yellow);
+  text-align: right;
+}
+
+.bonus-extra {
+  font-size: 0.5em;
+  color: var(--text-dim);
+}
+
+/* ============================================
+   11. MÓDULOS
+============================================ */
+.modules-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1rem;
+}
+
+.module-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.25rem 1rem;
+  text-align: center;
+  text-decoration: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  transition: all 0.25s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.module-card:hover {
+  transform: translateY(-4px);
+}
+
+.module-icon-wrap {
+  width: 52px;
+  height: 52px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  transition: transform var(--ease);
+}
+
+.module-card:hover .module-icon-wrap {
+  transform: scale(1.1);
+}
+
+.module-name {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 0.42rem;
+  color: var(--text);
+  line-height: 1.6;
+}
+
+.module-desc {
+  font-size: 0.72rem;
+  color: var(--text-dim);
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.module-badge {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 0.32rem;
+  padding: 0.2rem 0.5rem;
+  border-radius: 10px;
+}
+
+/* Variantes de color de módulo */
+.mod-cyan:hover {
+  border-color: var(--cyan);
+  box-shadow: 0 0 20px rgba(6, 182, 212, 0.2);
+}
+
+.mod-green:hover {
+  border-color: var(--green);
+  box-shadow: 0 0 20px rgba(34, 197, 94, 0.2);
+}
+
+.mod-yellow:hover {
+  border-color: var(--yellow);
+  box-shadow: 0 0 20px rgba(250, 204, 21, 0.2);
+}
+
+.mod-pink:hover {
+  border-color: var(--pink);
+  box-shadow: 0 0 20px rgba(236, 72, 153, 0.2);
+}
+
+.mod-orange:hover {
+  border-color: var(--orange);
+  box-shadow: 0 0 20px rgba(249, 115, 22, 0.2);
+}
+
+.mod-violet:hover {
+  border-color: var(--violet);
+  box-shadow: 0 0 20px rgba(124, 58, 237, 0.2);
+}
+
+.mod-cyan .module-icon-wrap {
+  background: rgba(6, 182, 212, 0.1);
+  border: 1px solid rgba(6, 182, 212, 0.2);
+}
+
+.mod-green .module-icon-wrap {
+  background: rgba(34, 197, 94, 0.1);
+  border: 1px solid rgba(34, 197, 94, 0.2);
+}
+
+.mod-yellow .module-icon-wrap {
+  background: rgba(250, 204, 21, 0.1);
+  border: 1px solid rgba(250, 204, 21, 0.2);
+}
+
+.mod-pink .module-icon-wrap {
+  background: rgba(236, 72, 153, 0.1);
+  border: 1px solid rgba(236, 72, 153, 0.2);
+}
+
+.mod-orange .module-icon-wrap {
+  background: rgba(249, 115, 22, 0.1);
+  border: 1px solid rgba(249, 115, 22, 0.2);
+}
+
+.mod-violet .module-icon-wrap {
+  background: rgba(124, 58, 237, 0.1);
+  border: 1px solid rgba(124, 58, 237, 0.2);
+}
+
+.badge-cyan {
+  background: rgba(6, 182, 212, 0.15);
+  color: var(--cyan);
+  border: 1px solid rgba(6, 182, 212, 0.3);
+}
+
+.badge-green {
+  background: rgba(34, 197, 94, 0.15);
+  color: var(--green);
+  border: 1px solid rgba(34, 197, 94, 0.3);
+}
+
+.badge-yellow {
+  background: rgba(250, 204, 21, 0.15);
+  color: var(--yellow);
+  border: 1px solid rgba(250, 204, 21, 0.3);
+}
+
+.badge-pink {
+  background: rgba(236, 72, 153, 0.15);
+  color: var(--pink);
+  border: 1px solid rgba(236, 72, 153, 0.3);
+}
+
+.badge-orange {
+  background: rgba(249, 115, 22, 0.15);
+  color: var(--orange);
+  border: 1px solid rgba(249, 115, 22, 0.3);
+}
+
+.badge-violet {
+  background: rgba(124, 58, 237, 0.15);
+  color: var(--violet-light);
+  border: 1px solid rgba(124, 58, 237, 0.3);
+}
+
+/* ============================================
+   12. JUEGOS
+============================================ */
+.games-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 1rem;
+}
+
+.game-quick-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  text-decoration: none;
+  transition: all 0.25s ease;
+  display: flex;
+  flex-direction: column;
+}
+
+.game-quick-card:hover {
+  transform: translateY(-4px) scale(1.02);
+  border-color: var(--cyan);
+  box-shadow: 0 0 20px rgba(6, 182, 212, 0.3);
+}
+
+.game-banner {
+  height: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2.5rem;
+  background: var(--g-bg);
+  position: relative;
+  overflow: hidden;
+}
+
+.game-banner::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(0, 0, 0, 0.1) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 0, 0, 0.1) 1px, transparent 1px);
+  background-size: 12px 12px;
+}
+
+.game-banner span {
+  position: relative;
+  z-index: 1;
+  animation: gameBounce 2s ease-in-out infinite;
+}
+
+@keyframes gameBounce {
+
+  0%,
+  100% {
+    transform: translateY(0)
+  }
+
+  50% {
+    transform: translateY(-5px)
+  }
+}
+
+.game-quick-body {
+  padding: 0.75rem;
+  flex: 1;
+}
+
+.game-quick-name {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 0.38rem;
+  color: var(--text);
+  margin-bottom: 0.3rem;
+  line-height: 1.5;
+}
+
+.game-quick-reward {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 0.32rem;
+  color: var(--yellow);
+}
+
+/* ============================================
+   13. TOASTS
+============================================ */
+.toast-container {
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  z-index: 10001;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.toast {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 0.875rem 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-width: 260px;
+  max-width: 360px;
+  font-weight: 700;
+  font-size: 0.875rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+  animation: toastIn 0.3s ease;
+}
+
+@keyframes toastIn {
+  from {
+    transform: translateX(100%);
+    opacity: 0
+  }
+
+  to {
+    transform: translateX(0);
+    opacity: 1
+  }
+}
+
+@keyframes toastOut {
+  from {
+    transform: translateX(0);
+    opacity: 1
+  }
+
+  to {
+    transform: translateX(100%);
+    opacity: 0
+  }
+}
+
+/* ============================================
+   14. ANIMACIONES Y UTILIDADES
+============================================ */
+.fade-up {
+  opacity: 0;
+  transform: translateY(20px);
+  animation: fadeUp 0.5s ease forwards;
+}
+
+@keyframes fadeUp {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.delay-1 {
+  animation-delay: 0.05s;
+}
+
+.delay-2 {
+  animation-delay: 0.10s;
+}
+
+.delay-3 {
+  animation-delay: 0.15s;
+}
+
+.delay-4 {
+  animation-delay: 0.20s;
+}
+
+/* ============================================
+   15. RESPONSIVE
+============================================ */
+@media (max-width: 1200px) {
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .modules-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .games-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 900px) {
+  .sidebar {
+    transform: translateX(-100%);
+  }
+
+  .sidebar.open {
+    transform: translateX(0);
+    box-shadow: 4px 0 20px rgba(0, 0, 0, 0.5);
+  }
+
+  .sidebar-toggle-btn {
+    display: block;
+  }
+
+  .main {
+    margin-left: 0;
+    padding: 1.25rem 1rem;
+  }
+
+  .missions-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .modules-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .games-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .missions-progress {
+    flex-wrap: wrap;
+  }
+
+  .progress-reward {
+    width: 100%;
+    text-align: left;
+  }
+}
+
+@media (max-width: 520px) {
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .modules-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .games-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* ── RESPONSIVE HEADER FIX ── */
+@media (max-width: 768px) {
+
+  /* Header: forzar una sola fila compacta */
+  #sharedHeader .header-inner,
+  #sharedHeader header,
+  #sharedHeader .header {
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 10px;
+    min-height: unset;
+  }
+
+  /* Logo más pequeño */
+  #sharedHeader .header-logo,
+  #sharedHeader .logo {
+    font-size: 0.7rem;
+    flex-shrink: 0;
+  }
+
+  /* Bloque de energía: comprimirlo al centro, no que se expanda */
+  #sharedHeader .energia-wrap,
+  #sharedHeader .energy-wrap,
+  #sharedHeader .header-energy {
+    flex: 1 1 0;
+    min-width: 0;
+    max-width: 160px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  /* Texto de energía más pequeño */
+  #sharedHeader .energia-label,
+  #sharedHeader .energy-label {
+    font-size: 0.6rem;
+    white-space: nowrap;
+  }
+
+  /* Barra de energía más delgada */
+  #sharedHeader .energia-bar,
+  #sharedHeader .energy-bar,
+  #sharedHeader .header-energy .stat-bar-track {
+    height: 6px !important;
+  }
+
+  /* Botones de perfil y cerrar sesión: siempre visibles a la derecha */
+  #sharedHeader .header-actions,
+  #sharedHeader .header-btns {
+    display: flex;
+    flex-shrink: 0;
+    gap: 4px;
+    margin-left: auto;
+  }
+
+  #sharedHeader .btn-perfil,
+  #sharedHeader .btn-logout,
+  #sharedHeader [id*="perfil"],
+  #sharedHeader [id*="logout"],
+  #sharedHeader [id*="signOut"] {
+    padding: 4px 8px;
+    font-size: 0.65rem;
+    white-space: nowrap;
+  }
+}
+
+/* ── HEADER RESPONSIVE ── */
+@media (max-width: 768px) {
+
+  .header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 10px;
+    overflow: hidden;
+  }
+
+  /* Logo: no crece, no se encoge */
+  .header-logo {
+    flex: 0 0 auto;
+  }
+
+  .logo-sub {
+    display: none;
+  }
+
+  .logo-name {
+    font-size: 0.72rem;
+  }
+
+  /* Spacer absorbe el espacio sobrante */
+  .header-spacer {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  /* Energía: ancho fijo, barra oculta */
+  .header-energy {
+    flex: 0 0 auto;
+    max-width: 48px;
+    font-size: 0.72rem;
+    gap: 3px;
+    overflow: hidden;
+  }
+
+  .energy-bar-mini {
+    display: none;
+  }
+
+  /* Monedas: ancho máximo fijo, texto truncado */
+  .header-coins {
+    flex: 0 0 auto;
+    max-width: 70px;
+    font-size: 0.72rem;
+    gap: 3px;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+
+  /* Avatar y logout: NUNCA se comprimen ni desaparecen */
+  .header-avatar {
+    flex: 0 0 32px;
+    font-size: 1.1rem;
+    text-align: center;
+  }
+
+  .header-logout-btn {
+    flex: 0 0 32px;
+    min-width: 32px;
+    min-height: 32px;
+    padding: 0.3rem;
+  }
+}

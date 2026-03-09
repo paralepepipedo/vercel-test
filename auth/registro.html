@@ -1,0 +1,729 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <!--
+  ARCHIVO: /auth/registro.html
+
+  CONFIGURACIÓN REQUERIDA EN CLERK DASHBOARD:
+  (hacer una sola vez en dashboard.clerk.com)
+
+  1. Configure → Email, Phone, Username
+     - Username: ✅ ON (requerido)
+     - Email:    ✅ ON pero NO requerido (optional)
+     - Phone:    ❌ OFF
+
+  2. Configure → Restrictions → Sign-up mode
+     - Seleccionar "Restricted" si el profesor
+       crea las cuentas, o "Public" para libre.
+
+  3. Configure → Email & SMS → Email verification
+     - Desactivar "Require email verification"
+       O mejor: no pedir email en el paso 1.
+
+  4. Configure → Password → Password strength
+     - Cambiar a "Weak" o "None" para alumnos
+       (mínimo 4 caracteres)
+
+  IMPORTANTE: Con la configuración actual de Clerk
+  (username + password sin verificación email),
+  el registro es inmediato sin código de correo.
+  Solo poner username y contraseña de 4+ caracteres.
+-->
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+  <title>Crear Cuenta — EduCoins</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Nunito:wght@400;700;800;900&display=swap"
+    rel="stylesheet" />
+  <style>
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0
+    }
+
+    body {
+      font-family: 'Nunito', sans-serif;
+      background: #07071a;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+      background-image:
+        linear-gradient(rgba(124, 58, 237, .03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(124, 58, 237, .03) 1px, transparent 1px);
+      background-size: 50px 50px;
+    }
+
+    .auth-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1.5rem;
+      width: 100%;
+      max-width: 520px;
+    }
+
+    .auth-logo {
+      display: flex;
+      align-items: center;
+      gap: .875rem;
+      text-decoration: none
+    }
+
+    .logo-box {
+      width: 56px;
+      height: 56px;
+      background: linear-gradient(135deg, #7c3aed, #06b6d4);
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.8rem;
+      animation: logoPulse 3s ease-in-out infinite;
+    }
+
+    @keyframes logoPulse {
+
+      0%,
+      100% {
+        box-shadow: 0 0 20px rgba(124, 58, 237, .4)
+      }
+
+      50% {
+        box-shadow: 0 0 50px rgba(124, 58, 237, .8), 0 0 80px rgba(6, 182, 212, .3)
+      }
+    }
+
+    .logo-name {
+      font-family: 'Press Start 2P', monospace;
+      font-size: .85rem;
+      color: #a855f7;
+      display: block
+    }
+
+    .logo-sub {
+      font-family: 'Press Start 2P', monospace;
+      font-size: .4rem;
+      color: #06b6d4;
+      display: block;
+      margin-top: 5px
+    }
+
+    /* PASO 1: Selección de grado (se muestra primero) */
+    .paso-grado {
+      width: 100%;
+      background: #0f0f2e;
+      border: 1px solid rgba(124, 58, 237, .3);
+      border-radius: 20px;
+      padding: 2rem;
+      box-shadow: 0 0 60px rgba(124, 58, 237, .15);
+    }
+
+    .paso-titulo {
+      font-family: 'Press Start 2P', monospace;
+      font-size: .6rem;
+      color: white;
+      margin-bottom: .5rem;
+      line-height: 1.6;
+    }
+
+    .paso-sub {
+      font-size: .875rem;
+      color: #94a3b8;
+      font-weight: 700;
+      margin-bottom: 1.5rem;
+    }
+
+    .grados-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: .625rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .grado-btn {
+      background: rgba(124, 58, 237, .08);
+      border: 2px solid rgba(124, 58, 237, .25);
+      border-radius: 12px;
+      padding: .875rem .5rem;
+      text-align: center;
+      cursor: pointer;
+      transition: all .2s;
+      color: white;
+    }
+
+    .grado-btn:hover {
+      border-color: #7c3aed;
+      background: rgba(124, 58, 237, .2);
+      transform: translateY(-2px);
+    }
+
+    .grado-btn.seleccionado {
+      border-color: #7c3aed;
+      background: linear-gradient(135deg, rgba(124, 58, 237, .3), rgba(6, 182, 212, .15));
+      box-shadow: 0 0 16px rgba(124, 58, 237, .4);
+    }
+
+    .grado-num {
+      font-family: 'Press Start 2P', monospace;
+      font-size: .55rem;
+      color: #a855f7;
+      display: block;
+      margin-bottom: .25rem;
+    }
+
+    .grado-label {
+      font-size: .72rem;
+      color: #94a3b8;
+      font-weight: 700;
+    }
+
+    .grado-btn.seleccionado .grado-label {
+      color: #e2e8f0;
+    }
+
+    .btn-siguiente {
+      width: 100%;
+      padding: .875rem;
+      background: linear-gradient(135deg, #7c3aed, #6d28d9);
+      color: white;
+      border: none;
+      border-radius: 12px;
+      font-family: 'Press Start 2P', monospace;
+      font-size: .5rem;
+      cursor: pointer;
+      transition: all .2s;
+      opacity: .4;
+      pointer-events: none;
+    }
+
+    .btn-siguiente.activo {
+      opacity: 1;
+      pointer-events: all;
+      box-shadow: 0 4px 20px rgba(124, 58, 237, .4);
+    }
+
+    .btn-siguiente.activo:hover {
+      transform: translateY(-2px);
+    }
+
+    /* PASO 2: Formulario de Clerk (oculto hasta que elijan grado) */
+    .paso-clerk {
+      width: 100%;
+      display: none;
+    }
+
+    #clerk-sign-up {
+      width: 100%;
+    }
+
+    .paso-badge {
+      display: flex;
+      align-items: center;
+      gap: .75rem;
+      background: rgba(34, 197, 94, .08);
+      border: 1px solid rgba(34, 197, 94, .25);
+      border-radius: 12px;
+      padding: .75rem 1rem;
+      margin-bottom: .75rem;
+    }
+
+    .paso-badge-emoji {
+      font-size: 1.5rem;
+    }
+
+    .paso-badge-txt {
+      font-size: .875rem;
+      font-weight: 800;
+      color: #86efac;
+    }
+
+    .paso-badge-sub {
+      font-size: .75rem;
+      color: #94a3b8;
+      font-weight: 700;
+    }
+
+    .auth-footer {
+      font-size: .875rem;
+      color: #94a3b8;
+      font-weight: 700;
+      text-align: center
+    }
+
+    .auth-footer a {
+      color: #a855f7;
+      text-decoration: none
+    }
+
+    .auth-footer a:hover {
+      text-decoration: underline
+    }
+
+    .spinner-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1rem;
+      padding: 2rem;
+      color: #64748b;
+      font-size: .875rem;
+      font-weight: 700
+    }
+
+    .spinner {
+      width: 32px;
+      height: 32px;
+      border: 3px solid rgba(124, 58, 237, .2);
+      border-top-color: #7c3aed;
+      border-radius: 50%;
+      animation: spin .8s linear infinite
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg)
+      }
+    }
+
+    .colegio-seccion {
+      margin-top: 1.25rem;
+      border-top: 1px solid rgba(124, 58, 237, .2);
+      padding-top: 1.25rem;
+    }
+
+    .colegio-label {
+      font-family: 'Press Start 2P', monospace;
+      font-size: .5rem;
+      color: white;
+      margin-bottom: .75rem;
+      display: block;
+    }
+
+    .colegio-grid {
+      display: flex;
+      flex-direction: column;
+      gap: .5rem;
+      margin-bottom: .25rem;
+    }
+
+    .colegio-btn {
+      background: rgba(124, 58, 237, .08);
+      border: 2px solid rgba(124, 58, 237, .25);
+      border-radius: 12px;
+      padding: .75rem 1rem;
+      text-align: left;
+      cursor: pointer;
+      transition: all .2s;
+      color: white;
+      display: flex;
+      align-items: center;
+      gap: .75rem;
+    }
+
+    .colegio-btn:hover {
+      border-color: #7c3aed;
+      background: rgba(124, 58, 237, .2);
+    }
+
+    .colegio-btn.seleccionado {
+      border-color: #7c3aed;
+      background: linear-gradient(135deg, rgba(124, 58, 237, .3), rgba(6, 182, 212, .15));
+      box-shadow: 0 0 16px rgba(124, 58, 237, .4);
+    }
+
+    .colegio-nombre {
+      font-family: 'Press Start 2P', monospace;
+      font-size: .45rem;
+      color: #a855f7;
+      display: block;
+      margin-bottom: .2rem;
+    }
+
+    .colegio-btn.seleccionado .colegio-nombre {
+      color: #e2e8f0;
+    }
+
+    .colegio-comuna {
+      font-size: .72rem;
+      color: #94a3b8;
+      font-weight: 700;
+    }
+
+    .colegio-btn.seleccionado .colegio-comuna {
+      color: #cbd5e1;
+    }
+
+    .colegio-loading {
+      font-size: .8rem;
+      color: #64748b;
+      font-weight: 700;
+      padding: .5rem 0;
+      text-align: center;
+    }
+
+    @media(max-width:480px) {
+      .grados-grid {
+        grid-template-columns: repeat(4, 1fr);
+        gap: .4rem;
+      }
+
+      .grado-num {
+        font-size: .45rem;
+      }
+
+      .grado-label {
+        font-size: .65rem;
+      }
+    }
+  </style>
+
+  <!-- SDK de Clerk con la clave en el data-attribute -->
+  <script data-clerk-publishable-key="pk_test_bG92aW5nLXJhcHRvci0xLmNsZXJrLmFjY291bnRzLmRldiQ"
+    src="https://cdn.jsdelivr.net/npm/@clerk/clerk-js@latest/dist/clerk.browser.js"></script>
+
+</head>
+
+<body>
+
+  <div class="auth-wrap">
+
+    <!-- LOGO -->
+    <a href="../index.html" class="auth-logo">
+      <div class="logo-box">🎓</div>
+      <div>
+        <span class="logo-name">EduCoins</span>
+        <span class="logo-sub">Aprende &amp; Gana</span>
+      </div>
+    </a>
+
+    <!-- ══════════════════════════════════════════
+       PASO 1: Elegir el grado
+       Se muestra primero. Cuando eligen uno,
+       se guarda en localStorage y se muestra
+       el formulario de Clerk (Paso 2).
+  ══════════════════════════════════════════ -->
+    <div class="paso-grado" id="pasoGrado">
+      <div class="paso-titulo">¿EN QUÉ CURSO ESTÁS?</div>
+      <div class="paso-sub">Así te mostramos el contenido correcto 📚</div>
+
+      <div class="grados-grid">
+        <button class="grado-btn" data-grado="1">
+          <span class="grado-num">1°</span>
+          <span class="grado-label">Básico</span>
+        </button>
+        <button class="grado-btn" data-grado="2">
+          <span class="grado-num">2°</span>
+          <span class="grado-label">Básico</span>
+        </button>
+        <button class="grado-btn" data-grado="3">
+          <span class="grado-num">3°</span>
+          <span class="grado-label">Básico</span>
+        </button>
+        <button class="grado-btn" data-grado="4">
+          <span class="grado-num">4°</span>
+          <span class="grado-label">Básico</span>
+        </button>
+        <button class="grado-btn" data-grado="5">
+          <span class="grado-num">5°</span>
+          <span class="grado-label">Básico</span>
+        </button>
+        <button class="grado-btn" data-grado="6">
+          <span class="grado-num">6°</span>
+          <span class="grado-label">Básico</span>
+        </button>
+        <button class="grado-btn" data-grado="7">
+          <span class="grado-num">7°</span>
+          <span class="grado-label">Básico</span>
+        </button>
+        <button class="grado-btn" data-grado="8">
+          <span class="grado-num">8°</span>
+          <span class="grado-label">Básico</span>
+        </button>
+      </div>
+
+      <!-- Selector de colegio -->
+      <div class="colegio-seccion">
+        <span class="colegio-label">🏫 ¿EN QUÉ COLEGIO ESTÁS?</span>
+        <div class="colegio-grid" id="colegioGrid">
+          <div class="colegio-loading">Cargando colegios...</div>
+        </div>
+      </div>
+
+      <button class="btn-siguiente" id="btnSiguiente" disabled>
+        🚀 ¡Siguiente! Crear mi cuenta →
+      </button>
+    </div>
+
+    <!-- ══════════════════════════════════════════
+       PASO 2: Formulario de Clerk
+       Oculto hasta que el alumno elige su grado.
+  ══════════════════════════════════════════ -->
+    <div class="paso-clerk" id="pasoClerk">
+
+      <!-- Badge que muestra el grado elegido -->
+      <div class="paso-badge">
+        <span class="paso-badge-emoji">🎓</span>
+        <div>
+          <div class="paso-badge-txt" id="badgeGradoTxt">— Básico seleccionado</div>
+          <div class="paso-badge-sub">Ahora elige tu nombre de usuario y contraseña</div>
+        </div>
+      </div>
+
+      <div id="clerk-sign-up">
+        <div class="spinner-wrap">
+          <div class="spinner"></div>
+          Cargando registro...
+        </div>
+      </div>
+
+    </div>
+
+    <div class="auth-footer">
+      ¿Ya tienes cuenta? <a href="login.html">Inicia sesión aquí</a>
+    </div>
+
+  </div>
+
+  <script src="clerk-config.js"></script>
+  <script>
+    (function () {
+      var gradoSeleccionado = null;
+      var colegioSeleccionado = null; // { id, nombre }
+      var base = window.EDUCOINS_BASE || '';
+
+      // ——————————————————————————————————
+      // MODO ?nuevo=true (registro OAuth)
+      // Usuario ya autenticado con Google, solo
+      // necesita elegir grado y colegio.
+      // ——————————————————————————————————
+      var esNuevoOAuth = new URLSearchParams(window.location.search).get('nuevo') === 'true';
+
+      if (esNuevoOAuth) {
+        var footer = document.querySelector('.auth-footer');
+        if (footer) footer.style.display = 'none';
+
+        // Reusar el mismo selector — al presionar Siguiente
+        // llamamos a crearPerfilOAuth en vez de abrir Clerk
+        document.getElementById('btnSiguiente').addEventListener('click', function () {
+          if (!gradoSeleccionado || !colegioSeleccionado) return;
+
+          document.getElementById('badgeGradoTxt').textContent =
+            gradoSeleccionado + '° Básico · ' + colegioSeleccionado.nombre + ' ✅';
+          document.getElementById('pasoGrado').style.display = 'none';
+          document.getElementById('pasoClerk').style.display = 'block';
+          document.getElementById('clerk-sign-up').innerHTML =
+            '<div class="spinner-wrap"><div class="spinner"></div>Creando tu perfil...</div>';
+
+          crearPerfilOAuth(gradoSeleccionado, colegioSeleccionado.id);
+        });
+
+        // Los listeners de grado y colegio se registran más abajo
+        // pero la función verificarPasoListo ya activa el botón
+      }
+
+      // ——————————————————————————————————
+      // CARGAR COLEGIOS desde la API (público)
+      // ——————————————————————————————————
+      fetch(base + '/api/colegios')
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (data) {
+          var grid = document.getElementById('colegioGrid');
+          if (!data || !data.colegios || data.colegios.length === 0) {
+            grid.innerHTML = '<div class="colegio-loading">No se pudieron cargar los colegios</div>';
+            return;
+          }
+          grid.innerHTML = data.colegios.map(function (c) {
+            return '<button class="colegio-btn" data-id="' + c.id + '" data-nombre="' + c.nombre + '">' +
+              '<span style="font-size:1.4rem">🏫</span>' +
+              '<div>' +
+              '<span class="colegio-nombre">' + c.nombre + '</span>' +
+              '<span class="colegio-comuna">' + c.comuna + ' · ' + c.region + '</span>' +
+              '</div>' +
+              '</button>';
+          }).join('');
+
+          // Eventos de selección de colegio
+          grid.querySelectorAll('.colegio-btn').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+              grid.querySelectorAll('.colegio-btn').forEach(function (b) {
+                b.classList.remove('seleccionado');
+              });
+              this.classList.add('seleccionado');
+              colegioSeleccionado = {
+                id: this.dataset.id,
+                nombre: this.dataset.nombre,
+              };
+              verificarPasoListo();
+            });
+          });
+        })
+        .catch(function () {
+          document.getElementById('colegioGrid').innerHTML =
+            '<div class="colegio-loading">Sin conexión — recarga la página</div>';
+        });
+
+      // Habilitar botón solo si AMBOS están seleccionados
+      function verificarPasoListo() {
+        if (gradoSeleccionado && colegioSeleccionado) {
+          var btnSig = document.getElementById('btnSiguiente');
+          btnSig.classList.add('activo');
+          btnSig.disabled = false;
+        }
+      }
+
+      // ——————————————————————————————————
+      // PASO 1: Selección de grado
+      // ——————————————————————————————————
+      document.querySelectorAll('.grado-btn').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          document.querySelectorAll('.grado-btn').forEach(function (b) {
+            b.classList.remove('seleccionado');
+          });
+          this.classList.add('seleccionado');
+          gradoSeleccionado = parseInt(this.dataset.grado);
+          verificarPasoListo();
+        });
+      });
+
+      document.getElementById('btnSiguiente').addEventListener('click', function () {
+        if (!gradoSeleccionado || !colegioSeleccionado) return;
+
+        // Guardar para uso posterior (flujo normal y OAuth)
+        try {
+          sessionStorage.setItem('educoins_grado_registro', gradoSeleccionado);
+          sessionStorage.setItem('educoins_colegio_id', colegioSeleccionado.id);
+          sessionStorage.setItem('educoins_colegio_nombre', colegioSeleccionado.nombre);
+        } catch (e) { }
+
+        // Badge: mostrar grado y colegio elegidos
+        document.getElementById('badgeGradoTxt').textContent =
+          gradoSeleccionado + '° Básico · ' + colegioSeleccionado.nombre + ' ✅';
+
+        // Ocultar paso 1, mostrar paso 2
+        document.getElementById('pasoGrado').style.display = 'none';
+        document.getElementById('pasoClerk').style.display = 'block';
+
+        // Inicializar Clerk y montar el formulario de registro
+        iniciarClerk();
+      });
+
+      // ——————————————————————————————————
+      // PASO 2: Formulario de Clerk
+      // ——————————————————————————————————
+      async function iniciarClerk() {
+        if (typeof window.Clerk === 'undefined') {
+          document.getElementById('clerk-sign-up').innerHTML =
+            '<div style="color:#fca5a5;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);border-radius:12px;padding:1.5rem;font-weight:700;line-height:1.7">' +
+            '⚠️ Sin conexión al servicio de registro.<br>Verifica tu internet.' +
+            '</div>';
+          return;
+        }
+
+        await window.Clerk.load();
+
+        // Si ya tiene sesión activa → dashboard
+        if (window.Clerk.user) {
+          window.location.href = base + '/dashboard/dashboard.html';
+          return;
+        }
+
+        window.Clerk.mountSignUp(
+          document.getElementById('clerk-sign-up'),
+          {
+            appearance: {
+              variables: {
+                colorPrimary: '#7c3aed',
+                colorBackground: '#0f0f2e',
+                colorInputBackground: '#1a1a3e',
+                colorInputText: '#e2e8f0',
+                colorText: '#e2e8f0',
+                colorTextSecondary: '#94a3b8',
+                colorDanger: '#ef4444',
+                colorSuccess: '#22c55e',
+                borderRadius: '12px',
+                fontFamily: "'Nunito', sans-serif",
+              },
+              elements: {
+                logoImage: { display: 'none' },
+                card: {
+                  background: '#0f0f2e',
+                  border: '1px solid rgba(124,58,237,0.3)',
+                  boxShadow: '0 0 40px rgba(124,58,237,0.12)',
+                  borderRadius: '20px',
+                },
+                formButtonPrimary: {
+                  background: 'linear-gradient(135deg,#7c3aed,#6d28d9)',
+                  fontFamily: "'Press Start 2P',monospace",
+                  fontSize: '0.5rem',
+                },
+              },
+            },
+            // Después del registro exitoso → dashboard
+            redirectUrl: base + '/dashboard/dashboard.html',
+            signInUrl: base + '/auth/login.html',
+          }
+        );
+      }
+
+      // ——————————————————————————————————
+      // CREAR PERFIL — modo OAuth (?nuevo=true)
+      // ——————————————————————————————————
+      async function crearPerfilOAuth(grado, colegioId) {
+        var signUpEl = document.getElementById('clerk-sign-up');
+
+        function mostrarError(msg) {
+          signUpEl.innerHTML =
+            '<div style="background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.4);' +
+            'border-radius:12px;padding:1.5rem;color:#fca5a5;font-family:Nunito,sans-serif;' +
+            'font-weight:700;line-height:1.7">⚠️ ' + msg + '</div>';
+        }
+
+        try {
+          await window.Clerk.load();
+          var user = window.Clerk.user;
+          if (!user) { window.location.href = base + '/auth/login.html'; return; }
+
+          var token = await window.Clerk.session.getToken();
+          if (!token) { mostrarError('No se pudo obtener el token. Recarga la página.'); return; }
+
+          var nombre = user.firstName || user.username || 'Alumno' + Date.now();
+          var email = (user.primaryEmailAddress && user.primaryEmailAddress.emailAddress) || '';
+
+          var resp = await fetch(base + '/api/perfil', {
+            method: 'POST',
+            headers: {
+              'Authorization': 'Bearer ' + token,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              nombre: nombre,
+              email: email,
+              grado_ingreso: grado,
+              anio_ingreso: new Date().getFullYear(),
+              colegio_id: colegioId,
+            }),
+          });
+
+          var data = await resp.json();
+          if (!resp.ok) { mostrarError(data.mensaje || 'Error al crear el perfil (' + resp.status + ')'); return; }
+
+          window.location.href = base + '/dashboard/dashboard.html';
+
+        } catch (err) {
+          console.error('[registro] Error crearPerfilOAuth:', err);
+          mostrarError('Error inesperado: ' + err.message);
+        }
+      }
+
+    })();
+  </script>
+
+</body>
+
+</html>

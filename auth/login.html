@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+  <title>Iniciar Sesión — EduCoins</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Nunito:wght@400;700;800;900&display=swap"
+    rel="stylesheet" />
+  <style>
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0
+    }
+
+    body {
+      font-family: 'Nunito', sans-serif;
+      background: #07071a;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+      background-image: linear-gradient(rgba(124, 58, 237, .03) 1px, transparent 1px), linear-gradient(90deg, rgba(124, 58, 237, .03) 1px, transparent 1px);
+      background-size: 50px 50px
+    }
+
+    .auth-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2rem;
+      width: 100%;
+      max-width: 480px
+    }
+
+    .auth-logo {
+      display: flex;
+      align-items: center;
+      gap: .875rem;
+      text-decoration: none
+    }
+
+    .logo-box {
+      width: 56px;
+      height: 56px;
+      background: linear-gradient(135deg, #7c3aed, #06b6d4);
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.8rem;
+      animation: logoPulse 3s ease-in-out infinite
+    }
+
+    @keyframes logoPulse {
+
+      0%,
+      100% {
+        box-shadow: 0 0 20px rgba(124, 58, 237, .4)
+      }
+
+      50% {
+        box-shadow: 0 0 50px rgba(124, 58, 237, .8), 0 0 80px rgba(6, 182, 212, .3)
+      }
+    }
+
+    .logo-name {
+      font-family: 'Press Start 2P', monospace;
+      font-size: .85rem;
+      color: #a855f7;
+      display: block
+    }
+
+    .logo-sub {
+      font-family: 'Press Start 2P', monospace;
+      font-size: .4rem;
+      color: #06b6d4;
+      display: block;
+      margin-top: 5px
+    }
+
+    #clerk-sign-in {
+      width: 100%;
+      min-height: 80px
+    }
+
+    .auth-footer {
+      font-size: .875rem;
+      color: #94a3b8;
+      font-weight: 700;
+      text-align: center
+    }
+
+    .auth-footer a {
+      color: #a855f7;
+      text-decoration: none
+    }
+
+    .auth-footer a:hover {
+      text-decoration: underline
+    }
+
+    .spinner-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1rem;
+      padding: 2.5rem;
+      color: #64748b;
+      font-size: .875rem;
+      font-weight: 700
+    }
+
+    .spinner {
+      width: 36px;
+      height: 36px;
+      border: 3px solid rgba(124, 58, 237, .2);
+      border-top-color: #7c3aed;
+      border-radius: 50%;
+      animation: spin .8s linear infinite
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg)
+      }
+    }
+  </style>
+
+  <!--
+  SDK de Clerk con la clave directo en el data-attribute.
+  SIN async NI defer: carga síncrona garantiza que
+  window.Clerk existe cuando el script de abajo corre.
+
+  PERO: window.Clerk existe, pero NO está inicializado todavía.
+  Necesita window.Clerk.load() que es async.
+  El script de abajo maneja esto con DOMContentLoaded.
+-->
+  <script data-clerk-publishable-key="pk_test_bG92aW5nLXJhcHRvci0xLmNsZXJrLmFjY291bnRzLmRldiQ"
+    src="https://cdn.jsdelivr.net/npm/@clerk/clerk-js@latest/dist/clerk.browser.js"></script>
+
+</head>
+
+<body>
+
+  <div class="auth-wrap">
+    <a href="../index.html" class="auth-logo">
+      <div class="logo-box">🎓</div>
+      <div>
+        <span class="logo-name">EduCoins</span>
+        <span class="logo-sub">Aprende &amp; Gana</span>
+      </div>
+    </a>
+
+    <div id="clerk-sign-in">
+      <div class="spinner-wrap">
+        <div class="spinner"></div>
+        Cargando login...
+      </div>
+    </div>
+
+    <div class="auth-footer">
+      ¿No tienes cuenta? <a href="registro.html">Regístrate aquí</a>
+    </div>
+  </div>
+
+  <script src="clerk-config.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', async function () {
+      var base = window.EDUCOINS_BASE || '';
+
+      if (typeof window.Clerk === 'undefined') {
+        mostrarError('Sin conexión al servicio de login. Verifica tu internet.');
+        return;
+      }
+
+      try {
+        await window.Clerk.load();
+      } catch (err) {
+        console.error('[login] Error Clerk.load():', err);
+        mostrarFormulario(base);
+        return;
+      }
+
+      if (window.Clerk.user) {
+        window.location.href = base + '/dashboard/dashboard.html';
+        return;
+      }
+
+      // Intentar mountSignIn — si falla (localhost sin UI), usar formulario propio
+      var signInEl = document.getElementById('clerk-sign-in');
+      try {
+        signInEl.innerHTML = '';
+        window.Clerk.mountSignIn(signInEl, {
+          appearance: {
+            variables: {
+              colorPrimary: '#7c3aed', colorBackground: '#0f0f2e',
+              colorInputBackground: '#1a1a3e', colorInputText: '#e2e8f0',
+              colorText: '#e2e8f0', colorTextSecondary: '#94a3b8',
+              borderRadius: '12px', fontFamily: "'Nunito', sans-serif",
+            },
+            elements: {
+              card: { background: '#0f0f2e', border: '1px solid rgba(124,58,237,0.3)', borderRadius: '20px' },
+              formButtonPrimary: { background: 'linear-gradient(135deg,#7c3aed,#6d28d9)' },
+            },
+          },
+          redirectUrl: base + '/dashboard/dashboard.html',
+          signUpUrl: base + '/auth/registro.html',
+        });
+      } catch (err) {
+        console.warn('[login] mountSignIn falló, usando formulario propio:', err.message);
+        mostrarFormulario(base);
+      }
+
+      function mostrarError(msg) {
+        document.getElementById('clerk-sign-in').innerHTML =
+          '<div style="background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.4);border-radius:12px;padding:1.5rem;color:#fca5a5;font-weight:700;line-height:1.7;text-align:center">⚠️ ' + msg + '</div>';
+      }
+
+      function mostrarFormulario(base) {
+        document.getElementById('clerk-sign-in').innerHTML =
+          '<div style="background:#0f0f2e;border:1px solid rgba(124,58,237,0.3);border-radius:20px;padding:2rem;box-shadow:0 0 60px rgba(124,58,237,0.15)">' +
+          '<div style="font-family:\'Press Start 2P\',monospace;font-size:.5rem;color:#a855f7;margin-bottom:1.5rem;text-align:center">INICIAR SESIÓN</div>' +
+          '<div style="margin-bottom:1rem">' +
+          '<label style="display:block;font-size:.72rem;font-weight:800;color:#94a3b8;margin-bottom:.4rem">CORREO ELECTRÓNICO</label>' +
+          '<input id="loginEmail" type="email" placeholder="tu@correo.com" style="width:100%;background:#1a1a3e;border:1px solid rgba(124,58,237,0.3);border-radius:10px;padding:.75rem 1rem;color:#e2e8f0;font-size:.95rem;font-family:Nunito,sans-serif;outline:none"/>' +
+          '</div>' +
+          '<div style="margin-bottom:1.5rem">' +
+          '<label style="display:block;font-size:.72rem;font-weight:800;color:#94a3b8;margin-bottom:.4rem">CONTRASEÑA</label>' +
+          '<input id="loginPassword" type="password" placeholder="••••••••" style="width:100%;background:#1a1a3e;border:1px solid rgba(124,58,237,0.3);border-radius:10px;padding:.75rem 1rem;color:#e2e8f0;font-size:.95rem;font-family:Nunito,sans-serif;outline:none"/>' +
+          '</div>' +
+          '<div id="loginError" style="display:none;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.4);border-radius:8px;padding:.75rem;color:#fca5a5;font-size:.8rem;font-weight:700;margin-bottom:1rem;text-align:center"></div>' +
+          '<button id="loginBtn" onclick="hacerLogin(\'' + base + '\')" style="width:100%;background:linear-gradient(135deg,#7c3aed,#6d28d9);border:none;border-radius:12px;padding:.875rem;color:#fff;font-family:\'Press Start 2P\',monospace;font-size:.45rem;cursor:pointer;box-shadow:0 4px 20px rgba(124,58,237,.4)">▶ ENTRAR</button>' +
+          '<div style="margin:1.25rem 0;display:flex;align-items:center;gap:.75rem"><div style="flex:1;height:1px;background:rgba(255,255,255,.1)"></div><span style="color:#64748b;font-size:.75rem;font-weight:700">O</span><div style="flex:1;height:1px;background:rgba(255,255,255,.1)"></div></div>' +
+          '<button onclick="loginGoogle(\'' + base + '\')" style="width:100%;background:#fff;border:none;border-radius:12px;padding:.875rem;color:#1a1a1a;font-family:Nunito,sans-serif;font-weight:800;font-size:.95rem;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:.75rem;margin-bottom:1rem"><img src="https://www.google.com/favicon.ico" style="width:18px;height:18px"> Entrar con Google</button>' +
+          '<div style="text-align:center;font-size:.8rem;color:#64748b;font-weight:700">¿No tienes cuenta? <a href="registro.html" style="color:#a855f7">Regístrate</a></div>' + '</div>';
+
+        // Enter para submit
+        setTimeout(function () {
+          var pw = document.getElementById('loginPassword');
+          if (pw) pw.addEventListener('keydown', function (e) { if (e.key === 'Enter') hacerLogin(base); });
+          var em = document.getElementById('loginEmail');
+          if (em) em.addEventListener('keydown', function (e) { if (e.key === 'Enter') hacerLogin(base); });
+        }, 100);
+      }
+    });
+
+    async function loginGoogle(base) {
+      try {
+        await window.Clerk.client.signIn.authenticateWithRedirect({
+          strategy: 'oauth_google',
+          redirectUrl: (base || '') + '/auth/sso-callback.html',
+          redirectUrlComplete: (base || '') + '/dashboard/dashboard.html',
+        });
+      } catch (err) {
+        console.error('[login] Google OAuth error:', err);
+        alert('Error al conectar con Google. Intenta recargar la página.');
+      }
+    }
+
+    async function hacerLogin(base) {
+      var email = document.getElementById('loginEmail').value.trim();
+      var password = document.getElementById('loginPassword').value;
+      var errorEl = document.getElementById('loginError');
+      var btn = document.getElementById('loginBtn');
+
+      if (!email || !password) {
+        errorEl.textContent = 'Completa todos los campos';
+        errorEl.style.display = 'block';
+        return;
+      }
+
+      btn.textContent = '⏳ Entrando...';
+      btn.disabled = true;
+      errorEl.style.display = 'none';
+
+      try {
+        var result = await window.Clerk.client.signIn.create({
+          identifier: email,
+          password: password,
+        });
+
+        if (result.status === 'complete') {
+          await window.Clerk.setActive({ session: result.createdSessionId });
+          window.location.href = (base || '') + '/dashboard/dashboard.html';
+        } else {
+          errorEl.textContent = 'Se requiere verificación adicional. Usa el portal de Clerk.';
+          errorEl.style.display = 'block';
+          btn.textContent = '▶ ENTRAR';
+          btn.disabled = false;
+        }
+      } catch (err) {
+        var msg = (err.errors && err.errors[0]) ? err.errors[0].longMessage || err.errors[0].message : err.message;
+        errorEl.textContent = msg || 'Error al iniciar sesión';
+        errorEl.style.display = 'block';
+        btn.textContent = '▶ ENTRAR';
+        btn.disabled = false;
+      }
+    }
+  </script>
+
+</body>
+
+</html>

@@ -1,0 +1,922 @@
+/* ============================================
+   ARCHIVO: /admin/admin.css
+   ============================================ */
+
+/* PAGE HEADER */
+.page-header {
+   display: flex;
+   align-items: flex-start;
+   justify-content: space-between;
+   margin-bottom: 1.5rem;
+   flex-wrap: wrap;
+   gap: 1rem;
+}
+
+.page-tag {
+   font-family: 'Press Start 2P', monospace;
+   font-size: .4rem;
+   color: var(--red);
+   display: block;
+   margin-bottom: .5rem;
+}
+
+.page-title {
+   font-family: 'Press Start 2P', monospace;
+   font-size: clamp(.75rem, 2vw, 1rem);
+   color: white;
+   line-height: 1.5;
+   margin-bottom: .4rem;
+}
+
+.page-subtitle {
+   font-size: .875rem;
+   color: var(--text-dim);
+   font-weight: 700;
+}
+
+.admin-badge {
+   display: flex;
+   align-items: center;
+   gap: .875rem;
+   background: rgba(239, 68, 68, .08);
+   border: 1px solid rgba(239, 68, 68, .3);
+   border-radius: var(--radius);
+   padding: .875rem 1.25rem;
+}
+
+.admin-badge-icon {
+   font-size: 2rem;
+}
+
+.admin-badge-rol {
+   font-family: 'Press Start 2P', monospace;
+   font-size: .35rem;
+   color: var(--red);
+   margin-bottom: .2rem;
+}
+
+.admin-badge-nombre {
+   font-weight: 800;
+   font-size: .9rem;
+   color: var(--text);
+}
+
+/* TABS */
+.admin-tabs {
+   display: flex;
+   gap: .5rem;
+   margin-bottom: 1.75rem;
+   background: var(--bg2);
+   border: 1px solid var(--border);
+   border-radius: var(--radius);
+   padding: .375rem;
+   flex-wrap: wrap;
+}
+
+.admin-tab {
+   flex: 1;
+   padding: .625rem .5rem;
+   border: none;
+   background: none;
+   border-radius: 10px;
+   cursor: pointer;
+   font-family: 'Press Start 2P', monospace;
+   font-size: .38rem;
+   color: var(--text-dim);
+   transition: all .2s;
+   white-space: nowrap;
+   min-width: 100px;
+}
+
+.admin-tab:hover {
+   color: var(--text);
+}
+
+.admin-tab.active {
+   background: linear-gradient(135deg, rgba(239, 68, 68, .2), rgba(249, 115, 22, .1));
+   color: var(--red);
+}
+
+/* TAB PANELS */
+.tab-panel {
+   display: none;
+}
+
+.tab-panel.active {
+   display: block;
+}
+
+/* KPIs */
+.admin-kpis {
+   display: grid;
+   grid-template-columns: repeat(4, 1fr);
+   gap: 1rem;
+   margin-bottom: 1.5rem;
+}
+
+.akpi-card {
+   background: var(--card);
+   border: 1px solid var(--border);
+   border-radius: var(--radius);
+   padding: 1.25rem;
+   transition: all .2s;
+}
+
+.akpi-card:hover {
+   transform: translateY(-2px);
+   border-color: var(--red);
+}
+
+.akpi-icon {
+   font-size: 1.75rem;
+   display: block;
+   margin-bottom: .5rem;
+}
+
+.akpi-num {
+   font-family: 'Press Start 2P', monospace;
+   font-size: .85rem;
+   color: white;
+   margin-bottom: .25rem;
+}
+
+.akpi-label {
+   font-size: .72rem;
+   color: var(--text-dim);
+   font-weight: 700;
+   margin-bottom: .25rem;
+}
+
+.akpi-delta {
+   font-size: .72rem;
+   font-weight: 800;
+}
+
+.akpi-delta.up {
+   color: var(--green);
+}
+
+.akpi-delta.down {
+   color: var(--red);
+}
+
+/* CARDS */
+.admin-card {
+   background: var(--card);
+   border: 1px solid var(--border);
+   border-radius: var(--radius);
+   overflow: hidden;
+   margin-bottom: 1.25rem;
+}
+
+.admin-card-header {
+   padding: 1rem 1.25rem;
+   border-bottom: 1px solid var(--border);
+   display: flex;
+   align-items: center;
+   justify-content: space-between;
+   background: var(--bg3);
+}
+
+.admin-card-titulo {
+   font-family: 'Press Start 2P', monospace;
+   font-size: .45rem;
+   color: white;
+}
+
+.admin-sub {
+   font-size: .78rem;
+   color: var(--text-dim);
+   font-weight: 700;
+   margin-top: .2rem;
+}
+
+.alerta-count {
+   font-family: 'Press Start 2P', monospace;
+   font-size: .38rem;
+   padding: .25rem .625rem;
+   border-radius: 20px;
+   background: rgba(239, 68, 68, .15);
+   color: var(--red);
+   border: 1px solid rgba(239, 68, 68, .3);
+}
+
+.resumen-grid {
+   display: grid;
+   grid-template-columns: 1fr 1fr;
+   gap: 1.25rem;
+   margin-bottom: 1.25rem;
+}
+
+/* TOP ALUMNOS */
+.top-alumnos {
+   padding: .75rem 1.25rem;
+   display: flex;
+   flex-direction: column;
+   gap: .625rem;
+}
+
+.top-row {
+   display: flex;
+   align-items: center;
+   gap: .875rem;
+}
+
+.top-pos {
+   font-family: 'Press Start 2P', monospace;
+   font-size: .45rem;
+   width: 24px;
+   text-align: center;
+}
+
+.top-pos.g1 {
+   color: var(--yellow);
+}
+
+.top-pos.g2 {
+   color: #94a3b8;
+}
+
+.top-pos.g3 {
+   color: #c77c48;
+}
+
+.top-av {
+   font-size: 1.3rem;
+}
+
+.top-info {
+   flex: 1;
+}
+
+.top-nombre {
+   font-weight: 800;
+   font-size: .875rem;
+   color: var(--text);
+}
+
+.top-grado {
+   font-size: .72rem;
+   color: var(--text-dim);
+   font-weight: 700;
+}
+
+.top-pts {
+   font-family: 'Press Start 2P', monospace;
+   font-size: .42rem;
+   color: var(--yellow);
+}
+
+/* ALERTAS */
+.alertas-lista {
+   padding: .75rem 1.25rem;
+   display: flex;
+   flex-direction: column;
+   gap: .625rem;
+}
+
+.alerta-item {
+   display: flex;
+   align-items: flex-start;
+   gap: .75rem;
+   padding: .75rem;
+   background: var(--bg3);
+   border: 1px solid var(--border);
+   border-radius: var(--radius-sm);
+   border-left: 3px solid;
+}
+
+.alerta-item.warning {
+   border-left-color: var(--yellow);
+}
+
+.alerta-item.danger {
+   border-left-color: var(--red);
+}
+
+.alerta-item.info {
+   border-left-color: var(--cyan);
+}
+
+.alerta-emoji {
+   font-size: 1.2rem;
+   flex-shrink: 0;
+   margin-top: .1rem;
+}
+
+.alerta-txt {
+   flex: 1;
+   font-size: .82rem;
+   font-weight: 800;
+   color: var(--text);
+   line-height: 1.5;
+}
+
+.alerta-sub {
+   font-size: .72rem;
+   color: var(--text-dim);
+   font-weight: 700;
+   margin-top: .2rem;
+}
+
+/* TOOLBAR ALUMNOS / EVAL */
+.alumnos-toolbar,
+.eval-toolbar,
+.monedas-toolbar {
+   display: flex;
+   gap: .875rem;
+   margin-bottom: 1.25rem;
+   flex-wrap: wrap;
+   align-items: center;
+}
+
+.search-input {
+   flex: 1;
+   min-width: 200px;
+   background: var(--card);
+   border: 1px solid var(--border);
+   border-radius: var(--radius-sm);
+   padding: .625rem 1rem;
+   color: var(--text);
+   font-family: 'Nunito', sans-serif;
+   font-size: .875rem;
+   font-weight: 700;
+   outline: none;
+   transition: border-color .2s;
+}
+
+.search-input:focus {
+   border-color: var(--red);
+}
+
+.filtro-select {
+   background: var(--card);
+   border: 1px solid var(--border);
+   border-radius: var(--radius-sm);
+   padding: .625rem 1rem;
+   color: var(--text);
+   font-family: 'Nunito', sans-serif;
+   font-size: .875rem;
+   font-weight: 700;
+   outline: none;
+}
+
+.btn-admin {
+   padding: .625rem 1.125rem;
+   background: var(--bg3);
+   border: 1px solid var(--border);
+   border-radius: var(--radius-sm);
+   color: var(--text);
+   font-family: 'Press Start 2P', monospace;
+   font-size: .4rem;
+   cursor: pointer;
+   transition: all .2s;
+   white-space: nowrap;
+}
+
+.btn-admin:hover {
+   border-color: var(--violet);
+}
+
+.btn-admin.btn-primary {
+   background: linear-gradient(135deg, var(--red), #b91c1c);
+   color: white;
+   border-color: transparent;
+   box-shadow: 0 4px 12px rgba(239, 68, 68, .3);
+}
+
+.btn-admin.btn-primary:hover {
+   transform: translateY(-1px);
+   box-shadow: 0 6px 20px rgba(239, 68, 68, .5);
+}
+
+/* TABLA ALUMNOS */
+.alumnos-tabla {
+   background: var(--card);
+   border: 1px solid var(--border);
+   border-radius: var(--radius);
+   overflow: hidden;
+}
+
+.alumnos-table {
+   width: 100%;
+   border-collapse: collapse;
+}
+
+.alumnos-table th {
+   background: var(--bg3);
+   padding: .75rem 1.25rem;
+   text-align: left;
+   font-family: 'Press Start 2P', monospace;
+   font-size: .35rem;
+   color: var(--text-muted);
+   border-bottom: 1px solid var(--border);
+}
+
+.alumnos-table td {
+   padding: .875rem 1.25rem;
+   border-bottom: 1px solid rgba(255, 255, 255, .04);
+   font-size: .85rem;
+   font-weight: 700;
+   color: var(--text);
+}
+
+.alumnos-table tr:last-child td {
+   border-bottom: none;
+}
+
+.alumnos-table tr:hover td {
+   background: rgba(255, 255, 255, .02);
+}
+
+.alumno-av {
+   font-size: 1.4rem;
+}
+
+.alumno-nombre {
+   font-weight: 800;
+}
+
+.alumno-grado {
+   font-size: .75rem;
+   color: var(--text-dim);
+}
+
+.pill {
+   font-family: 'Press Start 2P', monospace;
+   font-size: .33rem;
+   padding: .2rem .5rem;
+   border-radius: 20px;
+}
+
+.pill-green {
+   background: rgba(34, 197, 94, .12);
+   color: var(--green);
+   border: 1px solid rgba(34, 197, 94, .25);
+}
+
+.pill-yellow {
+   background: rgba(250, 204, 21, .12);
+   color: var(--yellow);
+   border: 1px solid rgba(250, 204, 21, .25);
+}
+
+.pill-red {
+   background: rgba(239, 68, 68, .12);
+   color: var(--red);
+   border: 1px solid rgba(239, 68, 68, .25);
+}
+
+.tabla-acc-btn {
+   background: none;
+   border: 1px solid var(--border);
+   border-radius: 6px;
+   padding: .3rem .625rem;
+   color: var(--text-dim);
+   font-size: .75rem;
+   cursor: pointer;
+   transition: all .2s;
+}
+
+.tabla-acc-btn:hover {
+   border-color: var(--violet);
+   color: var(--text);
+}
+
+/* EVAL LISTA */
+.eval-lista {
+   display: flex;
+   flex-direction: column;
+   gap: .875rem;
+}
+
+.eval-card {
+   background: var(--card);
+   border: 1px solid var(--border);
+   border-radius: var(--radius);
+   padding: 1.25rem 1.5rem;
+   display: flex;
+   align-items: center;
+   gap: 1.25rem;
+   border-left: 4px solid var(--e-color, var(--violet));
+}
+
+.eval-emoji {
+   font-size: 1.75rem;
+   flex-shrink: 0;
+}
+
+.eval-body {
+   flex: 1;
+}
+
+.eval-asig {
+   font-family: 'Press Start 2P', monospace;
+   font-size: .4rem;
+   color: var(--e-color, var(--violet-light));
+   margin-bottom: .3rem;
+}
+
+.eval-desc {
+   font-weight: 800;
+   font-size: .9rem;
+   color: var(--text);
+   margin-bottom: .25rem;
+}
+
+.eval-meta {
+   font-size: .75rem;
+   color: var(--text-dim);
+   font-weight: 700;
+}
+
+.eval-right {
+   flex-shrink: 0;
+   display: flex;
+   flex-direction: column;
+   align-items: flex-end;
+   gap: .5rem;
+}
+
+.eval-grado {
+   font-family: 'Press Start 2P', monospace;
+   font-size: .38rem;
+   color: var(--text-muted);
+}
+
+.eval-reward {
+   font-family: 'Press Start 2P', monospace;
+   font-size: .42rem;
+   color: var(--yellow);
+}
+
+/* MISIONES ADMIN */
+.misiones-admin-header {
+   display: flex;
+   align-items: center;
+   justify-content: space-between;
+   margin-bottom: 1.25rem;
+   flex-wrap: wrap;
+   gap: .875rem;
+}
+
+.misiones-admin-grid {
+   display: grid;
+   grid-template-columns: repeat(4, 1fr);
+   gap: .875rem;
+}
+
+.mision-chip {
+   background: var(--card);
+   border: 1px solid var(--border);
+   border-radius: var(--radius-sm);
+   padding: .875rem;
+   text-align: center;
+}
+
+.mc-emoji {
+   font-size: 1.5rem;
+   margin-bottom: .5rem;
+}
+
+.mc-nombre {
+   font-family: 'Press Start 2P', monospace;
+   font-size: .35rem;
+   color: white;
+   margin-bottom: .3rem;
+   line-height: 1.6;
+}
+
+.mc-reward {
+   font-size: .72rem;
+   color: var(--yellow);
+   font-weight: 700;
+}
+
+.mc-pct {
+   font-size: .72rem;
+   color: var(--text-dim);
+   font-weight: 700;
+}
+
+.mc-bar-track {
+   height: 4px;
+   background: rgba(255, 255, 255, .06);
+   border-radius: 2px;
+   overflow: hidden;
+   margin: .5rem 0;
+}
+
+.mc-bar-fill {
+   height: 100%;
+   background: linear-gradient(90deg, var(--violet), var(--cyan));
+   border-radius: 2px;
+}
+
+.misiones-progreso {
+   padding: 1rem 1.25rem;
+   display: flex;
+   flex-direction: column;
+   gap: .625rem;
+}
+
+.mp-row {
+   display: flex;
+   align-items: center;
+   gap: .875rem;
+}
+
+.mp-emoji {
+   font-size: 1.1rem;
+   flex-shrink: 0;
+}
+
+.mp-nombre {
+   flex: 1;
+   font-size: .82rem;
+   font-weight: 800;
+   color: var(--text);
+}
+
+.mp-bar-wrap {
+   width: 120px;
+}
+
+.mp-bar-track {
+   height: 6px;
+   background: rgba(255, 255, 255, .06);
+   border-radius: 3px;
+   overflow: hidden;
+}
+
+.mp-bar-fill {
+   height: 100%;
+   background: linear-gradient(90deg, var(--green), var(--cyan));
+   border-radius: 3px;
+}
+
+.mp-pct {
+   font-family: 'Press Start 2P', monospace;
+   font-size: .38rem;
+   color: var(--text-dim);
+   width: 32px;
+   text-align: right;
+}
+
+/* MONEDAS */
+.circulacion-lista,
+.transacciones-lista {
+   padding: .75rem 1.25rem;
+   display: flex;
+   flex-direction: column;
+   gap: .625rem;
+}
+
+.circ-row,
+.trans-row {
+   display: flex;
+   align-items: center;
+   gap: .875rem;
+   padding: .625rem 0;
+   border-bottom: 1px solid rgba(255, 255, 255, .04);
+}
+
+.circ-row:last-child,
+.trans-row:last-child {
+   border-bottom: none;
+}
+
+.circ-av {
+   font-size: 1.2rem;
+}
+
+.circ-info {
+   flex: 1;
+}
+
+.circ-nombre {
+   font-weight: 800;
+   font-size: .875rem;
+   color: var(--text);
+}
+
+.circ-sub {
+   font-size: .72rem;
+   color: var(--text-dim);
+   font-weight: 700;
+}
+
+.circ-num {
+   font-family: 'Press Start 2P', monospace;
+   font-size: .45rem;
+   color: var(--yellow);
+}
+
+.trans-tipo {
+   font-size: .75rem;
+   font-weight: 800;
+}
+
+.trans-tipo.plus {
+   color: var(--green);
+}
+
+.trans-tipo.minus {
+   color: var(--red);
+}
+
+/* MODALES */
+.modal-overlay {
+   position: fixed;
+   inset: 0;
+   z-index: 10000;
+   background: rgba(7, 7, 26, .88);
+   backdrop-filter: blur(8px);
+   display: flex;
+   align-items: center;
+   justify-content: center;
+   padding: 1rem;
+   opacity: 0;
+   pointer-events: none;
+   transition: opacity .3s;
+}
+
+.modal-overlay.active {
+   opacity: 1;
+   pointer-events: all;
+}
+
+.modal {
+   background: var(--bg2);
+   border: 1px solid var(--border);
+   border-radius: 20px;
+   padding: 2rem;
+   width: 100%;
+   max-width: 500px;
+   position: relative;
+   max-height: 90vh;
+   overflow-y: auto;
+   transform: translateY(20px) scale(.98);
+   transition: all .3s;
+   box-shadow: 0 0 60px rgba(239, 68, 68, .15);
+}
+
+.modal-overlay.active .modal {
+   transform: translateY(0) scale(1);
+}
+
+.modal-close {
+   position: absolute;
+   top: 1rem;
+   right: 1rem;
+   background: rgba(255, 255, 255, .08);
+   border: none;
+   border-radius: 50%;
+   width: 30px;
+   height: 30px;
+   cursor: pointer;
+   color: var(--text);
+}
+
+.modal-close:hover {
+   background: rgba(255, 255, 255, .15);
+}
+
+.modal-titulo {
+   font-family: 'Press Start 2P', monospace;
+   font-size: .65rem;
+   color: white;
+   margin-bottom: 1.5rem;
+   line-height: 1.5;
+}
+
+.form-group {
+   margin-bottom: 1.25rem;
+}
+
+.form-label {
+   font-family: 'Press Start 2P', monospace;
+   font-size: .38rem;
+   color: var(--text-dim);
+   display: block;
+   margin-bottom: .5rem;
+}
+
+.form-input,
+.form-select {
+   width: 100%;
+   background: var(--bg3);
+   border: 1px solid var(--border);
+   border-radius: var(--radius-sm);
+   padding: .75rem 1rem;
+   color: var(--text);
+   font-family: 'Nunito', sans-serif;
+   font-size: .9rem;
+   font-weight: 700;
+   outline: none;
+   transition: border-color .2s;
+}
+
+.form-input:focus,
+.form-select:focus {
+   border-color: var(--red);
+}
+
+.form-row {
+   display: grid;
+   grid-template-columns: 1fr 1fr;
+   gap: 1rem;
+}
+
+.btn-submit {
+   width: 100%;
+   padding: .875rem;
+   background: linear-gradient(135deg, var(--red), #b91c1c);
+   color: white;
+   border: none;
+   border-radius: var(--radius-sm);
+   cursor: pointer;
+   font-family: 'Press Start 2P', monospace;
+   font-size: .5rem;
+   transition: all .2s;
+   margin-top: .5rem;
+}
+
+.btn-submit:hover {
+   transform: translateY(-2px);
+}
+
+/* RESPONSIVE */
+@media(max-width:1000px) {
+   .admin-kpis {
+      grid-template-columns: repeat(2, 1fr);
+   }
+
+   .misiones-admin-grid {
+      grid-template-columns: repeat(2, 1fr);
+   }
+}
+
+@media(max-width:700px) {
+   .resumen-grid {
+      grid-template-columns: 1fr;
+   }
+
+   .admin-kpis {
+      grid-template-columns: repeat(2, 1fr);
+   }
+}
+
+@media(max-width:500px) {
+   .alumnos-table {
+      font-size: .75rem;
+   }
+
+   .admin-kpis {
+      grid-template-columns: 1fr 1fr;
+   }
+}
+
+/* ============================================
+   PROFESORES — agregar al final de admin.css
+   ============================================ */
+
+.grados-check-grid {
+   display: grid;
+   grid-template-columns: repeat(4, 1fr);
+   gap: .5rem;
+   margin-top: .5rem;
+}
+
+.grado-check {
+   display: flex;
+   align-items: center;
+   gap: .4rem;
+   background: var(--bg3);
+   border: 1px solid var(--border);
+   border-radius: 8px;
+   padding: .5rem .75rem;
+   cursor: pointer;
+   font-size: .82rem;
+   font-weight: 700;
+   color: var(--text-dim);
+   transition: all .2s;
+}
+
+.grado-check:hover {
+   border-color: var(--yellow);
+   color: white;
+}
+
+.grado-check input[type=checkbox] {
+   accent-color: var(--yellow);
+   width: 15px;
+   height: 15px;
+   cursor: pointer;
+}
+
+.grado-check:has(input:checked) {
+   background: rgba(250, 204, 21, .1);
+   border-color: var(--yellow);
+   color: var(--yellow);
+}

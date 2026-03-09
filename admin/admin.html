@@ -1,0 +1,1166 @@
+<!--
+  admin/admin.html — Panel de administración EduCoins
+  Versión: 1.5.0 — 2026-03-08
+  Changelog:
+    1.4.1 - Fix patch inline: ejecutar inmediatamente si clerkReady ya ocurrió
+    1.4.0 - KPIs inline patch, fix CSS .form-section-label, col Login hoy en tabla alumnos
+    1.3.0 - Tab evaluaciones, canjes pendientes, modal entrega
+    1.2.0 - Items tienda CRUD, badge canjes
+    1.1.0 - Tabs, KPIs, top alumnos, transacciones
+-->
+<!DOCTYPE html>
+<!--
+  admin/admin.html — Panel Admin EduCoins
+  VERSIÓN: 1.8.0 — 2026-03-08
+  Changelog:
+    1.8.0 - Selector colegio en formulario eval admin
+  1.7.0 - Fix CSS select opciones visibles + padding-top header
+    1.6.1 - modalEvalAdmin con emojis y guardarEvalAdmin
+-->
+<html lang="es">
+
+<head>
+  <!--
+============================================
+ARCHIVO: /admin/admin.html
+DESCRIPCIÓN: Panel de administración para
+             el profesor / apoderado
+ESTILOS:  ../shared/shared.css
+          admin.css
+SCRIPTS:  ../shared/shared.js
+          admin.js
+ACCESO:   Solo usuarios con rol 'admin'
+          (verificar con Clerk en producción)
+============================================
+-->
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+  <title>Panel Admin — EduCoins</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Nunito:wght@400;700;800;900&display=swap"
+    rel="stylesheet" />
+  <link rel="stylesheet" href="../shared/shared.css" />
+  <link rel="stylesheet" href="admin.css" />
+  <style>
+    /* ── Tabs: fuente Nunito legible ── */
+    .admin-tabs .admin-tab,
+    button.admin-tab,
+    a.admin-tab {
+      font-family: 'Nunito', sans-serif !important;
+      font-size: .82rem !important;
+      font-weight: 800 !important;
+      padding: .45rem .65rem !important;
+      letter-spacing: 0 !important;
+      min-width: 0 !important;
+      flex: unset !important;
+    }
+
+    .admin-tabs {
+      gap: .3rem !important;
+      flex-wrap: wrap !important;
+    }
+
+    /* ── Tab evaluaciones admin ── */
+    .eval-admin-toolbar {
+      display: flex;
+      gap: .6rem;
+      align-items: center;
+      flex-wrap: wrap;
+      margin-bottom: 1.25rem;
+    }
+
+    .eval-admin-card {
+      background: rgba(255, 255, 255, .04);
+      border: 1px solid rgba(255, 255, 255, .08);
+      border-radius: 12px;
+      padding: .85rem 1rem;
+      margin-bottom: .6rem;
+      display: flex;
+      align-items: center;
+      gap: .85rem;
+    }
+
+    .eval-admin-card:hover {
+      background: rgba(255, 255, 255, .07);
+      cursor: pointer;
+    }
+
+    .eval-admin-asig {
+      width: 2.4rem;
+      height: 2.4rem;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.1rem;
+      flex-shrink: 0;
+    }
+
+    .eval-admin-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .eval-admin-nombre {
+      font-weight: 800;
+      font-size: .9rem;
+    }
+
+    .eval-admin-meta {
+      font-size: .72rem;
+      color: rgba(255, 255, 255, .45);
+      margin-top: .15rem;
+    }
+
+    .eval-admin-badge {
+      font-size: .62rem;
+      font-weight: 900;
+      padding: .2rem .45rem;
+      border-radius: 5px;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .eval-admin-badge.proxima {
+      background: rgba(250, 204, 21, .12);
+      color: #facc15;
+      border: 1px solid rgba(250, 204, 21, .25);
+    }
+
+    .eval-admin-badge.pasada {
+      background: rgba(255, 255, 255, .06);
+      color: rgba(255, 255, 255, .35);
+    }
+
+    .eval-admin-badge.hoy {
+      background: rgba(239, 68, 68, .15);
+      color: #ef4444;
+      border: 1px solid rgba(239, 68, 68, .3);
+    }
+
+    .btn-eval-delete {
+      background: rgba(239, 68, 68, .1);
+      border: 1px solid rgba(239, 68, 68, .25);
+      color: #ef4444;
+      border-radius: 7px;
+      padding: .3rem .55rem;
+      font-size: .75rem;
+      cursor: pointer;
+      flex-shrink: 0;
+      transition: background .15s;
+    }
+
+    .btn-eval-delete:hover {
+      background: rgba(239, 68, 68, .25);
+    }
+
+
+    .form-section-label {
+      font-family: 'Press Start 2P', monospace;
+      font-size: .38rem;
+      color: rgba(255, 255, 255, .3);
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      padding: .6rem 0 .3rem;
+      margin-top: .5rem;
+      border-top: 1px solid rgba(255, 255, 255, .07);
+    }
+
+    .form-section-label:first-of-type {
+      border-top: none;
+      margin-top: 0;
+    }
+
+    .btn-danger {
+      background: rgba(239, 68, 68, .12) !important;
+      border-color: rgba(239, 68, 68, .4) !important;
+      color: #ef4444 !important;
+    }
+
+    .btn-danger:hover {
+      background: rgba(239, 68, 68, .25) !important;
+    }
+
+    /* Card de ítem en lista admin */
+    .item-admin-card {
+      background: rgba(255, 255, 255, .04);
+      border: 1px solid rgba(255, 255, 255, .08);
+      border-radius: 12px;
+      padding: .75rem 1rem;
+      margin-bottom: .6rem;
+      display: flex;
+      align-items: center;
+      gap: .85rem;
+    }
+
+    .item-admin-card.inactivo {
+      opacity: .45;
+    }
+
+    .item-admin-estado-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+  </style>
+
+  <!-- Clerk: carga síncrona con la clave en el data-attribute -->
+  <script data-clerk-publishable-key="pk_test_bG92aW5nLXJhcHRvci0xLmNsZXJrLmFjY291bnRzLmRldiQ"
+    src="https://cdn.jsdelivr.net/npm/@clerk/clerk-js@latest/dist/clerk.browser.js"></script>
+  <style>
+    /* Fix: opciones de select visibles en todos los navegadores */
+    #modalEvalAdmin select option {
+      background: #1a1a35;
+      color: #fff;
+    }
+
+    #modalEvalAdmin select {
+      color-scheme: dark;
+    }
+
+    /* Fix padding top para header fijo */
+    .main {
+      padding-top: 5rem !important;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div id="sharedHeader"></div>
+
+  <div class="layout">
+    <main class="main">
+
+      <!-- PAGE HEADER -->
+      <div class="page-header fade-up">
+        <div>
+          <span class="page-tag">🛡️ ADMINISTRACIÓN</span>
+          <h1 class="page-title">Panel de Control</h1>
+          <p class="page-subtitle">Gestiona alumnos, misiones, tienda y configuración económica.</p>
+        </div>
+        <div class="admin-badge">
+          <span class="admin-badge-icon">👨‍🏫</span>
+          <div>
+            <div class="admin-badge-rol">ADMINISTRADOR</div>
+            <div class="admin-badge-nombre" id="adminNombre">—</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TABS PRINCIPALES -->
+      <div class="admin-tabs fade-up delay-1">
+        <button class="admin-tab active" data-tab="resumen">📊 Resumen</button>
+        <button class="admin-tab" data-tab="alumnos">👥 Alumnos</button>
+        <button class="admin-tab" data-tab="evaluaciones">📅 Evaluaciones</button>
+        <button class="admin-tab" data-tab="misiones">🎯 Misiones</button>
+        <button class="admin-tab" data-tab="monedas">🪙 Monedas</button>
+        <button class="admin-tab" data-tab="banco-misiones">📋 Banco</button>
+        <button class="admin-tab" data-tab="tienda" style="position:relative">🛒 Tienda<span id="badgeCanjes"
+            style="display:none;position:absolute;top:-.4rem;right:-.4rem;background:#ef4444;color:white;border-radius:50%;width:1.15rem;height:1.15rem;font-size:.55rem;font-family:'Press Start 2P',monospace;display:none;align-items:center;justify-content:center;animation:pulseBadge 2s infinite;"></span></button>
+        <button class="admin-tab" data-tab="economia">⚙️ Economía</button>
+        <button class="admin-tab" data-tab="profesores">👨‍🏫 Profesores</button>
+        <a href="juegos_catalogo.html" class="admin-tab" style="text-decoration:none;">🎮 Juegos</a>
+      </div>
+
+      <!-- ============ TAB: RESUMEN ============ -->
+      <div class="tab-panel active" id="tab-resumen">
+
+        <!-- KPIs -->
+        <div class="admin-kpis fade-up delay-2">
+          <div class="akpi-card">
+            <span class="akpi-icon">👥</span>
+            <div class="akpi-num" id="kpiAlumnos">—</div>
+            <div class="akpi-label">Alumnos activos</div>
+          </div>
+          <div class="akpi-card">
+            <span class="akpi-icon">🎯</span>
+            <div class="akpi-num" id="kpiMisiones">—</div>
+            <div class="akpi-label">Misiones completadas hoy</div>
+          </div>
+          <div class="akpi-card">
+            <span class="akpi-icon">📝</span>
+            <div class="akpi-num" id="kpiTareas">—</div>
+            <div class="akpi-label">Tareas correctas hoy</div>
+          </div>
+          <div class="akpi-card">
+            <span class="akpi-icon">😴</span>
+            <div class="akpi-num" id="kpiRacha">—</div>
+            <div class="akpi-label">Sin actividad hoy</div>
+          </div>
+        </div>
+
+        <!-- TOP ALUMNOS + TRANSACCIONES RECIENTES -->
+        <div class="resumen-grid fade-up delay-3">
+
+          <div class="admin-card">
+            <div class="admin-card-header">
+              <span class="admin-card-titulo">🏆 TOP 5 ALUMNOS</span>
+            </div>
+            <div class="top-alumnos" id="topAlumnos">
+              <p style="color:var(--text-dim);padding:.5rem;">Cargando...</p>
+            </div>
+          </div>
+
+          <div class="admin-card">
+            <div class="admin-card-header">
+              <span class="admin-card-titulo">💳 ÚLTIMAS TRANSACCIONES</span>
+            </div>
+            <div class="transacciones-lista" id="transaccionesResumen">
+              <p style="color:var(--text-dim);padding:.5rem;">Cargando...</p>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- GRÁFICO ACTIVIDAD -->
+        <div class="admin-card fade-up delay-4">
+          <div class="admin-card-header">
+            <span class="admin-card-titulo">📅 ACTIVIDAD DE ALUMNOS</span>
+          </div>
+          <div id="tablaActividad">
+            <p style="color:var(--text-dim);padding:.5rem;">Cargando...</p>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ============ TAB: ALUMNOS ============ -->
+      <div class="tab-panel" id="tab-alumnos">
+
+        <div class="alumnos-toolbar">
+          <input type="text" class="search-input" id="searchAlumno" placeholder="🔍 Buscar alumno..." />
+          <select class="filtro-select" id="filtroGrado">
+            <option value="">Todos los grados</option>
+            <option value="4">4° Básico</option>
+            <option value="5">5° Básico</option>
+            <option value="6">6° Básico</option>
+            <option value="7">7° Básico</option>
+            <option value="8">8° Básico</option>
+          </select>
+        </div>
+
+        <div class="alumnos-tabla" id="alumnosTabla">
+          <p style="color:var(--text-dim);padding:1rem;">Cargando alumnos...</p>
+        </div>
+
+      </div>
+
+      <!-- ============ TAB: EVALUACIONES ============ -->
+      <div class="tab-panel" id="tab-evaluaciones">
+
+        <div class="eval-admin-toolbar">
+          <button class="btn-admin btn-primary" id="btnNuevaEval">+ Nueva Evaluación</button>
+          <select class="filtro-select" id="filtroEvalGrado">
+            <option value="">Todos los grados</option>
+            <option value="1">1° Básico</option>
+            <option value="2">2° Básico</option>
+            <option value="3">3° Básico</option>
+            <option value="4">4° Básico</option>
+            <option value="5">5° Básico</option>
+            <option value="6">6° Básico</option>
+            <option value="7">7° Básico</option>
+            <option value="8">8° Básico</option>
+          </select>
+          <select class="filtro-select" id="filtroEvalAsig">
+            <option value="">Todas las asignaturas</option>
+            <option value="Matematicas">➗ Matemáticas</option>
+            <option value="Lenguaje">📖 Lenguaje</option>
+            <option value="Historia">🏛️ Historia</option>
+            <option value="Ciencias">🔬 Ciencias</option>
+            <option value="Ingles">🇬🇧 Inglés</option>
+            <option value="Ed. Fisica">⚽ Ed. Física</option>
+            <option value="Musica">🎵 Música</option>
+            <option value="Artes">🎨 Artes</option>
+            <option value="Tecnologia">💻 Tecnología</option>
+          </select>
+        </div>
+
+        <div id="evalAdminLista">
+          <p style="color:var(--text-dim);padding:1rem;">Cargando evaluaciones...</p>
+        </div>
+
+      </div>
+
+      <!-- ============ TAB: MISIONES ============ -->
+      <div class="tab-panel" id="tab-misiones">
+
+        <div class="misiones-admin-header">
+          <div>
+            <div class="admin-card-titulo">🎯 BANCO DE MISIONES (ACTIVAS HOY)</div>
+            <div class="admin-sub">Tipos de misiones disponibles para los alumnos</div>
+          </div>
+        </div>
+
+        <div class="misiones-admin-grid" id="misionesAdminGrid">
+          <p style="color:var(--text-dim);padding:1rem;">Cargando...</p>
+        </div>
+
+      </div>
+
+      <!-- ============ TAB: MONEDAS ============ -->
+      <div class="tab-panel" id="tab-monedas">
+
+        <div class="monedas-toolbar">
+          <button class="btn-admin btn-primary" id="btnDarMonedas">🪙 Dar Monedas Manualmente</button>
+        </div>
+
+        <div class="resumen-grid">
+          <div class="admin-card">
+            <div class="admin-card-header"><span class="admin-card-titulo">🏆 TOP ALUMNOS POR MONEDAS</span></div>
+            <div class="circulacion-lista" id="circulacionLista">
+              <p style="color:var(--text-dim);padding:.5rem;">Cargando...</p>
+            </div>
+          </div>
+          <div class="admin-card">
+            <div class="admin-card-header"><span class="admin-card-titulo">📋 ÚLTIMAS TRANSACCIONES</span></div>
+            <div class="transacciones-lista" id="transaccionesLista">
+              <p style="color:var(--text-dim);padding:.5rem;">Cargando...</p>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ============ TAB: BANCO DE MISIONES ============ -->
+      <div class="tab-panel" id="tab-banco-misiones">
+
+        <div class="monedas-toolbar" style="justify-content:space-between;flex-wrap:wrap;gap:.6rem;">
+          <div style="display:flex;gap:.6rem;flex-wrap:wrap;">
+            <button class="btn-admin btn-primary" id="btnNuevaMision">+ Nueva Misión</button>
+          </div>
+          <a href="banco-misiones.html" class="btn-admin"
+            style="display:inline-flex;align-items:center;gap:.4rem;border-color:var(--cyan);color:var(--cyan);text-decoration:none;">
+            🛠️ Administrar Banco Completo →
+          </a>
+        </div>
+
+        <!-- Resumen rápido -->
+        <div style="display:flex;gap:1rem;margin-bottom:1rem;flex-wrap:wrap;" id="bancoResumenRapido"></div>
+
+        <div id="bancoMisionesLista">
+          <p style="color:var(--text-dim);padding:1rem;">Cargando banco de misiones...</p>
+        </div>
+
+      </div>
+
+      <!-- ============ TAB: TIENDA ============ -->
+      <div class="tab-panel" id="tab-tienda">
+
+        <!-- ══ CANJES PENDIENTES ══ -->
+        <div id="seccionCanjes" style="display:none;margin-bottom:1.5rem">
+          <div style="display:flex;align-items:center;gap:.6rem;margin-bottom:.85rem">
+            <span style="font-family:'Press Start 2P',monospace;font-size:.45rem;color:#f97316">🔔 CANJES
+              PENDIENTES</span>
+            <span id="canjesCount"
+              style="background:#ef4444;color:white;border-radius:50%;width:1.3rem;height:1.3rem;display:inline-flex;align-items:center;justify-content:center;font-family:'Press Start 2P',monospace;font-size:.32rem;font-weight:900;animation:pulseBadge 2s infinite">0</span>
+          </div>
+          <div id="canjesLista"></div>
+        </div>
+
+        <div class="monedas-toolbar">
+          <button class="btn-admin btn-primary" id="btnNuevoItem">+ Nuevo Ítem</button>
+        </div>
+
+        <div id="tiendaAdminLista">
+          <p style="color:var(--text-dim);padding:1rem;">Cargando ítems de tienda...</p>
+        </div>
+
+      </div>
+
+      <!-- ============ TAB: PROFESORES ============ -->
+      <div class="tab-panel" id="tab-profesores">
+
+        <div class="monedas-toolbar">
+          <button class="btn-admin btn-primary" id="btnNuevoProfesor">+ Nuevo Profesor</button>
+        </div>
+
+        <div class="admin-card">
+          <div class="admin-card-header">
+            <span class="admin-card-titulo">👨‍🏫 PROFESORES REGISTRADOS</span>
+          </div>
+          <div id="profesoresLista">
+            <p style="color:var(--text-dim);padding:1rem;">Cargando profesores...</p>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ============ TAB: ECONOMÍA ============ -->
+      <div class="tab-panel" id="tab-economia">
+
+        <div class="admin-card">
+          <div class="admin-card-header">
+            <span class="admin-card-titulo">⚙️ PARÁMETROS ECONÓMICOS</span>
+          </div>
+          <div class="admin-sub" style="margin-bottom:1rem;">Modifica las recompensas de cada acción. Cambios se aplican
+            de inmediato.</div>
+          <div id="economiaLista">
+            <p style="color:var(--text-dim);padding:1rem;">Cargando configuración...</p>
+          </div>
+        </div>
+
+      </div>
+
+    </main>
+  </div>
+
+  <!-- MODAL NUEVA EVALUACIÓN -->
+  <div class="modal-overlay" id="modalEval">
+    <div class="modal">
+      <button class="modal-close" id="btnCerrarModalEval">✕</button>
+      <div class="modal-titulo">Nueva Evaluación</div>
+      <div class="form-group">
+        <label class="form-label">Asignatura *</label>
+        <select class="form-select" id="fEvalAsig">
+          <option value="">Seleccionar...</option>
+          <option>Matemáticas</option>
+          <option>Lenguaje</option>
+          <option>Historia</option>
+          <option>Ciencias</option>
+          <option>Inglés</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Descripción *</label>
+        <input type="text" class="form-input" id="fEvalDesc" placeholder="Ej: Prueba Unit 3 - Fracciones" />
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Fecha *</label>
+          <input type="date" class="form-input" id="fEvalFecha" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Grado *</label>
+          <select class="form-select" id="fEvalGrado">
+            <option value="1">1° Básico</option>
+            <option value="2">2° Básico</option>
+            <option value="3">3° Básico</option>
+            <option value="4">4° Básico</option>
+            <option value="5">5° Básico</option>
+            <option value="6" selected>6° Básico</option>
+            <option value="7">7° Básico</option>
+            <option value="8">8° Básico</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Recompensa (EduCoins para quien aprueba)</label>
+        <input type="number" class="form-input" id="fEvalReward" value="200" min="0" max="1000" />
+      </div>
+      <button class="btn-submit" id="btnGuardarEval">✅ Publicar Evaluación</button>
+    </div>
+  </div>
+
+  <!-- MODAL DAR MONEDAS -->
+  <div class="modal-overlay" id="modalMonedas">
+    <div class="modal">
+      <button class="modal-close" id="btnCerrarModalMonedas">✕</button>
+      <div class="modal-titulo">🪙 Dar Monedas Manualmente</div>
+      <div class="form-group">
+        <label class="form-label">Alumno *</label>
+        <select class="form-select" id="fMonedasAlumno"></select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Cantidad de EduCoins *</label>
+        <input type="number" class="form-input" id="fMonedasCantidad" value="100" min="1" max="9999" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Motivo</label>
+        <input type="text" class="form-input" id="fMonedasMotivo" placeholder="Ej: Premio por participación" />
+      </div>
+      <button class="btn-submit" id="btnConfirmarMonedas">✅ Confirmar</button>
+    </div>
+  </div>
+
+  <!-- MODAL NUEVA / EDITAR MISIÓN BANCO -->
+  <div class="modal-overlay" id="modalMision">
+    <div class="modal">
+      <button class="modal-close" id="btnCerrarModalMision">✕</button>
+      <div class="modal-titulo" id="modalMisionTitulo">Nueva Misión</div>
+      <input type="hidden" id="fMisionId" />
+      <div class="form-group">
+        <label class="form-label">Tipo (clave interna) *</label>
+        <input type="text" class="form-input" id="fMisionTipo" placeholder="Ej: trivia_completar" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Descripción *</label>
+        <input type="text" class="form-input" id="fMisionDesc" placeholder="Ej: Completa una partida de trivia" />
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Ícono (emoji)</label>
+          <input type="text" class="form-input" id="fMisionIcono" placeholder="🎯" maxlength="4" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Recompensa 🪙 EduCoins</label>
+          <input type="number" class="form-input" id="fMisionRecompensa" value="50" min="0" max="999" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Recompensa ⭐ XP</label>
+          <input type="number" class="form-input" id="fMisionXP" value="0" min="0" max="999" />
+        </div>
+      </div>
+      <button class="btn-submit" id="btnGuardarMision">✅ Guardar Misión</button>
+    </div>
+  </div>
+
+  <!-- MODAL NUEVO / EDITAR ÍTEM TIENDA -->
+  <div class="modal-overlay" id="modalItem">
+    <div class="modal" style="max-width:560px;max-height:90vh;overflow-y:auto">
+      <button class="modal-close" id="btnCerrarModalItem">✕</button>
+      <div class="modal-titulo" id="modalItemTitulo">Nuevo Ítem</div>
+      <input type="hidden" id="fItemId" />
+
+      <!-- ── SECCIÓN: Básico ── -->
+      <div class="form-section-label">Información básica</div>
+
+      <div class="form-group">
+        <label class="form-label">Nombre *</label>
+        <input type="text" class="form-input" id="fItemNombre" placeholder="Ej: Escudo Dorado" />
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Categoría *</label>
+          <select class="form-select" id="fItemCategoria">
+            <option value="avatares">Avatares</option>
+            <option value="cosmético">Cosmético</option>
+            <option value="decoracion">Decoración</option>
+            <option value="ventajas">Ventajas</option>
+            <option value="power_up">Power Up</option>
+            <option value="accesorio">Accesorio</option>
+            <option value="título">Título</option>
+            <option value="canje">Canje CLP</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Tipo *</label>
+          <select class="form-select" id="fItemTipo">
+            <option value="cosmético">Cosmético</option>
+            <option value="activable">Activable (boost)</option>
+            <option value="consumible">Consumible</option>
+            <option value="canjeable">Canjeable CLP</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Precio (🪙) *</label>
+          <input type="number" class="form-input" id="fItemPrecio" value="500" min="1" max="9999999" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Nivel mínimo</label>
+          <input type="number" class="form-input" id="fItemNivelMin" value="1" min="1" max="99" />
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Ícono (emoji)</label>
+          <input type="text" class="form-input" id="fItemIcono" placeholder="🛡️" maxlength="4" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">URL imagen</label>
+          <input type="text" class="form-input" id="fItemImagenUrl" placeholder="images/billete_1000.jpg" />
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Descripción</label>
+        <input type="text" class="form-input" id="fItemDesc" placeholder="Breve descripción del ítem" />
+      </div>
+
+      <!-- ── SECCIÓN: Stock ── -->
+      <div class="form-section-label">Stock</div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Stock máximo <span style="color:var(--text-muted);font-size:.72rem">(vacío =
+              ilimitado)</span></label>
+          <input type="number" class="form-input" id="fItemStock" placeholder="∞" min="0" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Stock usado <span style="color:var(--text-muted);font-size:.72rem">(solo
+              lectura)</span></label>
+          <input type="number" class="form-input" id="fItemStockUsado" value="0" readonly style="opacity:.5" />
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group" style="flex-direction:row;align-items:center;gap:.6rem;padding-top:.5rem">
+          <input type="checkbox" id="fItemCompraRepetida"
+            style="width:1.1rem;height:1.1rem;accent-color:var(--primary);cursor:pointer" />
+          <label for="fItemCompraRepetida" class="form-label" style="margin:0;cursor:pointer">Permite compra
+            repetida</label>
+        </div>
+        <div class="form-group" style="flex-direction:row;align-items:center;gap:.6rem;padding-top:.5rem">
+          <input type="checkbox" id="fItemDisponible" checked
+            style="width:1.1rem;height:1.1rem;accent-color:#22c55e;cursor:pointer" />
+          <label for="fItemDisponible" class="form-label" style="margin:0;cursor:pointer">Ítem activo / visible</label>
+        </div>
+      </div>
+
+      <!-- ── SECCIÓN: Boost (solo activables) ── -->
+      <div id="seccionBoost" style="display:none">
+        <div class="form-section-label">Configuración boost</div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Duración (horas)</label>
+            <input type="number" class="form-input" id="fItemDuracion" value="24" min="1" max="720" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Multiplicador</label>
+            <input type="number" class="form-input" id="fItemMultiplicador" value="2" min="1" max="10" step="0.5" />
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Alcance</label>
+          <select class="form-select" id="fItemAlcance">
+            <option value="todo">Todo</option>
+            <option value="juegos">Solo juegos</option>
+            <option value="misiones">Solo misiones</option>
+            <option value="tareas">Solo tareas</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- ── Botones ── -->
+      <div style="display:flex;gap:.75rem;margin-top:1.25rem">
+        <button class="btn-submit" id="btnGuardarItem" style="flex:1">✅ Guardar Ítem</button>
+        <button class="btn-admin btn-danger" id="btnEliminarItem" style="display:none">🗑️ Eliminar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL NUEVO / EDITAR PROFESOR -->
+  <div class="modal-overlay" id="modalProfesor">
+    <div class="modal">
+      <button class="modal-close" id="btnCerrarModalProfesor">✕</button>
+      <div class="modal-titulo" id="modalProfesorTitulo">Nuevo Profesor</div>
+      <input type="hidden" id="fProfesorClerkId" />
+      <div class="form-group">
+        <label class="form-label">Nombre *</label>
+        <input type="text" class="form-input" id="fProfesorNombre" placeholder="Ej: María González" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Email *</label>
+        <input type="email" class="form-input" id="fProfesorEmail" placeholder="profesor@colegio.cl" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Clerk ID * <span style="color:var(--text-muted);font-size:.75rem;">(desde el dashboard
+            de Clerk)</span></label>
+        <input type="text" class="form-input" id="fProfesorClerkIdInput" placeholder="user_2abc123xyz..." />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Grados asignados</label>
+        <div class="grados-check-grid" id="gradosCheckGrid">
+          <label class="grado-check"><input type="checkbox" value="1" /> 1° Básico</label>
+          <label class="grado-check"><input type="checkbox" value="2" /> 2° Básico</label>
+          <label class="grado-check"><input type="checkbox" value="3" /> 3° Básico</label>
+          <label class="grado-check"><input type="checkbox" value="4" /> 4° Básico</label>
+          <label class="grado-check"><input type="checkbox" value="5" /> 5° Básico</label>
+          <label class="grado-check"><input type="checkbox" value="6" /> 6° Básico</label>
+          <label class="grado-check"><input type="checkbox" value="7" /> 7° Básico</label>
+          <label class="grado-check"><input type="checkbox" value="8" /> 8° Básico</label>
+        </div>
+      </div>
+      <button class="btn-submit" id="btnGuardarProfesor">✅ Guardar Profesor</button>
+    </div>
+  </div>
+
+  <!-- MODAL EDITAR ALUMNO -->
+  <div class="modal-overlay" id="modalEditarAlumno">
+    <div class="modal">
+      <button class="modal-close" id="btnCerrarModalEditarAlumno">✕</button>
+      <div class="modal-titulo">✏️ Editar Alumno</div>
+      <input type="hidden" id="fAlumnoClerkId" />
+      <div class="form-group">
+        <label class="form-label">Nombre *</label>
+        <input type="text" class="form-input" id="fAlumnoNombre" />
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Grado actual</label>
+          <select class="form-select" id="fAlumnoGrado">
+            <option value="1">1° Básico</option>
+            <option value="2">2° Básico</option>
+            <option value="3">3° Básico</option>
+            <option value="4">4° Básico</option>
+            <option value="5">5° Básico</option>
+            <option value="6">6° Básico</option>
+            <option value="7">7° Básico</option>
+            <option value="8">8° Básico</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Racha (días)</label>
+          <input type="number" class="form-input" id="fAlumnoRacha" min="0" max="999" />
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Monedas 🪙</label>
+        <input type="number" class="form-input" id="fAlumnoMonedas" min="0" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Avatar</label>
+        <div id="avatarSelectorGrid" style="display:flex;flex-wrap:wrap;gap:.4rem;margin-top:.4rem;"></div>
+        <input type="hidden" id="fAlumnoAvatar" />
+      </div>
+      <button class="btn-submit" id="btnGuardarAlumno">✅ Guardar Cambios</button>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════
+     MODAL: NUEVA / EDITAR EVALUACIÓN (ADMIN)
+═══════════════════════════════════════ -->
+  <div id="modalEvalAdmin"
+    style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:9000;align-items:center;justify-content:center;padding:1rem">
+    <div
+      style="background:#1a1a35;border:1px solid rgba(96,165,250,.2);border-radius:14px;padding:1.5rem;width:100%;max-width:520px;max-height:90vh;overflow-y:auto;position:relative">
+      <button onclick="cerrarModalEvalAdmin()"
+        style="position:absolute;top:.75rem;right:.75rem;background:none;border:none;color:rgba(255,255,255,.4);font-size:1.2rem;cursor:pointer">✕</button>
+      <div id="modalEvalAdminTitulo"
+        style="font-family:'Press Start 2P',monospace;font-size:.45rem;color:white;line-height:1.8;margin-bottom:1.25rem">
+        📅 Nueva Evaluación</div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem;margin-bottom:.75rem">
+        <div>
+          <label
+            style="font-size:.7rem;color:rgba(255,255,255,.45);font-weight:700;display:block;margin-bottom:.3rem">Asignatura
+            *</label>
+          <select id="evalAdminAsig"
+            style="width:100%;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:7px;padding:.55rem .75rem;color:white;font-family:'Nunito',sans-serif;font-size:.85rem;box-sizing:border-box">
+            <option value="">Selecciona...</option>
+            <option value="Matematicas">➗ Matemáticas</option>
+            <option value="Lenguaje">📖 Lenguaje</option>
+            <option value="Historia">🏛️ Historia</option>
+            <option value="Ciencias">🔬 Ciencias</option>
+            <option value="Ingles">🇬🇧 Inglés</option>
+            <option value="Ed. Fisica">⚽ Ed. Física</option>
+            <option value="Musica">🎵 Música</option>
+            <option value="Artes">🎨 Artes</option>
+            <option value="Tecnologia">💻 Tecnología</option>
+          </select>
+        </div>
+        <div>
+          <label
+            style="font-size:.7rem;color:rgba(255,255,255,.45);font-weight:700;display:block;margin-bottom:.3rem">Fecha
+            *</label>
+          <input type="date" id="evalAdminFecha"
+            style="width:100%;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:7px;padding:.55rem .75rem;color:white;font-family:'Nunito',sans-serif;font-size:.85rem;box-sizing:border-box">
+        </div>
+      </div>
+
+      <!-- Selector colegio -->
+      <div style="margin-bottom:.75rem">
+        <label style="font-size:.7rem;color:rgba(255,255,255,.45);font-weight:700;display:block;margin-bottom:.3rem">🏫
+          Colegio *</label>
+        <select id="evalAdminColegio"
+          style="width:100%;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:7px;padding:.55rem .75rem;color:white;font-family:'Nunito',sans-serif;font-size:.85rem;box-sizing:border-box;color-scheme:dark">
+          <option value="">Cargando colegios...</option>
+        </select>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem;margin-bottom:.75rem">
+        <div>
+          <label
+            style="font-size:.7rem;color:rgba(255,255,255,.45);font-weight:700;display:block;margin-bottom:.3rem">Tipo
+            *</label>
+          <select id="evalAdminTipo"
+            style="width:100%;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:7px;padding:.55rem .75rem;color:white;font-family:'Nunito',sans-serif;font-size:.85rem;box-sizing:border-box">
+            <option value="prueba">📝 Prueba</option>
+            <option value="trabajo">📋 Trabajo</option>
+            <option value="tarea">✏️ Tarea</option>
+            <option value="disertacion">🎤 Disertación</option>
+            <option value="laboratorio">🔬 Laboratorio</option>
+          </select>
+        </div>
+        <div>
+          <label
+            style="font-size:.7rem;color:rgba(255,255,255,.45);font-weight:700;display:block;margin-bottom:.3rem">Grado
+            destinatario *</label>
+          <select id="evalAdminGrado"
+            style="width:100%;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:7px;padding:.55rem .75rem;color:white;font-family:'Nunito',sans-serif;font-size:.85rem;box-sizing:border-box">
+            <option value="">Todo el colegio</option>
+            <option value="1">1° Básico</option>
+            <option value="2">2° Básico</option>
+            <option value="3">3° Básico</option>
+            <option value="4">4° Básico</option>
+            <option value="5">5° Básico</option>
+            <option value="6">6° Básico</option>
+            <option value="7">7° Básico</option>
+            <option value="8">8° Básico</option>
+          </select>
+        </div>
+      </div>
+
+      <div style="margin-bottom:.75rem">
+        <label
+          style="font-size:.7rem;color:rgba(255,255,255,.45);font-weight:700;display:block;margin-bottom:.3rem">Descripción
+          / Contenidos</label>
+        <textarea id="evalAdminDesc" rows="3"
+          placeholder="Ej: Fracciones, multiplicación de decimales, álgebra básica..."
+          style="width:100%;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:7px;padding:.55rem .75rem;color:white;font-family:'Nunito',sans-serif;font-size:.85rem;box-sizing:border-box;resize:vertical"></textarea>
+      </div>
+
+      <input type="hidden" id="evalAdminId">
+      <div style="display:flex;gap:.6rem;margin-top:.25rem">
+        <button onclick="cerrarModalEvalAdmin()"
+          style="flex:1;padding:.7rem;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.09);border-radius:8px;color:rgba(255,255,255,.5);font-family:'Press Start 2P',monospace;font-size:.3rem;cursor:pointer">✕
+          Cancelar</button>
+        <button id="btnGuardarEvalAdmin" onclick="guardarEvalAdmin()"
+          style="flex:2;padding:.7rem;background:linear-gradient(135deg,#3b82f6,#6366f1);border:none;border-radius:8px;color:white;font-family:'Press Start 2P',monospace;font-size:.3rem;font-weight:900;cursor:pointer">💾
+          Guardar Evaluación</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════
+     MODAL: CONFIRMAR ENTREGA DE CANJE
+═══════════════════════════════════════ -->
+  <div id="modalEntrega"
+    style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9000;display:none;align-items:center;justify-content:center;padding:1rem">
+    <div
+      style="background:#1a1a35;border:1px solid rgba(74,222,128,.25);border-radius:14px;padding:1.5rem;width:100%;max-width:380px;position:relative">
+      <button onclick="cerrarModalEntrega()"
+        style="position:absolute;top:.75rem;right:.75rem;background:none;border:none;color:rgba(255,255,255,.4);font-size:1.2rem;cursor:pointer">✕</button>
+      <div
+        style="font-family:'Press Start 2P',monospace;font-size:.45rem;color:white;line-height:1.8;margin-bottom:1.25rem">
+        ✅ Confirmar entrega</div>
+
+      <label
+        style="font-size:.7rem;color:rgba(255,255,255,.45);font-weight:700;display:block;margin-bottom:.3rem">Ítem</label>
+      <input id="entregaItem" readonly
+        style="width:100%;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.09);border-radius:7px;padding:.55rem .75rem;color:rgba(255,255,255,.5);font-family:'Nunito',sans-serif;font-size:.85rem;margin-bottom:.75rem;box-sizing:border-box">
+
+      <label
+        style="font-size:.7rem;color:rgba(255,255,255,.45);font-weight:700;display:block;margin-bottom:.3rem">Alumno</label>
+      <input id="entregaAlumno" readonly
+        style="width:100%;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.09);border-radius:7px;padding:.55rem .75rem;color:rgba(255,255,255,.5);font-family:'Nunito',sans-serif;font-size:.85rem;margin-bottom:.75rem;box-sizing:border-box">
+
+      <label
+        style="font-size:.7rem;color:rgba(255,255,255,.45);font-weight:700;display:block;margin-bottom:.3rem">Entregado
+        por</label>
+      <input id="entregaAdmin" readonly
+        style="width:100%;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.09);border-radius:7px;padding:.55rem .75rem;color:rgba(255,255,255,.5);font-family:'Nunito',sans-serif;font-size:.85rem;margin-bottom:.75rem;box-sizing:border-box">
+
+      <label style="font-size:.7rem;color:rgba(255,255,255,.45);font-weight:700;display:block;margin-bottom:.3rem">Nota
+        opcional</label>
+      <input id="entregaNota" placeholder="Ej: Entregado en clases de Matemáticas"
+        style="width:100%;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.09);border-radius:7px;padding:.55rem .75rem;color:white;font-family:'Nunito',sans-serif;font-size:.85rem;margin-bottom:1rem;box-sizing:border-box">
+
+      <input type="hidden" id="entregaInvId">
+      <div style="display:flex;gap:.6rem">
+        <button onclick="cerrarModalEntrega()"
+          style="flex:1;padding:.7rem;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.09);border-radius:8px;color:rgba(255,255,255,.5);font-family:'Press Start 2P',monospace;font-size:.3rem;cursor:pointer">✕
+          Cancelar</button>
+        <button onclick="confirmarEntrega()"
+          style="flex:1;padding:.7rem;background:#4ade80;border:none;border-radius:8px;color:#0a1a0f;font-family:'Press Start 2P',monospace;font-size:.3rem;font-weight:900;cursor:pointer">✅
+          Confirmar entrega</button>
+      </div>
+    </div>
+  </div>
+
+  <style>
+    @keyframes pulseBadge {
+
+      0%,
+      100% {
+        box-shadow: 0 0 0 0 rgba(239, 68, 68, .6)
+      }
+
+      50% {
+        box-shadow: 0 0 0 5px rgba(239, 68, 68, 0)
+      }
+    }
+
+    .canje-row-admin {
+      background: #1a1a35;
+      border: 1px solid rgba(249, 115, 22, .2);
+      border-radius: 10px;
+      padding: .7rem .9rem;
+      margin-bottom: .6rem;
+      display: flex;
+      align-items: center;
+      gap: .8rem;
+    }
+
+    .canje-avatar-admin {
+      width: 2.2rem;
+      height: 2.2rem;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #6366f1, #a78bfa);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1rem;
+      flex-shrink: 0;
+    }
+
+    .canje-info-admin {
+      flex: 1;
+      min-width: 0
+    }
+
+    .canje-nombre-admin {
+      font-weight: 800;
+      font-size: .9rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis
+    }
+
+    .canje-sub-admin {
+      font-size: .72rem;
+      color: rgba(255, 255, 255, .45);
+      margin-top: .1rem
+    }
+
+    .canje-fecha-admin {
+      font-size: .65rem;
+      color: #f97316;
+      margin-top: .1rem
+    }
+
+    .btn-entregar-admin {
+      flex-shrink: 0;
+      background: rgba(74, 222, 128, .15);
+      border: 1px solid rgba(74, 222, 128, .35);
+      color: #4ade80;
+      border-radius: 7px;
+      padding: .4rem .65rem;
+      font-family: 'Press Start 2P', monospace;
+      font-size: .3rem;
+      cursor: pointer;
+      transition: background .15s;
+      white-space: nowrap;
+    }
+
+    .btn-entregar-admin:hover {
+      background: rgba(74, 222, 128, .28)
+    }
+  </style>
+
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- Auth: config → guard → shared → módulo (orden obligatorio) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+  <script src="../auth/clerk-config.js"></script>
+  <script src="../shared/clerk-guard.js"></script>
+  <script src="../shared/shared.js"></script>
+  <script src="admin.js"></script>
+  <script>
+    // ── PATCH v1.6.1: _renderTablaActividad global + carga directa ──
+
+    function _renderTablaActividad(lista) {
+      var el = document.getElementById('tablaActividad');
+      if (!el || !lista || !lista.length) { if (el) el.innerHTML = '<p style="color:var(--text-dim);padding:.5rem;">Sin alumnos.</p>'; return; }
+      var hoy = new Date(); hoy.setHours(0, 0, 0, 0);
+      var inactivos = lista.filter(function (a) {
+        if (!a.ultimo_login) return true;
+        var l = new Date(a.ultimo_login); l.setHours(0, 0, 0, 0);
+        return l < hoy;
+      });
+      var activos = lista.filter(function (a) {
+        if (!a.ultimo_login) return false;
+        var l = new Date(a.ultimo_login); l.setHours(0, 0, 0, 0);
+        return l >= hoy;
+      });
+      var filas = [].concat(inactivos, activos).map(function (a) {
+        var loginHoy = false, diasStr = 'Nunca';
+        if (a.ultimo_login) {
+          var l = new Date(a.ultimo_login); l.setHours(0, 0, 0, 0);
+          loginHoy = l >= hoy;
+          var dias = Math.round((hoy - l) / 86400000);
+          diasStr = loginHoy ? 'Hoy' : (dias === 1 ? 'Ayer' : 'Hace ' + dias + ' días');
+        }
+        var badge = loginHoy
+          ? '<span style="background:rgba(34,197,94,.2);color:#22c55e;padding:.15rem .5rem;border-radius:999px;font-size:.72rem;font-weight:700;">✅ Activo hoy</span>'
+          : '<span style="background:rgba(239,68,68,.15);color:#ef4444;padding:.15rem .5rem;border-radius:999px;font-size:.72rem;font-weight:700;">❌ ' + diasStr + '</span>';
+        return '<tr style="border-top:1px solid rgba(255,255,255,.06);">' +
+          '<td style="padding:.45rem .5rem">' + (a.avatar_base || '🐰') + ' <strong>' + (a.nombre || '') + '</strong></td>' +
+          '<td style="padding:.45rem .5rem;color:var(--text-dim);font-size:.8rem">' + (a.grado_actual || '?') + '°</td>' +
+          '<td style="padding:.45rem .5rem">' + badge + '</td>' +
+          '<td style="padding:.45rem .5rem;color:var(--text-dim);font-size:.8rem">' + (a.racha_dias || 0) + ' 🔥</td>' +
+          '</tr>';
+      }).join('');
+      el.innerHTML = '<table style="width:100%;border-collapse:collapse;font-size:.85rem;">' +
+        '<thead><tr style="color:var(--text-dim);text-align:left;">' +
+        '<th style="padding:.45rem .5rem">Alumno</th><th style="padding:.45rem .5rem">Grado</th>' +
+        '<th style="padding:.45rem .5rem">Último acceso</th><th style="padding:.45rem .5rem">Racha</th>' +
+        '</tr></thead><tbody>' + filas + '</tbody></table>';
+    }
+
+    function _patchCargarResumen() {
+      if (!window.CLERK_TOKEN) return;
+      var h = { 'Authorization': 'Bearer ' + window.CLERK_TOKEN };
+      var opts = { credentials: 'include', headers: h };
+
+      // KPIs
+      fetch(BASE_URL + '/api/admin?action=kpis', opts).then(function (r) { return r.json(); }).then(function (d) {
+        document.getElementById('kpiAlumnos').textContent = d.alumnos_activos || 0;
+        document.getElementById('kpiMisiones').textContent = (d.pct_misiones || 0) + '%';
+        document.getElementById('kpiTareas').textContent = (d.pct_tareas || 0) + '%';
+      }).catch(function () { });
+
+      // Alumnos
+      fetch(BASE_URL + '/api/admin?action=alumnos', opts).then(function (r) { return r.json(); }).then(function (d) {
+        var lista = d.alumnos || [];
+
+        // KPI sin actividad hoy
+        var hoy = new Date(); hoy.setHours(0, 0, 0, 0);
+        var sinAct = lista.filter(function (a) {
+          if (!a.ultimo_login) return true;
+          var l = new Date(a.ultimo_login); l.setHours(0, 0, 0, 0);
+          return l < hoy;
+        }).length;
+        document.getElementById('kpiRacha').textContent = sinAct + ' alumnos';
+
+        // Tabla actividad
+        _renderTablaActividad(lista);
+
+        // TOP 5
+        var top = document.getElementById('topAlumnos');
+        if (top) {
+          var medallas = ['🥇', '🥈', '🥉', '4️⃣', '5️⃣'];
+          top.innerHTML = lista.slice(0, 5).map(function (a, i) {
+            return '<div style="display:flex;align-items:center;gap:.75rem;padding:.5rem 0;border-bottom:1px solid rgba(255,255,255,.06);">' +
+              '<span>' + medallas[i] + '</span><span style="font-size:1.2rem;">' + (a.avatar_base || '🐰') + '</span>' +
+              '<div style="flex:1"><div style="font-weight:700;font-size:.9rem;">' + (a.nombre || '') + '</div>' +
+              '<div style="font-size:.75rem;color:var(--text-dim);">Nv.' + (a.nivel || 1) + ' · Grado ' + (a.grado_actual || '?') + '</div></div>' +
+              '<div style="font-weight:800;color:#facc15;">' + (a.monedas || 0).toLocaleString('es-CL') + ' 🪙</div></div>';
+          }).join('') || '<p style="color:var(--text-dim)">Sin alumnos</p>';
+        }
+      }).catch(function () { });
+
+      // Transacciones
+      fetch(BASE_URL + '/api/admin?action=transacciones', opts).then(function (r) { return r.json(); }).then(function (d) {
+        var lista = d.transacciones || [];
+        var el = document.getElementById('transaccionesResumen');
+        if (!el) return;
+        el.innerHTML = lista.slice(0, 5).map(function (t) {
+          var m = Number(t.monto || 0);
+          var color = m > 0 ? '#22c55e' : '#ef4444';
+          var signo = m > 0 ? '+' : '';
+          return '<div style="display:flex;align-items:center;gap:.6rem;padding:.4rem 0;border-bottom:1px solid rgba(255,255,255,.06);font-size:.82rem;">' +
+            '<span>' + (t.avatar_base || '🐰') + '</span>' +
+            '<div style="flex:1"><div style="font-weight:700">' + (t.nombre || '') + '</div>' +
+            '<div style="color:var(--text-dim);font-size:.75rem">' + (t.concepto || '—') + '</div></div>' +
+            '<div style="font-weight:800;color:' + color + '">' + signo + m.toLocaleString('es-CL') + ' 🪙</div></div>';
+        }).join('') || '<p style="color:var(--text-dim)">Sin transacciones</p>';
+      }).catch(function () { });
+    }
+
+    // Polling: esperar CLERK_TOKEN (el evento clerkReady puede haber ocurrido ya)
+    (function _waitToken(tries) {
+      if (window.CLERK_TOKEN) {
+        _patchCargarResumen();
+      } else if (tries > 0) {
+        setTimeout(function () { _waitToken(tries - 1); }, 300);
+      }
+    })(20); // hasta 6 segundos
+  </script>
+</body>

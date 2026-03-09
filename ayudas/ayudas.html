@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Material de Apoyo — EduCoins</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Nunito:wght@400;700;800;900&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="../shared/shared.css"/>
+<style>
+.page-header { display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:1.5rem; flex-wrap:wrap; gap:1rem; }
+.page-tag    { font-family:'Press Start 2P',monospace; font-size:.4rem; color:var(--violet-light); display:block; margin-bottom:.5rem; }
+.page-title  { font-family:'Press Start 2P',monospace; font-size:clamp(.75rem,2vw,1rem); color:white; line-height:1.5; margin-bottom:.4rem; }
+.page-subtitle { font-size:.875rem; color:var(--text-dim); font-weight:700; }
+
+/* BÚSQUEDA */
+.search-bar { position:relative; margin-bottom:1.5rem; }
+.search-input { width:100%; background:var(--card); border:1px solid var(--border); border-radius:var(--radius-sm); padding:.875rem 1rem .875rem 3rem; color:var(--text); font-family:'Nunito',sans-serif; font-size:1rem; font-weight:700; outline:none; transition:border-color .2s; }
+.search-input:focus { border-color:var(--violet); }
+.search-icon { position:absolute; left:1rem; top:50%; transform:translateY(-50%); font-size:1.2rem; pointer-events:none; }
+
+/* CATEGORÍAS */
+.cats-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:1rem; margin-bottom:2rem; }
+.cat-card { background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:1.25rem; text-align:center; cursor:pointer; transition:all .2s; }
+.cat-card:hover, .cat-card.active { border-color:var(--c-color,var(--violet)); transform:translateY(-2px); box-shadow:0 6px 20px rgba(var(--c-rgb,124,58,237),.2); background:rgba(var(--c-rgb,124,58,237),.06); }
+.cat-emoji  { font-size:2.5rem; display:block; margin-bottom:.5rem; }
+.cat-nombre { font-family:'Press Start 2P',monospace; font-size:.42rem; color:white; margin-bottom:.25rem; }
+.cat-count  { font-size:.72rem; color:var(--text-dim); font-weight:700; }
+
+/* CONTENIDO */
+.contenido-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:1.25rem; }
+.material-card { background:var(--card); border:1px solid var(--border); border-radius:var(--radius); overflow:hidden; transition:all .2s; cursor:pointer; }
+.material-card:hover { border-color:var(--m-color,var(--violet)); transform:translateY(-2px); }
+.material-header { padding:1.25rem; background:rgba(var(--m-rgb,124,58,237),.08); border-bottom:1px solid var(--border); display:flex; align-items:center; gap:1rem; }
+.material-emoji { font-size:2rem; }
+.material-titulo { font-family:'Press Start 2P',monospace; font-size:.5rem; color:white; line-height:1.6; }
+.material-cat    { font-size:.72rem; color:var(--text-dim); font-weight:700; margin-top:.2rem; }
+.material-body   { padding:1.25rem; }
+.material-preview { font-size:.85rem; color:var(--text-dim); font-weight:700; line-height:1.6; margin-bottom:1rem; }
+.material-tags { display:flex; gap:.375rem; flex-wrap:wrap; }
+.tag { font-family:'Press Start 2P',monospace; font-size:.3rem; padding:.2rem .5rem; border-radius:20px; background:rgba(var(--m-rgb,124,58,237),.12); color:var(--m-color,var(--violet-light)); border:1px solid rgba(var(--m-rgb,124,58,237),.25); }
+
+/* MODAL MATERIAL */
+.modal-overlay { position:fixed; inset:0; z-index:10000; background:rgba(7,7,26,.9); backdrop-filter:blur(8px); display:flex; align-items:center; justify-content:center; padding:1rem; opacity:0; pointer-events:none; transition:opacity .3s; }
+.modal-overlay.active { opacity:1; pointer-events:all; }
+.modal { background:var(--bg2); border:1px solid var(--border); border-radius:20px; padding:2rem; width:100%; max-width:680px; position:relative; max-height:88vh; overflow-y:auto; transform:scale(.97); transition:all .3s; }
+.modal-overlay.active .modal { transform:scale(1); }
+.modal-close { position:absolute; top:1rem; right:1rem; background:rgba(255,255,255,.08); border:none; border-radius:50%; width:30px; height:30px; cursor:pointer; color:var(--text); font-size:.9rem; }
+.modal-close:hover { background:rgba(255,255,255,.15); }
+.modal-titulo { font-family:'Press Start 2P',monospace; font-size:.7rem; color:white; margin-bottom:1.5rem; line-height:1.5; }
+
+/* TABLA DE MULTIPLICAR */
+.tabla-mult { width:100%; border-collapse:collapse; margin-top:.5rem; }
+.tabla-mult th, .tabla-mult td { padding:.5rem .625rem; text-align:center; border:1px solid rgba(255,255,255,.08); font-size:.85rem; font-weight:800; }
+.tabla-mult th { background:rgba(124,58,237,.2); color:var(--violet-light); font-family:'Press Start 2P',monospace; font-size:.38rem; }
+.tabla-mult td { color:var(--text); }
+.tabla-mult tr:hover td { background:rgba(124,58,237,.08); }
+.tabla-mult td:first-child { color:var(--cyan); background:rgba(6,182,212,.08); font-family:'Press Start 2P',monospace; font-size:.42rem; }
+
+/* FORMULAS */
+.formula-lista { display:flex; flex-direction:column; gap:.875rem; }
+.formula-item { background:var(--bg3); border:1px solid var(--border); border-radius:var(--radius-sm); padding:1rem 1.25rem; }
+.formula-nombre { font-family:'Press Start 2P',monospace; font-size:.42rem; color:var(--cyan); margin-bottom:.5rem; }
+.formula-eq { font-family:'Press Start 2P',monospace; font-size:.6rem; color:white; margin-bottom:.375rem; background:rgba(0,0,0,.3); padding:.5rem .75rem; border-radius:6px; display:inline-block; }
+.formula-desc { font-size:.8rem; color:var(--text-dim); font-weight:700; }
+
+/* REGLAS ORTOGRAFÍA */
+.regla-lista { display:flex; flex-direction:column; gap:.75rem; }
+.regla-item { border-left:3px solid var(--violet); padding:.75rem 1rem; background:rgba(124,58,237,.05); border-radius:0 var(--radius-sm) var(--radius-sm) 0; }
+.regla-titulo { font-weight:900; font-size:.875rem; color:white; margin-bottom:.25rem; }
+.regla-ej     { font-size:.78rem; color:var(--text-dim); font-weight:700; }
+
+@media(max-width:900px){.cats-grid{grid-template-columns:repeat(2,1fr);}.contenido-grid{grid-template-columns:1fr;}}
+</style>
+
+  <!-- Clerk: carga síncrona con la clave en el data-attribute -->
+  <script
+    data-clerk-publishable-key="pk_test_bG92aW5nLXJhcHRvci0xLmNsZXJrLmFjY291bnRzLmRldiQ"
+    src="https://cdn.jsdelivr.net/npm/@clerk/clerk-js@latest/dist/clerk.browser.js"
+  ></script>
+</head>
+<body>
+<div id="sharedHeader"></div>
+<div class="layout">
+  <main class="main">
+
+    <div class="page-header fade-up">
+      <div>
+        <span class="page-tag">📚 MATERIAL DE APOYO</span>
+        <h1 class="page-title">Centro de Ayuda</h1>
+        <p class="page-subtitle">Tablas, fórmulas y resúmenes para estudiar y repasar.</p>
+      </div>
+    </div>
+
+    <div class="search-bar fade-up delay-1">
+      <span class="search-icon">🔍</span>
+      <input type="text" class="search-input" id="searchInput" placeholder="Buscar: tabla del 7, área rectángulo, reglas de acentuación..."/>
+    </div>
+
+    <div class="cats-grid fade-up delay-2" id="catsGrid"></div>
+    <div class="contenido-grid fade-up delay-3" id="contenidoGrid"></div>
+
+  </main>
+</div>
+
+<!-- MODAL CONTENIDO -->
+<div class="modal-overlay" id="modalMaterial">
+  <div class="modal">
+    <button class="modal-close" id="btnCerrarMaterial">✕</button>
+    <div class="modal-titulo" id="modalMatTitulo">—</div>
+    <div id="modalMatContenido"></div>
+  </div>
+</div>
+
+<div class="toast-container" id="toastContainer"></div>
+
+  <!-- Auth: config → guard → shared → módulo (orden obligatorio) -->
+  <script src="../auth/clerk-config.js"></script>
+  <script src="../shared/clerk-guard.js"></script>
+  <script src="../shared/shared.js"></script>
+<script>
+var CATS_CONFIG = [
+  { id:'matematicas', emoji:'➗', nombre:'Matemáticas', count:4, color:'#3b82f6', rgb:'59,130,246' },
+  { id:'lenguaje',    emoji:'📖', nombre:'Lenguaje',    count:3, color:'#ef4444', rgb:'239,68,68'  },
+  { id:'historia',    emoji:'🏛️', nombre:'Historia',   count:2, color:'#f97316', rgb:'249,115,22' },
+  { id:'ciencias',    emoji:'🔬', nombre:'Ciencias',    count:3, color:'#22c55e', rgb:'34,197,94'  },
+];
+
+var MATERIALES = [
+  {
+    id:'m1', cat:'matematicas', emoji:'✖️', titulo:'TABLAS DE MULTIPLICAR',
+    preview:'Todas las tablas del 1 al 10 en una sola vista. Perfecta para memorizar.',
+    tags:['1°-8°','Operaciones'],
+    color:'#3b82f6', rgb:'59,130,246',
+    tipo:'tabla_mult',
+  },
+  {
+    id:'m2', cat:'matematicas', emoji:'📐', titulo:'FÓRMULAS GEOMÉTRICAS',
+    preview:'Áreas, perímetros y volúmenes de las figuras más comunes.',
+    tags:['5°-8°','Geometría'],
+    color:'#3b82f6', rgb:'59,130,246',
+    tipo:'formulas_geo',
+  },
+  {
+    id:'m3', cat:'matematicas', emoji:'🔢', titulo:'FRACCIONES Y DECIMALES',
+    preview:'Cómo operar con fracciones, simplificar y convertir a decimales.',
+    tags:['4°-7°','Fracciones'],
+    color:'#3b82f6', rgb:'59,130,246',
+    tipo:'fracciones',
+  },
+  {
+    id:'m4', cat:'lenguaje',    emoji:'✍️', titulo:'REGLAS ORTOGRÁFICAS',
+    preview:'Las reglas de uso de B/V, H, C/S/Z y tildes explicadas con ejemplos.',
+    tags:['1°-8°','Ortografía'],
+    color:'#ef4444', rgb:'239,68,68',
+    tipo:'ortografia',
+  },
+  {
+    id:'m5', cat:'lenguaje',    emoji:'📝', titulo:'TIPOS DE TEXTO',
+    preview:'Narrativo, descriptivo, expositivo, argumentativo: diferencias y estructura.',
+    tags:['5°-8°','Comprensión'],
+    color:'#ef4444', rgb:'239,68,68',
+    tipo:'textos',
+  },
+  {
+    id:'m6', cat:'ciencias',    emoji:'🌱', titulo:'LAS PLANTAS',
+    preview:'Partes de la planta, fotosíntesis, reproducción y clasificación.',
+    tags:['3°-6°','Biología'],
+    color:'#22c55e', rgb:'34,197,94',
+    tipo:'plantas',
+  },
+  {
+    id:'m7', cat:'ciencias',    emoji:'⚗️', titulo:'ESTADOS DE LA MATERIA',
+    preview:'Sólido, líquido y gaseoso. Cambios de estado y ejemplos cotidianos.',
+    tags:['4°-7°','Química'],
+    color:'#22c55e', rgb:'34,197,94',
+    tipo:'materia',
+  },
+  {
+    id:'m8', cat:'historia',    emoji:'🗺️', titulo:'REGIONES DE CHILE',
+    preview:'Las 16 regiones de Chile: capitales, características y datos clave.',
+    tags:['4°-8°','Geografía'],
+    color:'#f97316', rgb:'249,115,22',
+    tipo:'regiones',
+  },
+];
+
+// Contenidos pre-definidos para los modales
+var CONTENIDOS = {
+  tabla_mult: function() {
+    var html = '<div style="overflow-x:auto"><table class="tabla-mult"><thead><tr><th>×</th>';
+    for(var j=1;j<=10;j++) html+='<th>'+j+'</th>';
+    html+='</tr></thead><tbody>';
+    for(var i=1;i<=10;i++){
+      html+='<tr><td>'+i+'</td>';
+      for(var j=1;j<=10;j++) html+='<td>'+(i*j)+'</td>';
+      html+='</tr>';
+    }
+    return html+'</tbody></table></div>';
+  },
+  formulas_geo: function() {
+    var fs = [
+      { nombre:'ÁREA DEL RECTÁNGULO', eq:'A = largo × ancho', desc:'Multiplica los dos lados' },
+      { nombre:'ÁREA DEL TRIÁNGULO',  eq:'A = (base × altura) ÷ 2', desc:'La mitad de base por altura' },
+      { nombre:'ÁREA DEL CÍRCULO',    eq:'A = π × r²', desc:'π ≈ 3.14159, r = radio' },
+      { nombre:'PERÍMETRO RECT.',     eq:'P = 2 × (largo + ancho)', desc:'Suma de todos los lados' },
+      { nombre:'VOLUMEN CUBO',        eq:'V = lado³', desc:'El lado elevado al cubo' },
+      { nombre:'VOLUMEN CAJA',        eq:'V = largo × ancho × alto', desc:'Los tres lados multiplicados' },
+    ];
+    return '<div class="formula-lista">'+fs.map(function(f){
+      return '<div class="formula-item"><div class="formula-nombre">'+f.nombre+'</div><div class="formula-eq">'+f.eq+'</div><div class="formula-desc">'+f.desc+'</div></div>';
+    }).join('')+'</div>';
+  },
+  fracciones: function() {
+    var fs = [
+      { nombre:'SUMA / RESTA (igual denominador)',   eq:'a/c ± b/c = (a±b)/c', desc:'Solo operar los numeradores' },
+      { nombre:'SUMA / RESTA (distinto denominador)',eq:'a/b ± c/d = (ad±bc)/bd', desc:'Buscar mínimo común múltiplo' },
+      { nombre:'MULTIPLICACIÓN',                     eq:'a/b × c/d = (a×c)/(b×d)', desc:'Numerador × numerador, denominador × denominador' },
+      { nombre:'DIVISIÓN',                           eq:'a/b ÷ c/d = a/b × d/c', desc:'Multiplicar por el recíproco' },
+      { nombre:'FRACCIÓN A DECIMAL',                 eq:'a/b → a ÷ b', desc:'Divide el numerador en el denominador' },
+    ];
+    return '<div class="formula-lista">'+fs.map(function(f){
+      return '<div class="formula-item"><div class="formula-nombre">'+f.nombre+'</div><div class="formula-eq">'+f.eq+'</div><div class="formula-desc">'+f.desc+'</div></div>';
+    }).join('')+'</div>';
+  },
+  ortografia: function() {
+    var reglas = [
+      { titulo:'USO DE B',  ej:'bienestar, biblioteca, hablar, beber — verbos en -bir, -buir, palabras con bl/br' },
+      { titulo:'USO DE V',  ej:'voz, viento, vivir — después de n/d/b, adjetivos en -ivo/-iva' },
+      { titulo:'USO DE H',  ej:'hola, hora, hijo — palabras que empiezan con ie/ue/ui/hum' },
+      { titulo:'USO DE C',  ej:'cielo, cero, ciudad — ce, ci (sonido s en América)' },
+      { titulo:'TILDES',    ej:'Agudas (última sílaba, terminan en n/s/vocal), llanas (penúltima, resto), esdrújulas (antepenúltima, SIEMPRE)' },
+      { titulo:'G / J',     ej:'generoso, giro — ge/gi usa G; j delante de a/o/u y en verbos -jar/-jer/-jir' },
+    ];
+    return '<div class="regla-lista">'+reglas.map(function(r){
+      return '<div class="regla-item"><div class="regla-titulo">'+r.titulo+'</div><div class="regla-ej">Ej: '+r.ej+'</div></div>';
+    }).join('')+'</div>';
+  },
+  textos: function() {
+    var tipos = [
+      { titulo:'NARRATIVO',    ej:'Cuenta una historia con personajes, narrador y trama. Ej: cuentos, novelas.' },
+      { titulo:'DESCRIPTIVO',  ej:'Caracteriza personas, lugares u objetos con detalles sensoriales.' },
+      { titulo:'EXPOSITIVO',   ej:'Explica o informa sobre un tema de forma objetiva. Ej: artículos, enciclopedias.' },
+      { titulo:'ARGUMENTATIVO',ej:'Defiende una posición con argumentos y evidencia. Ej: editorial, ensayo.' },
+      { titulo:'INSTRUCTIVO',  ej:'Indica pasos para realizar algo. Ej: recetas, manuales.' },
+    ];
+    return '<div class="regla-lista">'+tipos.map(function(t){
+      return '<div class="regla-item"><div class="regla-titulo">'+t.titulo+'</div><div class="regla-ej">'+t.ej+'</div></div>';
+    }).join('')+'</div>';
+  },
+  plantas: function() {
+    var pts = [
+      { titulo:'RAÍZ',    ej:'Absorbe agua y minerales del suelo. Ancla la planta.' },
+      { titulo:'TALLO',   ej:'Transporta el agua y los nutrientes. Sostiene las hojas y flores.' },
+      { titulo:'HOJA',    ej:'Realiza la fotosíntesis. Contiene clorofila que captura la luz solar.' },
+      { titulo:'FLOR',    ej:'Órgano reproductor. Contiene el pistilo (femenino) y los estambres (masculinos).' },
+      { titulo:'FOTOSÍNTESIS', ej:'6CO₂ + 6H₂O + luz → glucosa + 6O₂. La planta "come" fabricando azúcar con luz.' },
+    ];
+    return '<div class="regla-lista" style="--violet:var(--green)">'+pts.map(function(p){
+      return '<div class="regla-item" style="border-color:var(--green)"><div class="regla-titulo">'+p.titulo+'</div><div class="regla-ej">'+p.ej+'</div></div>';
+    }).join('')+'</div>';
+  },
+  materia: function() {
+    var estados = [
+      { titulo:'SÓLIDO',    ej:'Forma y volumen fijo. Moléculas muy juntas. Ej: hielo, madera, piedra.' },
+      { titulo:'LÍQUIDO',   ej:'Volumen fijo pero forma variable. Ej: agua, jugo, aceite.' },
+      { titulo:'GASEOSO',   ej:'Sin forma ni volumen fijo. Ej: vapor de agua, aire, oxígeno.' },
+      { titulo:'FUSIÓN',    ej:'Sólido → Líquido (al calentar). Ej: hielo que se derrite.' },
+      { titulo:'EVAPORACIÓN',ej:'Líquido → Gas (al calentar). Ej: agua que hierve.' },
+      { titulo:'CONDENSACIÓN',ej:'Gas → Líquido (al enfriar). Ej: gotas en un vaso frío.' },
+    ];
+    return '<div class="regla-lista" style="--violet:var(--cyan)">'+estados.map(function(e){
+      return '<div class="regla-item" style="border-color:var(--cyan)"><div class="regla-titulo">'+e.titulo+'</div><div class="regla-ej">'+e.ej+'</div></div>';
+    }).join('')+'</div>';
+  },
+  regiones: function() {
+    var rs = [
+      ['1','Tarapacá','Iquique'],['2','Antofagasta','Antofagasta'],
+      ['3','Atacama','Copiapó'],['4','Coquimbo','La Serena'],
+      ['5','Valparaíso','Valparaíso'],['6',"O'Higgins",'Rancagua'],
+      ['7','Maule','Talca'],['8','Biobío','Concepción'],
+      ['9','La Araucanía','Temuco'],['10','Los Lagos','Puerto Montt'],
+      ['11','Aysén','Coyhaique'],['12','Magallanes','Punta Arenas'],
+      ['13','Metropolitana','Santiago'],['14','Los Ríos','Valdivia'],
+      ['15','Arica y Parinacota','Arica'],['16','Ñuble','Chillán'],
+    ];
+    return '<div style="overflow-x:auto"><table class="tabla-mult"><thead><tr><th>Nº</th><th>REGIÓN</th><th>CAPITAL</th></tr></thead><tbody>'+
+      rs.map(function(r){return '<tr><td>'+r[0]+'</td><td style="text-align:left;padding-left:.875rem">'+r[1]+'</td><td>'+r[2]+'</td></tr>';}).join('')+
+    '</tbody></table></div>';
+  },
+};
+
+var catActual = 'todos';
+
+document.addEventListener('DOMContentLoaded', function() {
+  initShared('ayudas');
+  renderCats();
+  renderMateriales();
+  document.getElementById('searchInput').addEventListener('input', function() { renderMateriales(this.value); });
+  document.getElementById('btnCerrarMaterial').addEventListener('click', function() { cerrarModal('modalMaterial'); });
+  document.getElementById('modalMaterial').addEventListener('click', function(e){if(e.target===this)cerrarModal('modalMaterial');});
+});
+
+function renderCats() {
+  var todas = [{id:'todos',emoji:'📚',nombre:'Todo',count:MATERIALES.length,color:'var(--violet)',rgb:'124,58,237'}].concat(CATS_CONFIG);
+  document.getElementById('catsGrid').innerHTML = todas.map(function(c) {
+    return '<div class="cat-card'+(c.id==='todos'?' active':'')+'" data-cat="'+c.id+'" style="--c-color:'+c.color+';--c-rgb:'+c.rgb+'">' +
+      '<span class="cat-emoji">'+c.emoji+'</span>' +
+      '<div class="cat-nombre">'+c.nombre+'</div>' +
+      '<div class="cat-count">'+c.count+' recurso'+(c.count!==1?'s':'')+'</div>' +
+    '</div>';
+  }).join('');
+
+  document.querySelectorAll('.cat-card').forEach(function(card) {
+    card.addEventListener('click', function() {
+      document.querySelectorAll('.cat-card').forEach(function(c){c.classList.remove('active');});
+      this.classList.add('active');
+      catActual = this.dataset.cat;
+      renderMateriales();
+    });
+  });
+}
+
+function renderMateriales(query) {
+  query = (query||'').toLowerCase();
+  var filtrados = MATERIALES.filter(function(m) {
+    var okCat   = catActual==='todos' || m.cat===catActual;
+    var okQuery = !query || m.titulo.toLowerCase().includes(query) || m.preview.toLowerCase().includes(query) || m.tags.some(function(t){return t.toLowerCase().includes(query);});
+    return okCat && okQuery;
+  });
+
+  document.getElementById('contenidoGrid').innerHTML = filtrados.map(function(m) {
+    return '<div class="material-card" data-id="'+m.id+'" style="--m-color:'+m.color+';--m-rgb:'+m.rgb+'">' +
+      '<div class="material-header"><span class="material-emoji">'+m.emoji+'</span><div><div class="material-titulo">'+m.titulo+'</div><div class="material-cat">'+m.cat+'</div></div></div>' +
+      '<div class="material-body">' +
+        '<div class="material-preview">'+m.preview+'</div>' +
+        '<div class="material-tags">'+m.tags.map(function(t){return '<span class="tag">'+t+'</span>';}).join('')+'</div>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+
+  document.querySelectorAll('.material-card').forEach(function(card) {
+    card.addEventListener('click', function() { abrirMaterial(this.dataset.id); });
+  });
+}
+
+function abrirMaterial(id) {
+  var m = MATERIALES.find(function(x){return x.id===id;});
+  if (!m) return;
+  document.getElementById('modalMatTitulo').textContent = m.emoji+' '+m.titulo;
+  var fnContenido = CONTENIDOS[m.tipo];
+  document.getElementById('modalMatContenido').innerHTML = fnContenido ? fnContenido() : '<p style="color:var(--text-dim);font-weight:700">Contenido próximamente.</p>';
+  abrirModal('modalMaterial');
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <!--
+============================================
+ARCHIVO: /dashboard/dashboard.html
+DESCRIPCIÓN: Panel principal del alumno
+VERSIÓN: 1.1.0 — 2026-03-08
+Changelog:
+  1.1.0 - PWA: service worker + botón instalar
+ESTILOS:  dashboard.css
+SCRIPTS:  dashboard.js
+============================================
+ÍNDICE DE SECCIONES
+1. Head — meta, fuentes, links
+2. Header fijo
+3. Sidebar de navegación
+4. Main — page header
+5. Main — stats grid (monedas, nivel, energía, racha)
+6. Main — misiones del día
+7. Main — accesos rápidos módulos
+8. Main — accesos rápidos juegos
+9. Toast container
+10. Script
+============================================
+-->
+  <meta charset="UTF-8" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="EduCoins" />
+  <link rel="manifest" href="/manifest.json" />
+  <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard — EduCoins</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Nunito:wght@400;600;700;800;900&display=swap"
+    rel="stylesheet" />
+  <link rel="stylesheet" href="../shared/shared.css" />
+  <link rel="stylesheet" href="dashboard.css" />
+
+  <!-- Clerk: carga síncrona en el head con la clave en el data-attribute -->
+  <script data-clerk-publishable-key="pk_test_bG92aW5nLXJhcHRvci0xLmNsZXJrLmFjY291bnRzLmRldiQ"
+    src="https://cdn.jsdelivr.net/npm/@clerk/clerk-js@latest/dist/clerk.browser.js"></script>
+</head>
+
+<body>
+
+  <!-- ============================================
+     2. HEADER FIJO
+============================================ -->
+  <div id="sharedHeader"></div>
+
+  <!-- ============================================
+     3. LAYOUT
+============================================ -->
+
+
+  <!-- ============================================
+       MAIN CONTENT
+  ============================================ -->
+  <main class="main">
+
+    <!-- 4. PAGE HEADER -->
+    <div class="page-header fade-up">
+      <div class="page-greeting">
+        <span class="greeting-time" id="greetingTime">⚡ BIENVENIDO</span>
+        <div class="greeting-name">¡Hola, <span id="greetingName">...</span>!</div>
+        <div class="greeting-sub">
+          Tienes <strong id="misionesRestantes" class="highlight-yellow">— misiones</strong> pendientes hoy. ¡Vamos!
+        </div>
+      </div>
+      <div class="page-date">
+        <strong id="fechaHoy">—</strong>
+        <span id="anioActual" class="date-year">—</span>
+        <span class="racha-display">
+          🔥 Racha: <span id="rachaDisplay" class="racha-num">— días</span>
+        </span>
+      </div>
+    </div>
+
+    <!-- BANNER INSTALAR PWA (solo visible si no está instalada) -->
+    <div id="pwaInstallBanner"
+      style="display:none;background:linear-gradient(135deg,rgba(124,58,237,.2),rgba(79,70,229,.2));border:1px solid rgba(124,58,237,.35);border-radius:12px;padding:.75rem 1rem;margin-bottom:1rem;display:none;align-items:center;gap:.75rem;animation:fadeUp .3s ease">
+      <span style="font-size:1.4rem">📲</span>
+      <div style="flex:1">
+        <div style="font-family:'Press Start 2P',monospace;font-size:.4rem;color:#a78bfa;margin-bottom:.2rem">INSTALAR
+          APP</div>
+        <div style="font-size:.75rem;color:rgba(255,255,255,.6)">Agrega EduCoins a tu pantalla de inicio</div>
+      </div>
+      <button id="pwaBtnInstalar"
+        style="background:linear-gradient(135deg,#7c3aed,#4f46e5);border:none;border-radius:8px;color:white;font-family:'Press Start 2P',monospace;font-size:.35rem;padding:.5rem .75rem;cursor:pointer;white-space:nowrap">
+        ⬇️ Instalar
+      </button>
+      <button id="pwaBtnCerrar"
+        style="background:none;border:none;color:rgba(255,255,255,.3);font-size:1rem;cursor:pointer;padding:.25rem">✕</button>
+    </div>
+
+    <!-- 5. STATS GRID -->
+    <div class="stats-grid" style="
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: .6rem;
+      margin-bottom: 1.25rem;
+    ">
+
+      <!-- EduCoins -->
+      <div class="stat-card stat-coins fade-up delay-1" style="padding:.75rem .9rem;min-height:0">
+        <img src="../shared/coin.png" alt="🪙" class="stat-icon"
+          style="height:1.1em;width:1.1em;object-fit:contain;vertical-align:middle;image-rendering:pixelated;margin-bottom:.2rem">
+        <span class="stat-label" style="font-size:.52rem">MIS EDUCOINS</span>
+        <span class="stat-value" id="statMonedas" style="font-size:1.25rem">—</span>
+        <span class="stat-sub" id="statMonedasSub" style="font-size:.65rem">acumuladas</span>
+      </div>
+
+      <!-- Nivel / XP -->
+      <div class="stat-card stat-xp fade-up delay-2" style="padding:.75rem .9rem;min-height:0">
+        <span class="stat-icon" style="font-size:1rem;margin-bottom:.2rem">⭐</span>
+        <span class="stat-label" style="font-size:.52rem">NIVEL Y XP</span>
+        <span class="stat-value" style="font-size:1.25rem">Nv.<span id="statNivel">—</span></span>
+        <span class="stat-sub" id="statXPSub" style="font-size:.65rem">— / — XP</span>
+        <div class="stat-bar-wrap" style="margin-top:.4rem">
+          <div class="stat-bar-track">
+            <div class="stat-bar-fill bar-violet" id="xpBarFill"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Racha -->
+      <div class="stat-card stat-racha fade-up delay-3" style="padding:.75rem .9rem;min-height:0">
+        <span class="stat-icon" style="font-size:1rem;margin-bottom:.2rem">🔥</span>
+        <span class="stat-label" style="font-size:.52rem">RACHA ACTUAL</span>
+        <span class="stat-value" id="statRacha" style="font-size:1.25rem">— días</span>
+        <span class="stat-sub up" id="statRachaSub" style="font-size:.65rem">¡Sigue así!</span>
+        <div class="stat-bar-wrap" style="margin-top:.4rem">
+          <div class="stat-bar-track">
+            <div class="stat-bar-fill bar-red" id="rachaBarFill"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Evaluaciones próximas -->
+      <div class="stat-card stat-evals fade-up delay-4" style="padding:.75rem .9rem;min-height:0;--card-accent:#06b6d4">
+        <span class="stat-icon" style="font-size:1rem;margin-bottom:.2rem">📅</span>
+        <span class="stat-label" style="font-size:.52rem">PRÓXIMAS EVALS</span>
+        <span class="stat-value" id="statEvalsProx" style="font-size:1.25rem">—</span>
+        <span class="stat-sub" id="statEvalsSub" style="font-size:.65rem">esta semana</span>
+        <div id="statEvalsDetalle"
+          style="margin-top:.35rem;font-size:.6rem;color:rgba(255,255,255,.45);line-height:1.4;min-height:.9rem"></div>
+      </div>
+
+    </div>
+
+    <style>
+      /* Stats grid responsive — 2 cols en móvil */
+      @media (max-width: 640px) {
+        .stats-grid {
+          grid-template-columns: repeat(2, 1fr) !important;
+        }
+      }
+    </style>
+
+    <!-- 6. MISIONES DEL DÍA -->
+    <section class="section fade-up delay-2">
+      <div class="section-header">
+        <div class="section-title-wrap">
+          <span class="section-title">🎯 MISIONES DE HOY</span>
+          <span class="section-chip chip-violet" id="misionChip">0/8</span>
+        </div>
+        <a href="/misiones/misiones.html" class="section-action">Ver todas →</a>
+      </div>
+
+      <!-- Ring de progreso + info -->
+      <div class="missions-progress">
+        <div class="progress-ring-wrap">
+          <svg class="progress-ring" viewBox="0 0 72 72">
+            <circle class="ring-track" cx="36" cy="36" r="30" />
+            <circle class="ring-fill" id="missionRing" cx="36" cy="36" r="30" />
+          </svg>
+          <div class="ring-text" id="missionRingText">0/8</div>
+        </div>
+        <div class="progress-info">
+          <div class="progress-title">PROGRESO DIARIO</div>
+          <div class="progress-sub">Completa las 8 misiones y desbloquea el bonus de energía extra 🏆</div>
+          <div class="progress-bar-track">
+            <div class="progress-bar-fill" id="missionProgressBar"></div>
+          </div>
+        </div>
+        <div class="progress-reward">
+          <span class="reward-label">BONUS AL COMPLETAR</span>
+          <div class="reward-value">+200 🪙</div>
+        </div>
+      </div>
+
+      <!-- Grid de misiones (generado por JS) -->
+      <div class="missions-grid" id="missionsGrid"></div>
+
+      <!-- Bonus card -->
+      <div class="bonus-card">
+        <span class="bonus-icon">⚡</span>
+        <div class="bonus-text">
+          <div class="bonus-title">🏆 BONUS: 8/8 MISIONES</div>
+          <div class="bonus-desc" id="bonusDesc">Completa todas las misiones para desbloquear el bonus</div>
+        </div>
+        <div class="bonus-amount">+200 🪙<br><span class="bonus-extra">+ energía extra</span></div>
+      </div>
+    </section>
+
+    <!-- 7. MÓDULOS -->
+    <section class="section fade-up delay-3">
+      <div class="section-header">
+        <div class="section-title-wrap">
+          <span class="section-title">📦 ACCESOS RÁPIDOS</span>
+        </div>
+      </div>
+
+      <div class="modules-grid">
+
+        <a href="../calendario/calendario.html" class="module-card mod-cyan">
+          <div class="module-icon-wrap">📅</div>
+          <div class="module-name">CALENDARIO</div>
+          <div class="module-desc">Tus pruebas y evaluaciones</div>
+          <div class="module-badge badge-cyan" id="modCalBadge">— próximas</div>
+        </a>
+
+        <a href="../tareas/tareas.html" class="module-card mod-green">
+          <div class="module-icon-wrap">📝</div>
+          <div class="module-name">TAREAS</div>
+          <div class="module-desc">Sube tus tareas del día</div>
+          <div class="module-badge badge-green">+100 🪙</div>
+        </a>
+
+        <a href="../duelos/duelos.html" class="module-card mod-yellow">
+          <div class="module-icon-wrap">⚔️</div>
+          <div class="module-name">DUELOS</div>
+          <div class="module-desc">Desafía a otros alumnos</div>
+          <div class="module-badge badge-yellow" id="modDueloBadge">Ver duelos</div>
+        </a>
+
+        <a href="../tienda/tienda.html" class="module-card mod-pink">
+          <div class="module-icon-wrap">🛒</div>
+          <div class="module-name">TIENDA</div>
+          <div class="module-desc">Compra accesorios y premios</div>
+          <div class="module-badge badge-pink" id="modTiendaBadge">— 🪙</div>
+        </a>
+
+        <a href="../objetivos/objetivos.html" class="module-card mod-orange">
+          <div class="module-icon-wrap">🎁</div>
+          <div class="module-name">OBJETIVOS</div>
+          <div class="module-desc">Tus metas mensuales</div>
+          <div class="module-badge badge-orange">2/3 activos</div>
+        </a>
+
+        <a href="../podio/podio.html" class="module-card mod-violet">
+          <div class="module-icon-wrap">🏆</div>
+          <div class="module-name">RANKING</div>
+          <div class="module-desc">Tu posición en el podio</div>
+          <div class="module-badge badge-violet" id="modRankBadge">#— global</div>
+        </a>
+
+        <a href="../ayudas/ayudas.html" class="module-card mod-cyan">
+          <div class="module-icon-wrap">📚</div>
+          <div class="module-name">MATERIAL</div>
+          <div class="module-desc">Tablas, fórmulas y más</div>
+          <div class="module-badge badge-cyan">+30 🪙</div>
+        </a>
+
+        <a href="../estadisticas/estadisticas.html" class="module-card mod-green">
+          <div class="module-icon-wrap">📊</div>
+          <div class="module-name">ESTADÍSTICAS</div>
+          <div class="module-desc">Tu progreso del año</div>
+          <div class="module-badge badge-green">Ver resumen</div>
+        </a>
+
+      </div>
+    </section>
+
+    <!-- 8. JUEGOS -->
+    <section class="section fade-up delay-4">
+      <div class="section-header">
+        <div class="section-title-wrap">
+          <span class="section-title">🎮 JUEGOS EDUCATIVOS</span>
+          <span class="section-chip chip-green">¡Bonus x2 disponible!</span>
+        </div>
+        <a href="/juegos/juegos.html" class="section-action">Ver lobby →</a>
+      </div>
+
+      <div class="games-grid">
+        <a href="/juegos/coinclik/coinclik.html" class="game-quick-card"
+          style="--g-bg:linear-gradient(135deg,#1e3a8a,#1d4ed8)">
+          <div class="game-banner"><span>💰</span></div>
+          <div class="game-quick-body">
+            <div class="game-quick-name">COINCLIK</div>
+            <div class="game-quick-reward">hasta +300 🪙</div>
+          </div>
+        </a>
+        <a href="/juegos/memoria/memoria.html" class="game-quick-card"
+          style="--g-bg:linear-gradient(135deg,#7c2d12,#9a3412)">
+          <div class="game-banner"><span>🃏</span></div>
+          <div class="game-quick-body">
+            <div class="game-quick-name">MEMORIA</div>
+            <div class="game-quick-reward">hasta +200 🪙</div>
+          </div>
+        </a>
+        <a href="/juegos/trivia/trivia.html" class="game-quick-card"
+          style="--g-bg:linear-gradient(135deg,#14532d,#166534)">
+          <div class="game-banner"><span>❓</span></div>
+          <div class="game-quick-body">
+            <div class="game-quick-name">TRIVIA</div>
+            <div class="game-quick-reward">hasta +250 🪙</div>
+          </div>
+        </a>
+        <a href="/juegos/sinonimos/sinonimos.html" class="game-quick-card"
+          style="--g-bg:linear-gradient(135deg,#701a75,#86198f)">
+          <div class="game-banner"><span>🔤</span></div>
+          <div class="game-quick-body">
+            <div class="game-quick-name">SINÓNIMOS</div>
+            <div class="game-quick-reward">hasta +180 🪙</div>
+          </div>
+        </a>
+        <a href="/juegos/problemas/problemas.html" class="game-quick-card"
+          style="--g-bg:linear-gradient(135deg,#422006,#78350f)">
+          <div class="game-banner"><span>🧮</span></div>
+          <div class="game-quick-body">
+            <div class="game-quick-name">PROBLEMAS</div>
+            <div class="game-quick-reward">hasta +350 🪙</div>
+          </div>
+        </a>
+      </div>
+    </section>
+
+  </main>
+  </div>
+
+  <!-- 9. TOAST CONTAINER -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- 10. SCRIPT -->
+
+  <!-- Scripts en orden correcto:
+       1. clerk-config: define EDUCOINS_BASE
+       2. clerk-guard:  verifica sesión, redirige si no hay login
+       3. shared.js:    carga el header
+       4. dashboard.js: lógica de la página -->
+  <!-- PWA: registro service worker + botón instalar -->
+  <script>
+    // Registrar Service Worker
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', function () {
+        navigator.serviceWorker.register('/sw.js').catch(function (e) {
+          console.log('[SW] No se pudo registrar:', e);
+        });
+      });
+    }
+
+    // Botón instalar PWA
+    var _pwaPrompt = null;
+
+    window.addEventListener('beforeinstallprompt', function (e) {
+      e.preventDefault();
+      _pwaPrompt = e;
+      // Mostrar banner solo si no está instalada
+      var banner = document.getElementById('pwaInstallBanner');
+      if (banner) banner.style.display = 'flex';
+    });
+
+    // Ya instalada → ocultar banner
+    window.addEventListener('appinstalled', function () {
+      var banner = document.getElementById('pwaInstallBanner');
+      if (banner) banner.style.display = 'none';
+      _pwaPrompt = null;
+    });
+
+    document.addEventListener('DOMContentLoaded', function () {
+      var btnInstalar = document.getElementById('pwaBtnInstalar');
+      var btnCerrar = document.getElementById('pwaBtnCerrar');
+      var banner = document.getElementById('pwaInstallBanner');
+
+      if (btnInstalar) {
+        btnInstalar.addEventListener('click', function () {
+          if (!_pwaPrompt) return;
+          _pwaPrompt.prompt();
+          _pwaPrompt.userChoice.then(function (result) {
+            if (result.outcome === 'accepted') {
+              if (banner) banner.style.display = 'none';
+            }
+            _pwaPrompt = null;
+          });
+        });
+      }
+
+      if (btnCerrar) {
+        btnCerrar.addEventListener('click', function () {
+          if (banner) banner.style.display = 'none';
+        });
+      }
+
+      // iOS: no soporta beforeinstallprompt — mostrar instrucción manual
+      var isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+      var isStandalone = window.navigator.standalone;
+      if (isIOS && !isStandalone) {
+        if (banner) {
+          banner.style.display = 'flex';
+          var btn = document.getElementById('pwaBtnInstalar');
+          if (btn) {
+            btn.textContent = 'Cómo instalar';
+            btn.onclick = function () {
+              alert('En Safari: toca el botón Compartir (□↑) y luego "Añadir a pantalla de inicio"');
+            };
+          }
+        }
+      }
+    });
+  </script>
+
+  <script src="../auth/clerk-config.js"></script>
+  <script src="../shared/clerk-guard.js"></script>
+  <script src="../shared/shared.js"></script>
+  <script src="dashboard.js"></script>
+</body>
+
+</html>

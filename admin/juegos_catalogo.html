@@ -1,0 +1,794 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<!--
+============================================
+ARCHIVO: /admin/juegos_catalogo.html
+DESCRIPCIÓN: Gestión de juegos y sus niveles
+ACCESO: Solo admins
+============================================
+-->
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Juegos & Niveles — Admin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Nunito:wght@400;700;800;900&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="../shared/shared.css"/>
+<link rel="stylesheet" href="admin.css"/>
+<style>
+  /* ── Layout de cards de juegos ── */
+  .juegos-admin-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    gap: 1rem;
+  }
+  .juego-admin-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 1rem 1.1rem;
+    transition: border-color .2s;
+  }
+  .juego-admin-card:hover { border-color: rgba(124,58,237,.4); }
+
+  .jac-header {
+    display: flex;
+    align-items: center;
+    gap: .65rem;
+    margin-bottom: .65rem;
+  }
+  .jac-emoji { font-size: 1.6rem; line-height: 1; }
+  .jac-nombre {
+    font-family: 'Press Start 2P', monospace;
+    font-size: .5rem;
+    color: #fff;
+    flex: 1;
+  }
+  .jac-actions { display: flex; gap: .4rem; }
+
+  /* Chips de niveles inline */
+  .niveles-inline {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .35rem;
+    margin-top: .6rem;
+  }
+  .ni-chip {
+    display: flex;
+    align-items: center;
+    gap: .3rem;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: .25rem .5rem;
+    font-size: .7rem;
+    font-weight: 800;
+    cursor: pointer;
+    transition: border-color .2s;
+  }
+  .ni-chip:hover { border-color: rgba(124,58,237,.5); }
+  .ni-chip .ni-num  { font-family: 'Press Start 2P', monospace; font-size: .38rem; color: #a78bfa; }
+  .ni-chip .ni-name { color: var(--text-dim); font-size: .65rem; }
+  .ni-chip .ni-int  { font-size: .6rem; color: var(--text-dim); }
+
+  .btn-add-nivel {
+    background: rgba(34,197,94,.1);
+    border: 1px dashed rgba(34,197,94,.4);
+    border-radius: 8px;
+    color: #4ade80;
+    font-size: .7rem;
+    font-weight: 900;
+    padding: .25rem .6rem;
+    cursor: pointer;
+    transition: all .2s;
+  }
+  .btn-add-nivel:hover { background: rgba(34,197,94,.18); }
+
+  /* Badges */
+  .badge { display:inline-flex; align-items:center; padding:.15rem .45rem; border-radius:6px; font-size:.65rem; font-weight:900; }
+  .badge-violet { background:rgba(124,58,237,.15); color:#a78bfa; border:1px solid rgba(124,58,237,.3); }
+  .badge-green  { background:rgba(34,197,94,.12);  color:#4ade80;  border:1px solid rgba(34,197,94,.25); }
+  .badge-gray   { background:rgba(255,255,255,.06); color:#64748b; border:1px solid var(--border); }
+
+  /* Config JSON textarea */
+  .config-json-area {
+    font-family: monospace;
+    font-size: .75rem;
+    min-height: 90px;
+    resize: vertical;
+  }
+  .json-hint {
+    font-size: .68rem;
+    color: #475569;
+    font-weight: 700;
+    margin-top: .3rem;
+  }
+
+  /* Modal más ancho para niveles */
+  #modalNivel .modal { max-width: 520px; }
+
+  /* ══════════════════════════════════════════════════════════════
+     NUEVO: Estilos para el editor de unidades activas
+     ══════════════════════════════════════════════════════════════ */
+  .config-unidades-section {
+    background: rgba(124,58,237,.08);
+    border: 1px solid rgba(124,58,237,.2);
+    border-radius: 12px;
+    padding: 1rem;
+    margin-top: .8rem;
+  }
+  .config-unidades-title {
+    font-size: .72rem;
+    font-weight: 900;
+    color: #a78bfa;
+    letter-spacing: .05em;
+    margin-bottom: .8rem;
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+  }
+  .asignatura-row {
+    display: flex;
+    align-items: center;
+    gap: .8rem;
+    margin-bottom: .6rem;
+    padding: .5rem .6rem;
+    background: rgba(255,255,255,.03);
+    border-radius: 8px;
+  }
+  .asignatura-label {
+    min-width: 90px;
+    font-size: .72rem;
+    font-weight: 800;
+    color: #e2e8f0;
+  }
+  .unidades-checks {
+    display: flex;
+    gap: .4rem;
+    flex-wrap: wrap;
+  }
+  .unidad-check {
+    display: flex;
+    align-items: center;
+    gap: .25rem;
+    background: rgba(255,255,255,.06);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: .25rem .5rem;
+    cursor: pointer;
+    transition: all .2s;
+  }
+  .unidad-check:hover {
+    border-color: rgba(124,58,237,.4);
+    background: rgba(124,58,237,.1);
+  }
+  .unidad-check input[type="checkbox"] {
+    accent-color: #7c3aed;
+    width: 14px;
+    height: 14px;
+  }
+  .unidad-check span {
+    font-size: .68rem;
+    font-weight: 700;
+    color: #94a3b8;
+  }
+  .unidad-check input:checked + span {
+    color: #a78bfa;
+  }
+  .config-help {
+    font-size: .65rem;
+    color: #64748b;
+    margin-top: .6rem;
+    line-height: 1.4;
+  }
+</style>
+<script
+  data-clerk-publishable-key="pk_test_bG92aW5nLXJhcHRvci0xLmNsZXJrLmFjY291bnRzLmRldiQ"
+  src="https://cdn.jsdelivr.net/npm/@clerk/clerk-js@latest/dist/clerk.browser.js"
+></script>
+</head>
+<body>
+
+<div id="sharedHeader"></div>
+
+<div class="layout">
+<main class="main">
+
+  <!-- PAGE HEADER -->
+  <div class="page-header fade-up">
+    <div>
+      <span class="page-tag">🎮 ADMINISTRACIÓN</span>
+      <h1 class="page-title">Juegos & Niveles</h1>
+      <p class="page-subtitle">Gestiona el catálogo de juegos y define los 10 niveles de cada uno.</p>
+    </div>
+    <div style="display:flex;gap:.6rem;align-items:center;">
+      <a href="admin.html" class="btn-admin btn-secondary">← Panel Admin</a>
+      <button class="btn-admin btn-primary" onclick="abrirModalJuego(null)">+ Nuevo Juego</button>
+    </div>
+  </div>
+
+  <!-- Contador -->
+  <div style="font-size:.72rem;font-weight:800;color:#475569;margin-bottom:1rem;" id="totalLabel">Cargando...</div>
+
+  <!-- Grid de juegos -->
+  <div class="juegos-admin-grid fade-up" id="juegosGrid">
+    <div style="color:var(--text-dim);padding:2rem;text-align:center;grid-column:1/-1;">Cargando juegos...</div>
+  </div>
+
+</main>
+</div>
+
+<!-- ═══════ MODAL: JUEGO ═══════ -->
+<div class="modal-overlay" id="modalJuego">
+  <div class="modal" style="max-width:520px;">
+    <button class="modal-close" onclick="cerrarModal('modalJuego')">✕</button>
+    <div class="modal-titulo" id="modalJuegoTitulo">Nuevo Juego</div>
+    <input type="hidden" id="fJuegoId"/>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Emoji *</label>
+        <input class="form-input" id="fJuegoEmoji" maxlength="4" placeholder="🎮" style="font-size:1.3rem;text-align:center;"/>
+      </div>
+      <div class="form-group" style="flex:3;">
+        <label class="form-label">Nombre del juego *</label>
+        <input class="form-input" id="fJuegoNombre" placeholder="NOMBRE EN MAYÚSCULAS"/>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">ID del juego * <span style="font-size:.65rem;color:#475569;">(sin espacios, ej: HorseRace)</span></label>
+      <input class="form-input" id="fJuegoJuegoId" placeholder="horserace"/>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Descripción</label>
+      <input class="form-input" id="fJuegoDesc" placeholder="Descripción corta del juego"/>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">URL relativa *</label>
+      <input class="form-input" id="fJuegoUrl" placeholder="juegos/horserace/horserace.html"/>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Color principal</label>
+        <input class="form-input" id="fJuegoColor" placeholder="#7c3aed"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">RGB (para CSS)</label>
+        <input class="form-input" id="fJuegoRgb" placeholder="124,58,237"/>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Gradiente background</label>
+      <input class="form-input" id="fJuegoBg" placeholder="linear-gradient(135deg,#1e1b4b,#312e81)"/>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Recompensa (texto)</label>
+        <input class="form-input" id="fJuegoRecompensa" placeholder="hasta +300"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Dificultad (1-3)</label>
+        <select class="form-select" id="fJuegoDificultad">
+          <option value="1">1 — Fácil</option>
+          <option value="2" selected>2 — Medio</option>
+          <option value="3">3 — Difícil</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Badge (opcional)</label>
+        <input class="form-input" id="fJuegoBadge" placeholder="🔥 POPULAR"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Orden</label>
+        <input class="form-input" type="number" id="fJuegoOrden" value="10" min="1" max="99"/>
+      </div>
+    </div>
+
+    <div class="form-row" style="align-items:center;gap:1.5rem;">
+      <label class="form-check">
+        <input type="checkbox" id="fJuegoActivo" checked/>
+        Activo (visible para alumnos)
+      </label>
+      <label class="form-check">
+        <input type="checkbox" id="fJuegoTieneNiveles"/>
+        Tiene sistema de niveles
+      </label>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════════════
+         NUEVO: Sección de configuración de unidades activas
+         ══════════════════════════════════════════════════════════════ -->
+    <div class="config-unidades-section" id="configUnidadesSection">
+      <div class="config-unidades-title">
+        📚 UNIDADES ACTIVAS POR ASIGNATURA
+      </div>
+      
+      <!-- Historia -->
+      <div class="asignatura-row">
+        <span class="asignatura-label">📜 Historia</span>
+        <div class="unidades-checks" id="checksHistoria">
+          <label class="unidad-check"><input type="checkbox" data-asig="historia" data-unidad="1"/><span>U1</span></label>
+          <label class="unidad-check"><input type="checkbox" data-asig="historia" data-unidad="2"/><span>U2</span></label>
+          <label class="unidad-check"><input type="checkbox" data-asig="historia" data-unidad="3"/><span>U3</span></label>
+          <label class="unidad-check"><input type="checkbox" data-asig="historia" data-unidad="4"/><span>U4</span></label>
+        </div>
+      </div>
+      
+      <!-- Ciencias -->
+      <div class="asignatura-row">
+        <span class="asignatura-label">🔬 Ciencias</span>
+        <div class="unidades-checks" id="checksCiencias">
+          <label class="unidad-check"><input type="checkbox" data-asig="ciencias" data-unidad="1"/><span>U1</span></label>
+          <label class="unidad-check"><input type="checkbox" data-asig="ciencias" data-unidad="2"/><span>U2</span></label>
+          <label class="unidad-check"><input type="checkbox" data-asig="ciencias" data-unidad="3"/><span>U3</span></label>
+          <label class="unidad-check"><input type="checkbox" data-asig="ciencias" data-unidad="4"/><span>U4</span></label>
+        </div>
+      </div>
+      
+      <!-- Lenguaje -->
+      <div class="asignatura-row">
+        <span class="asignatura-label">📖 Lenguaje</span>
+        <div class="unidades-checks" id="checksLenguaje">
+          <label class="unidad-check"><input type="checkbox" data-asig="lenguaje" data-unidad="1"/><span>U1</span></label>
+          <label class="unidad-check"><input type="checkbox" data-asig="lenguaje" data-unidad="2"/><span>U2</span></label>
+          <label class="unidad-check"><input type="checkbox" data-asig="lenguaje" data-unidad="3"/><span>U3</span></label>
+          <label class="unidad-check"><input type="checkbox" data-asig="lenguaje" data-unidad="4"/><span>U4</span></label>
+        </div>
+      </div>
+      
+      <div class="config-help">
+        💡 Marca las unidades que tienen contenido disponible. El juego sorteará entre las asignaturas 
+        que tengan al menos una unidad activa. Solo aplica a juegos tipo Cuestionario.
+      </div>
+    </div>
+
+    <button class="btn-submit" onclick="guardarJuego()">✅ Guardar Juego</button>
+  </div>
+</div>
+
+<!-- ═══════ MODAL: NIVEL ═══════ -->
+<div class="modal-overlay" id="modalNivel">
+  <div class="modal" style="max-width:520px;">
+    <button class="modal-close" onclick="cerrarModal('modalNivel')">✕</button>
+    <div class="modal-titulo" id="modalNivelTitulo">Nivel 1</div>
+    <input type="hidden" id="fNivelNivelId"/>
+    <input type="hidden" id="fNivelJuegoId"/>
+    <input type="hidden" id="fNivelNumero"/>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Número de nivel</label>
+        <input class="form-input" id="fNivelNum" type="number" min="1" max="10" readonly
+          style="color:#a78bfa;font-weight:900;"/>
+      </div>
+      <div class="form-group" style="flex:3;">
+        <label class="form-label">Nombre del nivel *</label>
+        <input class="form-input" id="fNivelNombre" placeholder="🌱 Principiante"/>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Descripción</label>
+      <input class="form-input" id="fNivelDesc" placeholder="Descripción breve del nivel"/>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Intentos requeridos</label>
+        <input class="form-input" type="number" id="fNivelIntentos" value="3" min="1" max="10"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Bonus monedas 🪙</label>
+        <input class="form-input" type="number" id="fNivelMonedas" value="0" min="0"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Bonus XP ⚡</label>
+        <input class="form-input" type="number" id="fNivelXp" value="0" min="0"/>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Config JSON del nivel</label>
+      <textarea class="form-input config-json-area" id="fNivelConfig"
+        placeholder='{"tablas_min":1,"tablas_max":2,"tiempo_decision":8,"vel_extra":0,"victorias_meta":5}'></textarea>
+      <div class="json-hint">
+        Claves válidas para HorseRace: <code>tablas_min</code>, <code>tablas_max</code>,
+        <code>tiempo_decision</code>, <code>vel_extra</code>, <code>victorias_meta</code>,
+        <code>modo_maestro</code>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:.6rem;justify-content:space-between;align-items:center;margin-top:.5rem;">
+      <button class="btn-admin btn-danger btn-sm" id="btnEliminarNivel"
+        onclick="eliminarNivel()" style="display:none;">🗑 Eliminar nivel</button>
+      <button class="btn-submit" style="margin:0;" onclick="guardarNivel()">✅ Guardar Nivel</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast-container" id="toastContainer"></div>
+
+<script src="../auth/clerk-config.js"></script>
+<script src="../shared/clerk-guard.js"></script>
+<script src="../shared/shared.js"></script>
+<script>
+// ── Estado ────────────────────────────────────────────────────
+var STATE = { juegos: [], niveles: {} };
+
+// ── Auth ──────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', function () {
+  initShared('admin');
+});
+
+document.addEventListener('clerkReady', function () {
+  if (!window.CLERK_TOKEN) return;
+  cargarTodo();
+});
+
+async function getToken() {
+  return window.CLERK_TOKEN || '';
+}
+
+// ── API helpers ───────────────────────────────────────────────
+async function apiFetch(url) {
+  var r = await fetch(BASE_URL + url, { headers: { 'Authorization': 'Bearer ' + await getToken() } });
+  return r.ok ? r.json() : null;
+}
+async function apiPost(body) {
+  var r = await fetch(BASE_URL + '/api/juegos', {
+    method: 'POST',
+    headers: { 'Authorization': 'Bearer ' + await getToken(), 'Content-Type': 'application/json' },
+    body: JSON.stringify(body)
+  });
+  return r.json();
+}
+async function apiPut(body) {
+  var r = await fetch(BASE_URL + '/api/juegos', {
+    method: 'PUT',
+    headers: { 'Authorization': 'Bearer ' + await getToken(), 'Content-Type': 'application/json' },
+    body: JSON.stringify(body)
+  });
+  return r.json();
+}
+async function apiDelete(body) {
+  var r = await fetch(BASE_URL + '/api/juegos', {
+    method: 'DELETE',
+    headers: { 'Authorization': 'Bearer ' + await getToken(), 'Content-Type': 'application/json' },
+    body: JSON.stringify(body)
+  });
+  return r.json();
+}
+
+// ── Cargar todo ───────────────────────────────────────────────
+async function cargarTodo() {
+  var data = await apiFetch('/api/juegos?action=catalogo_admin');
+  STATE.juegos = (data && data.juegos) || [];
+
+  // Cargar niveles de los juegos que los tienen
+  var conNiveles = STATE.juegos.filter(function (j) { return j.tiene_niveles; });
+  await Promise.all(conNiveles.map(async function (j) {
+    var d = await apiFetch('/api/juegos?action=mapa_niveles&juego_id=' + j.juego_id);
+    STATE.niveles[j.juego_id] = (d && d.mapa_niveles) || [];
+  }));
+
+  renderJuegos();
+}
+
+// ── Render grid ───────────────────────────────────────────────
+function renderJuegos() {
+  var grid = document.getElementById('juegosGrid');
+  var label = document.getElementById('totalLabel');
+  label.textContent = STATE.juegos.length + ' juego' + (STATE.juegos.length !== 1 ? 's' : '') + ' registrados';
+
+  if (!STATE.juegos.length) {
+    grid.innerHTML = '<div style="color:var(--text-dim);padding:2rem;text-align:center;grid-column:1/-1;">No hay juegos. Haz click en "+ Nuevo Juego" para agregar el primero.</div>';
+    return;
+  }
+
+  grid.innerHTML = STATE.juegos.map(function (j) {
+    // Chips de niveles
+    var nivelesHTML = '';
+    if (j.tiene_niveles) {
+      var nvs = STATE.niveles[j.juego_id] || [];
+      var chips = nvs.map(function (n) {
+        return '<div class="ni-chip" onclick="abrirModalNivel(\'' + j.juego_id + '\',' + n.nivel + ')" title="' + (n.nombre || '') + '">' +
+          '<span class="ni-num">Nv.' + n.nivel + '</span>' +
+          '<span class="ni-name">' + (n.nombre || '—').replace(/^[^\s]+\s/, '') + '</span>' +
+          '<span class="ni-int">×' + (n.intentos_requeridos || 3) + '</span>' +
+        '</div>';
+      }).join('');
+
+      var btnAdd = nvs.length < 10
+        ? '<button class="btn-add-nivel" onclick="abrirNuevoNivel(\'' + j.juego_id + '\',' + (nvs.length + 1) + ')">+ Nv.' + (nvs.length + 1) + '</button>'
+        : '';
+
+      nivelesHTML =
+        '<div style="font-size:.62rem;font-weight:900;color:#475569;letter-spacing:.05em;margin:.7rem 0 .4rem;">NIVELES (' + nvs.length + '/10)</div>' +
+        '<div class="niveles-inline">' + chips + btnAdd + '</div>';
+
+      if (!nvs.length) {
+        nivelesHTML =
+          '<div style="font-size:.62rem;font-weight:900;color:#475569;margin:.7rem 0 .4rem;">NIVELES</div>' +
+          '<button class="btn-add-nivel" onclick="abrirNuevoNivel(\'' + j.juego_id + '\',1)" style="margin-top:.3rem;">+ Agregar nivel 1</button>';
+      }
+    }
+
+    // ══════════════════════════════════════════════════════════════
+    // NUEVO: Mostrar badge de config si tiene unidades activas
+    // ══════════════════════════════════════════════════════════════
+    var configBadge = '';
+    if (j.config && typeof j.config === 'object') {
+      var totalUnidades = 0;
+      ['historia', 'ciencias', 'lenguaje'].forEach(function(asig) {
+        if (j.config[asig] && Array.isArray(j.config[asig])) {
+          totalUnidades += j.config[asig].length;
+        }
+      });
+      if (totalUnidades > 0) {
+        configBadge = '<span class="badge badge-violet" title="Unidades configuradas">📚 ' + totalUnidades + '</span>';
+      }
+    }
+
+    return '<div class="juego-admin-card">' +
+      '<div class="jac-header">' +
+        '<span class="jac-emoji">' + j.emoji + '</span>' +
+        '<div>' +
+          '<div class="jac-nombre">' + j.nombre + '</div>' +
+          '<div style="font-size:.65rem;color:var(--text-dim);margin-top:.15rem;">' + j.juego_id + '</div>' +
+        '</div>' +
+        '<div class="jac-actions">' +
+          configBadge +
+          (j.tiene_niveles ? '<span class="badge badge-violet">🎯 Niveles</span>' : '') +
+          (j.activo ? '<span class="badge badge-green">Activo</span>' : '<span class="badge badge-gray">Oculto</span>') +
+          '<button class="btn-admin btn-secondary btn-sm" onclick="abrirModalJuego(\'' + j.juego_id + '\')">✏️</button>' +
+        '</div>' +
+      '</div>' +
+      '<div style="font-size:.68rem;color:#64748b;font-weight:700;">' + (j.descripcion || '—') + '</div>' +
+      nivelesHTML +
+    '</div>';
+  }).join('');
+}
+
+// ══════════════════════════════════════════════════════════════
+// NUEVO: Funciones para manejar el config de unidades
+// ══════════════════════════════════════════════════════════════
+
+// Leer checkboxes y construir objeto config
+function leerConfigUnidades() {
+  var config = {
+    historia: [],
+    ciencias: [],
+    lenguaje: []
+  };
+  
+  var checks = document.querySelectorAll('#configUnidadesSection input[type="checkbox"]');
+  checks.forEach(function(cb) {
+    if (cb.checked) {
+      var asig = cb.getAttribute('data-asig');
+      var unidad = parseInt(cb.getAttribute('data-unidad'), 10);
+      if (config[asig] && !config[asig].includes(unidad)) {
+        config[asig].push(unidad);
+      }
+    }
+  });
+  
+  // Ordenar arrays
+  config.historia.sort(function(a,b) { return a - b; });
+  config.ciencias.sort(function(a,b) { return a - b; });
+  config.lenguaje.sort(function(a,b) { return a - b; });
+  
+  return config;
+}
+
+// Setear checkboxes desde objeto config
+function setearConfigUnidades(config) {
+  // Limpiar todos
+  var checks = document.querySelectorAll('#configUnidadesSection input[type="checkbox"]');
+  checks.forEach(function(cb) {
+    cb.checked = false;
+  });
+  
+  if (!config || typeof config !== 'object') return;
+  
+  // Marcar los que corresponden
+  ['historia', 'ciencias', 'lenguaje'].forEach(function(asig) {
+    var unidades = config[asig];
+    if (Array.isArray(unidades)) {
+      unidades.forEach(function(u) {
+        var cb = document.querySelector('input[data-asig="' + asig + '"][data-unidad="' + u + '"]');
+        if (cb) cb.checked = true;
+      });
+    }
+  });
+}
+
+// ── Modal juego ───────────────────────────────────────────────
+function abrirModalJuego(juegoId) {
+  var j = juegoId ? STATE.juegos.find(function (x) { return x.juego_id === juegoId; }) : null;
+  document.getElementById('modalJuegoTitulo').textContent = j ? 'Editar Juego' : 'Nuevo Juego';
+  document.getElementById('fJuegoId').value          = j ? j.juego_id : '';
+  document.getElementById('fJuegoEmoji').value       = j ? j.emoji   : '🎮';
+  document.getElementById('fJuegoNombre').value      = j ? j.nombre  : '';
+  document.getElementById('fJuegoJuegoId').value     = j ? j.juego_id : '';
+  document.getElementById('fJuegoJuegoId').readOnly  = !!j; // no editar ID existente
+  document.getElementById('fJuegoDesc').value        = j ? (j.descripcion || '') : '';
+  document.getElementById('fJuegoUrl').value         = j ? j.url     : '';
+  document.getElementById('fJuegoColor').value       = j ? j.color   : '#7c3aed';
+  document.getElementById('fJuegoRgb').value         = j ? j.rgb     : '124,58,237';
+  document.getElementById('fJuegoBg').value          = j ? j.bg      : 'linear-gradient(135deg,#1e1b4b,#312e81)';
+  document.getElementById('fJuegoRecompensa').value  = j ? j.recompensa : 'hasta +300';
+  document.getElementById('fJuegoDificultad').value  = j ? String(j.dificultad || 2) : '2';
+  document.getElementById('fJuegoBadge').value       = j ? (j.badge || '') : '';
+  document.getElementById('fJuegoOrden').value       = j ? String(j.orden || 10) : '10';
+  document.getElementById('fJuegoActivo').checked    = j ? !!j.activo : true;
+  document.getElementById('fJuegoTieneNiveles').checked = j ? !!j.tiene_niveles : false;
+  
+  // ══════════════════════════════════════════════════════════════
+  // NUEVO: Cargar config de unidades
+  // ══════════════════════════════════════════════════════════════
+  setearConfigUnidades(j ? j.config : null);
+  
+  document.getElementById('modalJuego').classList.add('active');
+}
+
+async function guardarJuego() {
+  var juegoIdOriginal = document.getElementById('fJuegoId').value;
+  
+  // ══════════════════════════════════════════════════════════════
+  // NUEVO: Leer config de unidades desde los checkboxes
+  // ══════════════════════════════════════════════════════════════
+  var configUnidades = leerConfigUnidades();
+  
+  var payload = {
+    juego_id:      document.getElementById('fJuegoJuegoId').value.trim(),
+    nombre:        document.getElementById('fJuegoNombre').value.trim(),
+    emoji:         document.getElementById('fJuegoEmoji').value.trim() || '🎮',
+    descripcion:   document.getElementById('fJuegoDesc').value.trim() || null,
+    url:           document.getElementById('fJuegoUrl').value.trim(),
+    color:         document.getElementById('fJuegoColor').value.trim() || '#7c3aed',
+    rgb:           document.getElementById('fJuegoRgb').value.trim() || '124,58,237',
+    bg:            document.getElementById('fJuegoBg').value.trim(),
+    recompensa:    document.getElementById('fJuegoRecompensa').value.trim() || 'hasta +300',
+    dificultad:    Number(document.getElementById('fJuegoDificultad').value),
+    badge:         document.getElementById('fJuegoBadge').value.trim() || null,
+    orden:         Number(document.getElementById('fJuegoOrden').value) || 10,
+    activo:        document.getElementById('fJuegoActivo').checked,
+    tiene_niveles: document.getElementById('fJuegoTieneNiveles').checked,
+    config:        configUnidades,  // NUEVO
+  };
+  if (!payload.juego_id || !payload.nombre || !payload.url) {
+    toast('Completa los campos obligatorios (*)', 'error');
+    return;
+  }
+  try {
+    var r;
+    if (juegoIdOriginal) {
+      r = await apiPut(Object.assign({ action: 'editar_juego' }, payload));
+    } else {
+      r = await apiPost(Object.assign({ action: 'crear_juego' }, payload));
+    }
+    if (!r || !r.ok) throw new Error(r?.error || 'Error al guardar');
+    toast(juegoIdOriginal ? '✅ Juego actualizado' : '✅ Juego creado', 'success');
+    cerrarModal('modalJuego');
+    await cargarTodo();
+  } catch (e) {
+    toast('❌ ' + e.message, 'error');
+  }
+}
+
+// ── Modal nivel ───────────────────────────────────────────────
+function abrirNuevoNivel(juegoId, numero) {
+  document.getElementById('modalNivelTitulo').textContent = 'Agregar nivel ' + numero;
+  document.getElementById('fNivelNivelId').value  = '';
+  document.getElementById('fNivelJuegoId').value  = juegoId;
+  document.getElementById('fNivelNumero').value   = String(numero);
+  document.getElementById('fNivelNum').value      = String(numero);
+  document.getElementById('fNivelNombre').value   = '';
+  document.getElementById('fNivelDesc').value     = '';
+  document.getElementById('fNivelIntentos').value = '3';
+  document.getElementById('fNivelMonedas').value  = '0';
+  document.getElementById('fNivelXp').value       = '0';
+  document.getElementById('fNivelConfig').value   = '{}';
+  document.getElementById('btnEliminarNivel').style.display = 'none';
+  document.getElementById('modalNivel').classList.add('active');
+}
+
+function abrirModalNivel(juegoId, numero) {
+  var nvs = STATE.niveles[juegoId] || [];
+  var n   = nvs.find(function (x) { return x.nivel === numero; });
+  if (!n) { abrirNuevoNivel(juegoId, numero); return; }
+
+  document.getElementById('modalNivelTitulo').textContent = 'Editar nivel ' + numero + ' — ' + (n.nombre || '');
+  document.getElementById('fNivelNivelId').value  = n.id || '';
+  document.getElementById('fNivelJuegoId').value  = juegoId;
+  document.getElementById('fNivelNumero').value   = String(numero);
+  document.getElementById('fNivelNum').value      = String(numero);
+  document.getElementById('fNivelNombre').value   = n.nombre || '';
+  document.getElementById('fNivelDesc').value     = n.descripcion || '';
+  document.getElementById('fNivelIntentos').value = String(n.intentos_requeridos || 3);
+  document.getElementById('fNivelMonedas').value  = String(n.recompensa_monedas  || 0);
+  document.getElementById('fNivelXp').value       = String(n.recompensa_xp       || 0);
+  document.getElementById('fNivelConfig').value   = typeof n.config === 'object'
+    ? JSON.stringify(n.config, null, 2) : (n.config || '{}');
+  document.getElementById('btnEliminarNivel').style.display = '';
+  document.getElementById('modalNivel').classList.add('active');
+}
+
+async function guardarNivel() {
+  var nivelId  = document.getElementById('fNivelNivelId').value;
+  var juegoId  = document.getElementById('fNivelJuegoId').value;
+  var numero   = Number(document.getElementById('fNivelNumero').value);
+  var nombre   = document.getElementById('fNivelNombre').value.trim();
+  var configTxt = document.getElementById('fNivelConfig').value.trim() || '{}';
+
+  if (!nombre) { toast('El nombre del nivel es obligatorio', 'error'); return; }
+
+  var configObj = {};
+  try { configObj = JSON.parse(configTxt); } catch (e) {
+    toast('❌ El JSON de config tiene un error de sintaxis', 'error'); return;
+  }
+
+  var payload = {
+    juego_id:              juegoId,
+    nivel:                 numero,
+    nombre:                nombre,
+    descripcion:           document.getElementById('fNivelDesc').value.trim() || null,
+    config:                configObj,
+    intentos_requeridos:   Number(document.getElementById('fNivelIntentos').value) || 3,
+    recompensa_bonus_monedas: Number(document.getElementById('fNivelMonedas').value) || 0,
+    recompensa_bonus_xp:      Number(document.getElementById('fNivelXp').value) || 0,
+  };
+
+  try {
+    var r;
+    if (nivelId) {
+      r = await apiPut(Object.assign({ action: 'editar_nivel_juego', id: nivelId }, payload));
+    } else {
+      r = await apiPost(Object.assign({ action: 'crear_nivel_juego' }, payload));
+    }
+    if (!r || !r.ok) throw new Error(r?.error || 'Error al guardar');
+    toast(nivelId ? '✅ Nivel actualizado' : '✅ Nivel creado', 'success');
+    cerrarModal('modalNivel');
+    // Refrescar niveles del juego
+    var d = await apiFetch('/api/juegos?action=mapa_niveles&juego_id=' + juegoId);
+    STATE.niveles[juegoId] = (d && d.mapa_niveles) || [];
+    renderJuegos();
+  } catch (e) {
+    toast('❌ ' + e.message, 'error');
+  }
+}
+
+async function eliminarNivel() {
+  var nivelId = document.getElementById('fNivelNivelId').value;
+  var juegoId = document.getElementById('fNivelJuegoId').value;
+  var numero  = document.getElementById('fNivelNumero').value;
+  if (!nivelId) return;
+  if (!confirm('¿Eliminar el nivel ' + numero + ' de ' + juegoId + '? Esta acción no se puede deshacer.')) return;
+  try {
+    var r = await apiDelete({ action: 'eliminar_nivel_juego', id: nivelId });
+    if (!r || !r.ok) throw new Error(r?.error || 'Error');
+    toast('🗑 Nivel eliminado', 'success');
+    cerrarModal('modalNivel');
+    var d = await apiFetch('/api/juegos?action=mapa_niveles&juego_id=' + juegoId);
+    STATE.niveles[juegoId] = (d && d.mapa_niveles) || [];
+    renderJuegos();
+  } catch (e) {
+    toast('❌ ' + e.message, 'error');
+  }
+}
+
+function cerrarModal(id) {
+  document.getElementById(id).classList.remove('active');
+}
+</script>
+</body>
+</html>

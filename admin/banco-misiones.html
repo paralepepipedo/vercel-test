@@ -1,0 +1,1308 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <!--
+============================================
+ARCHIVO: /admin/banco-misiones.html
+DESCRIPCIÓN: Centro de control total del banco de misiones
+ESTILOS:  ../shared/shared.css
+          banco-misiones.css  (inline)
+SCRIPTS:  ../shared/shared.js
+          banco-misiones.js
+ACCESO:   Solo usuarios con rol 'admin'
+============================================
+-->
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+  <title>Banco de Misiones — EduCoins Admin</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Nunito:wght@400;700;800;900&display=swap"
+    rel="stylesheet" />
+  <link rel="stylesheet" href="../shared/shared.css" />
+  <link rel="stylesheet" href="admin.css" />
+  <script data-clerk-publishable-key="pk_test_bG92aW5nLXJhcHRvci0xLmNsZXJrLmFjY291bnRzLmRldiQ"
+    src="https://cdn.jsdelivr.net/npm/@clerk/clerk-js@latest/dist/clerk.browser.js"></script>
+
+  <style>
+    /* =============================================
+   BANCO DE MISIONES — estilos propios
+   ============================================= */
+    :root {
+      --cat-juego: #7c3aed;
+      --cat-tarea: #22c55e;
+      --cat-evaluacion: #3b82f6;
+      --cat-duelo: #ef4444;
+      --cat-social: #f97316;
+      --cat-especial: #facc15;
+      --cat-lectura: #ec4899;
+      --cat-semanal: #06b6d4;
+    }
+
+    /* ---- TABS ADMIN ---- */
+    .admin-tabs {
+      display: flex;
+      gap: .5rem;
+      margin-bottom: 1.1rem;
+      flex-wrap: wrap;
+    }
+
+    .admin-tab {
+      padding: .55rem 1.2rem;
+      border-radius: 12px;
+      border: 2px solid var(--border);
+      background: var(--bg2);
+      color: var(--text-dim);
+      font-weight: 900;
+      font-size: .82rem;
+      cursor: pointer;
+      transition: all .2s;
+      display: flex;
+      align-items: center;
+      gap: .5rem;
+    }
+
+    .admin-tab:hover {
+      border-color: var(--violet);
+      color: var(--text);
+    }
+
+    .admin-tab-activa.admin-tab-activa {
+      /* diaria */
+      background: rgba(124, 58, 237, .12);
+      border-color: var(--violet);
+      color: #a78bfa;
+    }
+
+    .admin-tab-semanal-activa {
+      background: rgba(6, 182, 212, .1);
+      border-color: var(--cyan);
+      color: #67e8f9;
+    }
+
+    .admin-tab-count {
+      background: rgba(255, 255, 255, .08);
+      border-radius: 99px;
+      font-size: .65rem;
+      padding: .1rem .45rem;
+      font-weight: 900;
+    }
+
+    /* ---- TOOLBAR ---- */
+    .bm-toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: .6rem;
+      align-items: center;
+      margin-bottom: 1.5rem;
+    }
+
+    .bm-toolbar .search-input {
+      flex: 1;
+      min-width: 180px;
+    }
+
+    .bm-toolbar .filtro-select {
+      width: auto;
+    }
+
+    /* ---- EMOJI PICKER ---- */
+    .emoji-input-wrap {
+      position: relative;
+    }
+
+    .emoji-preview-btn {
+      position: absolute;
+      right: .4rem;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      font-size: 1.4rem;
+      cursor: pointer;
+      line-height: 1;
+      padding: .1rem;
+      border-radius: 6px;
+      transition: background .15s;
+    }
+
+    .emoji-preview-btn:hover {
+      background: rgba(255, 255, 255, .08);
+    }
+
+    .emoji-picker-panel {
+      position: absolute;
+      top: calc(100% + 6px);
+      left: 0;
+      z-index: 10001;
+      background: #1a1a3e;
+      border: 1px solid #2d2d6e;
+      border-radius: 14px;
+      padding: .75rem;
+      width: 300px;
+      box-shadow: 0 12px 40px rgba(0, 0, 0, .5);
+      display: none;
+    }
+
+    .emoji-picker-panel.open {
+      display: block;
+    }
+
+    .emoji-search {
+      width: 100%;
+      background: #0f0f2e;
+      border: 1px solid #2d2d6e;
+      border-radius: 8px;
+      padding: .4rem .6rem;
+      color: #e2e8f0;
+      font-size: .82rem;
+      margin-bottom: .6rem;
+      outline: none;
+    }
+
+    .emoji-cats {
+      display: flex;
+      gap: .3rem;
+      flex-wrap: wrap;
+      margin-bottom: .6rem;
+    }
+
+    .emoji-cat-btn {
+      background: rgba(255, 255, 255, .05);
+      border: 1px solid transparent;
+      border-radius: 7px;
+      padding: .2rem .45rem;
+      font-size: .7rem;
+      font-weight: 800;
+      color: #64748b;
+      cursor: pointer;
+      transition: all .15s;
+    }
+
+    .emoji-cat-btn:hover,
+    .emoji-cat-btn.active {
+      background: rgba(124, 58, 237, .15);
+      border-color: #7c3aed;
+      color: #a78bfa;
+    }
+
+    .emoji-grid {
+      display: grid;
+      grid-template-columns: repeat(8, 1fr);
+      gap: .15rem;
+      max-height: 180px;
+      overflow-y: auto;
+    }
+
+    .emoji-cell {
+      font-size: 1.25rem;
+      text-align: center;
+      padding: .3rem;
+      border-radius: 7px;
+      cursor: pointer;
+      transition: background .12s;
+      line-height: 1.2;
+    }
+
+    .emoji-cell:hover {
+      background: rgba(124, 58, 237, .2);
+    }
+
+    /* ---- FILTROS CATEGORÍA ---- */
+    .cat-pills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: .4rem;
+      margin-bottom: 1.2rem;
+    }
+
+    .cat-pill {
+      padding: .35rem .8rem;
+      border-radius: 20px;
+      font-size: .75rem;
+      font-weight: 800;
+      border: 2px solid transparent;
+      cursor: pointer;
+      transition: all .18s;
+      background: var(--bg3);
+      color: var(--text-dim);
+    }
+
+    .cat-pill:hover,
+    .cat-pill.active {
+      color: #fff;
+      border-color: currentColor;
+    }
+
+    .cat-pill[data-cat="todos"] {
+      --c: var(--violet);
+    }
+
+    .cat-pill[data-cat="juego"] {
+      --c: var(--cat-juego);
+    }
+
+    .cat-pill[data-cat="tarea"] {
+      --c: var(--cat-tarea);
+    }
+
+    .cat-pill[data-cat="evaluacion"] {
+      --c: var(--cat-evaluacion);
+    }
+
+    .cat-pill[data-cat="duelo"] {
+      --c: var(--cat-duelo);
+    }
+
+    .cat-pill[data-cat="social"] {
+      --c: var(--cat-social);
+    }
+
+    .cat-pill[data-cat="especial"] {
+      --c: var(--cat-especial);
+    }
+
+    .cat-pill[data-cat="lectura"] {
+      --c: var(--cat-lectura);
+    }
+
+    .cat-pill[data-cat="semanal"] {
+      --c: var(--cat-semanal);
+    }
+
+    .cat-pill {
+      color: var(--c, var(--text-dim));
+    }
+
+    .cat-pill.active {
+      background: var(--c, var(--violet));
+      color: #fff;
+    }
+
+    /* ---- EVENTO BANNER ---- */
+    .evento-banner {
+      background: linear-gradient(135deg, #7c3aed22, #facc1522);
+      border: 1px solid var(--yellow);
+      border-radius: 12px;
+      padding: 1rem 1.5rem;
+      margin-bottom: 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .evento-banner.inactivo {
+      border-color: var(--border);
+      background: var(--bg2);
+      opacity: .7;
+    }
+
+    .evento-titulo {
+      font-weight: 900;
+      font-size: 1rem;
+      color: var(--yellow);
+    }
+
+    .evento-sub {
+      font-size: .8rem;
+      color: var(--text-dim);
+      margin-top: .2rem;
+    }
+
+    .evento-acciones {
+      margin-left: auto;
+      display: flex;
+      gap: .5rem;
+      align-items: center;
+    }
+
+    /* ---- TABLA MISIONES ---- */
+    .bm-tabla-wrap {
+      overflow-x: auto;
+    }
+
+    .bm-tabla {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: .82rem;
+    }
+
+    .bm-tabla thead th {
+      background: var(--bg3);
+      padding: .6rem .8rem;
+      text-align: left;
+      font-size: .68rem;
+      letter-spacing: .08em;
+      color: var(--text-dim);
+      font-weight: 800;
+      white-space: nowrap;
+      position: sticky;
+      top: 0;
+      z-index: 2;
+    }
+
+    .bm-tabla tbody tr {
+      border-bottom: 1px solid var(--border);
+      transition: background .15s;
+    }
+
+    .bm-tabla tbody tr:hover {
+      background: var(--bg2);
+    }
+
+    .bm-tabla td {
+      padding: .55rem .8rem;
+      vertical-align: middle;
+    }
+
+    /* Icono + nombre */
+    .bm-nombre-cell {
+      display: flex;
+      align-items: center;
+      gap: .6rem;
+    }
+
+    .bm-icono {
+      font-size: 1.3rem;
+      min-width: 1.8rem;
+      text-align: center;
+    }
+
+    .bm-nombre {
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .bm-tipo {
+      font-size: .7rem;
+      color: var(--text-dim);
+      font-family: monospace;
+    }
+
+    /* Categoria badge */
+    .bm-cat {
+      display: inline-block;
+      padding: .2rem .55rem;
+      border-radius: 8px;
+      font-size: .68rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: .05em;
+    }
+
+    .bm-cat.juego {
+      background: var(--cat-juego)22;
+      color: var(--cat-juego);
+    }
+
+    .bm-cat.tarea {
+      background: var(--cat-tarea)22;
+      color: var(--cat-tarea);
+    }
+
+    .bm-cat.evaluacion {
+      background: var(--cat-evaluacion)22;
+      color: var(--cat-evaluacion);
+    }
+
+    .bm-cat.duelo {
+      background: var(--cat-duelo)22;
+      color: var(--cat-duelo);
+    }
+
+    .bm-cat.social {
+      background: var(--cat-social)22;
+      color: var(--cat-social);
+    }
+
+    .bm-cat.especial {
+      background: var(--cat-especial)22;
+      color: var(--cat-especial);
+    }
+
+    .bm-cat.lectura {
+      background: var(--cat-lectura)22;
+      color: var(--cat-lectura);
+    }
+
+    .bm-cat.semanal {
+      background: var(--cat-semanal)22;
+      color: var(--cat-semanal);
+    }
+
+    /* Dificultad estrellas */
+    .bm-dif {
+      display: flex;
+      gap: 2px;
+    }
+
+    .bm-star {
+      font-size: .85rem;
+      opacity: .25;
+    }
+
+    .bm-star.on {
+      opacity: 1;
+    }
+
+    /* Recompensas */
+    .bm-reward {
+      display: flex;
+      flex-direction: column;
+      gap: .15rem;
+    }
+
+    .bm-coins {
+      color: var(--yellow);
+      font-weight: 800;
+      font-size: .8rem;
+    }
+
+    .bm-xp {
+      color: var(--cyan);
+      font-size: .72rem;
+    }
+
+    /* Badges especiales */
+    .bm-badge {
+      display: inline-block;
+      padding: .15rem .4rem;
+      border-radius: 6px;
+      font-size: .62rem;
+      font-weight: 800;
+      margin-right: .2rem;
+    }
+
+    .bm-badge.forzada {
+      background: #ef444433;
+      color: #ef4444;
+    }
+
+    .bm-badge.semanal {
+      background: #06b6d433;
+      color: #06b6d4;
+    }
+
+    .bm-badge.evento {
+      background: #facc1533;
+      color: #facc15;
+    }
+
+    /* Switch on/off */
+    .bm-switch {
+      position: relative;
+      width: 36px;
+      height: 20px;
+      display: inline-block;
+      cursor: pointer;
+    }
+
+    .bm-switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .bm-switch-track {
+      position: absolute;
+      inset: 0;
+      background: var(--bg3);
+      border-radius: 20px;
+      border: 1px solid var(--border);
+      transition: .2s;
+    }
+
+    .bm-switch-track::after {
+      content: '';
+      position: absolute;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: var(--text-dim);
+      top: 2px;
+      left: 2px;
+      transition: .2s;
+    }
+
+    .bm-switch input:checked+.bm-switch-track {
+      background: #22c55e33;
+      border-color: #22c55e;
+    }
+
+    .bm-switch input:checked+.bm-switch-track::after {
+      transform: translateX(16px);
+      background: #22c55e;
+    }
+
+    /* Botones acción */
+    .bm-acc {
+      display: flex;
+      gap: .3rem;
+    }
+
+    .bm-btn {
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: .3rem .5rem;
+      font-size: .75rem;
+      cursor: pointer;
+      color: var(--text);
+      transition: all .15s;
+    }
+
+    .bm-btn:hover {
+      background: var(--bg4, var(--bg2));
+      border-color: var(--violet);
+    }
+
+    .bm-btn.danger:hover {
+      border-color: #ef4444;
+      color: #ef4444;
+    }
+
+    /* ---- STATS BAR ---- */
+    .bm-stats {
+      display: flex;
+      gap: 1.5rem;
+      padding: .8rem 1rem;
+      background: var(--bg2);
+      border-radius: 10px;
+      margin-bottom: 1.2rem;
+      flex-wrap: wrap;
+    }
+
+    .bm-stat {
+      font-size: .78rem;
+      color: var(--text-dim);
+    }
+
+    .bm-stat strong {
+      color: var(--text);
+      font-weight: 900;
+    }
+
+    /* ---- MODAL GRANDE ---- */
+    .modal-xl {
+      max-width: 680px;
+    }
+
+    .form-grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: .8rem;
+    }
+
+    .form-grid-3 {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: .8rem;
+    }
+
+    .grados-mini-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: .4rem;
+      margin-top: .4rem;
+    }
+
+    .grado-mini {
+      display: flex;
+      align-items: center;
+      gap: .3rem;
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: .35rem .5rem;
+      cursor: pointer;
+      font-size: .78rem;
+      font-weight: 700;
+      color: var(--text-dim);
+      transition: all .15s;
+    }
+
+    .grado-mini:has(input:checked) {
+      background: rgba(124, 58, 237, .15);
+      border-color: var(--violet);
+      color: var(--violet);
+    }
+
+    .grado-mini input {
+      accent-color: var(--violet);
+      width: 13px;
+      height: 13px;
+    }
+
+    .form-section-title {
+      font-size: .7rem;
+      font-weight: 900;
+      letter-spacing: .1em;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      margin: 1rem 0 .5rem;
+      padding-bottom: .4rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    /* ---- MODAL EVENTO ---- */
+    .evento-form {
+      display: flex;
+      flex-direction: column;
+      gap: .8rem;
+    }
+
+    .multiplicador-opts {
+      display: flex;
+      gap: .5rem;
+      flex-wrap: wrap;
+    }
+
+    .mult-opt {
+      padding: .4rem .9rem;
+      border-radius: 8px;
+      border: 2px solid var(--border);
+      background: var(--bg3);
+      font-weight: 900;
+      cursor: pointer;
+      transition: all .15s;
+      font-size: .9rem;
+    }
+
+    .mult-opt:hover,
+    .mult-opt.active {
+      border-color: var(--yellow);
+      color: var(--yellow);
+      background: #facc1515;
+    }
+
+    /* ---- BULK ACTIONS ---- */
+    .bulk-bar {
+      display: none;
+      align-items: center;
+      gap: .8rem;
+      padding: .7rem 1rem;
+      background: var(--violet)22;
+      border: 1px solid var(--violet);
+      border-radius: 10px;
+      margin-bottom: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .bulk-bar.visible {
+      display: flex;
+    }
+
+    .bulk-count {
+      font-weight: 900;
+      color: var(--violet);
+    }
+
+    /* ---- CHECKBOX SELECCIÓN ---- */
+    .bm-check {
+      cursor: pointer;
+      accent-color: var(--violet);
+      width: 15px;
+      height: 15px;
+    }
+
+    /* ---- EMPTY STATE ---- */
+    .bm-empty {
+      text-align: center;
+      padding: 3rem 1rem;
+      color: var(--text-dim);
+    }
+
+    .bm-empty-icon {
+      font-size: 3rem;
+      margin-bottom: 1rem;
+    }
+
+    /* Back button */
+    .back-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: .5rem;
+      color: var(--text-dim);
+      font-size: .82rem;
+      font-weight: 700;
+      text-decoration: none;
+      margin-bottom: 1.2rem;
+      padding: .4rem .8rem;
+      background: var(--bg2);
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      transition: all .15s;
+    }
+
+    .back-btn:hover {
+      color: var(--text);
+      border-color: var(--violet);
+    }
+
+    /* ---- EMOJI PICKER ---- */
+    .emoji-field-wrap {
+      position: relative;
+    }
+
+    .emoji-preview-btn {
+      display: flex;
+      align-items: center;
+      gap: .5rem;
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: .55rem .9rem;
+      cursor: pointer;
+      transition: border-color .2s;
+      width: 100%;
+      text-align: left;
+      font-size: .88rem;
+    }
+
+    .emoji-preview-btn:hover {
+      border-color: var(--violet);
+    }
+
+    .emoji-preview-big {
+      font-size: 1.6rem;
+      line-height: 1;
+    }
+
+    .emoji-preview-hint {
+      font-size: .72rem;
+      color: var(--text-muted);
+      font-weight: 700;
+    }
+
+    .emoji-picker-panel {
+      position: absolute;
+      top: calc(100% + .4rem);
+      left: 0;
+      z-index: 500;
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: .75rem;
+      width: 300px;
+      max-height: 300px;
+      overflow-y: auto;
+      box-shadow: 0 12px 40px rgba(0, 0, 0, .5);
+      display: none;
+    }
+
+    .emoji-picker-panel.open {
+      display: block;
+    }
+
+    .emoji-search {
+      width: 100%;
+      padding: .45rem .7rem;
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      font-size: .82rem;
+      margin-bottom: .6rem;
+      box-sizing: border-box;
+    }
+
+    .emoji-cats {
+      display: flex;
+      gap: .3rem;
+      flex-wrap: wrap;
+      margin-bottom: .6rem;
+    }
+
+    .emoji-cat-btn {
+      padding: .2rem .5rem;
+      border-radius: 6px;
+      border: 1px solid transparent;
+      background: var(--bg3);
+      color: var(--text-dim);
+      font-size: .7rem;
+      cursor: pointer;
+      transition: all .15s;
+    }
+
+    .emoji-cat-btn.active,
+    .emoji-cat-btn:hover {
+      border-color: var(--violet);
+      color: var(--text);
+    }
+
+    .emoji-grid {
+      display: grid;
+      grid-template-columns: repeat(8, 1fr);
+      gap: 2px;
+    }
+
+    .emoji-opt {
+      font-size: 1.3rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 34px;
+      height: 34px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background .12s;
+    }
+
+    .emoji-opt:hover {
+      background: var(--bg3);
+    }
+
+    .emoji-input-manual {
+      width: 100%;
+      margin-top: .6rem;
+      padding: .4rem .7rem;
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      font-size: .85rem;
+      box-sizing: border-box;
+      text-align: center;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="sharedHeader"></div>
+
+  <div class="layout">
+    <main class="main">
+
+      <!-- ENCABEZADO -->
+      <a href="admin.html" class="back-btn fade-up">← Volver al Panel Admin</a>
+
+      <div class="page-header fade-up">
+        <div>
+          <span class="page-tag">📋 BANCO DE MISIONES</span>
+          <h1 class="page-title">Control de Misiones</h1>
+          <p class="page-subtitle">Gestiona el catálogo completo. Las misiones diarias se generan desde aquí cada día.
+          </p>
+        </div>
+        <div style="display:flex;gap:.6rem;flex-wrap:wrap;align-items:flex-start">
+          <button class="btn-admin btn-primary" id="btnNuevaMision">+ Nueva Misión</button>
+          <button class="btn-admin" id="btnGestionarEvento" style="border-color:var(--yellow);color:var(--yellow)">⚡
+            Evento x2</button>
+          <button class="btn-admin" id="btnPoblarCatalogo" style="border-color:var(--cyan);color:var(--cyan)">🔄 Poblar
+            Catálogo</button>
+        </div>
+      </div>
+
+      <!-- BANNER EVENTO ACTIVO -->
+      <div class="evento-banner inactivo fade-up delay-1" id="eventoBanner">
+        <div>
+          <div class="evento-titulo" id="eventoTitulo">⚡ Sin evento activo</div>
+          <div class="evento-sub" id="eventoSub">Activa un evento para duplicar recompensas temporalmente</div>
+        </div>
+        <div class="evento-acciones">
+          <span id="eventoTimer" style="font-size:.8rem;color:var(--yellow);font-weight:800;"></span>
+          <button class="btn-admin btn-danger" id="btnDesactivarEvento"
+            style="display:none;padding:.3rem .7rem;font-size:.75rem;">✕ Desactivar</button>
+        </div>
+      </div>
+
+      <!-- STATS -->
+      <div class="bm-stats fade-up delay-2" id="bmStats">
+        <div class="bm-stat">Total: <strong id="statTotal">—</strong></div>
+        <div class="bm-stat">Activas: <strong id="statActivas">—</strong></div>
+        <div class="bm-stat">Forzadas: <strong id="statForzadas">—</strong></div>
+        <div class="bm-stat">Semanales: <strong id="statSemanales">—</strong></div>
+        <div class="bm-stat">Con evento: <strong id="statEvento">—</strong></div>
+      </div>
+
+      <!-- TABS ADMIN: Diarias / Semanales -->
+      <div class="admin-tabs fade-up delay-2">
+        <button class="admin-tab admin-tab-activa" id="adminTabDiaria" onclick="cambiarTabAdmin('diaria')">
+          📋 Misiones Diarias
+          <span class="admin-tab-count" id="adminCountDiaria">—</span>
+        </button>
+        <button class="admin-tab" id="adminTabSemanal" onclick="cambiarTabAdmin('semanal')">
+          📅 Misiones Semanales
+          <span class="admin-tab-count" id="adminCountSemanal">—</span>
+        </button>
+      </div>
+
+      <!-- FILTROS -->
+      <div class="bm-toolbar fade-up delay-2">
+        <input type="text" class="search-input" id="bmSearch" placeholder="🔍 Buscar misión..." />
+        <select class="filtro-select" id="bmFiltroActivo">
+          <option value="">Todas</option>
+          <option value="1">Activas</option>
+          <option value="0">Inactivas</option>
+        </select>
+        <select class="filtro-select" id="bmFiltroDif">
+          <option value="">Todas las dificultades</option>
+          <option value="1">⭐ Fácil</option>
+          <option value="2">⭐⭐ Media</option>
+          <option value="3">⭐⭐⭐ Difícil</option>
+        </select>
+        <select class="filtro-select" id="bmFiltroGrado">
+          <option value="">Todos los grados</option>
+          <option value="1">1° Básico</option>
+          <option value="2">2° Básico</option>
+          <option value="3">3° Básico</option>
+          <option value="4">4° Básico</option>
+          <option value="5">5° Básico</option>
+          <option value="6">6° Básico</option>
+          <option value="7">7° Básico</option>
+          <option value="8">8° Básico</option>
+        </select>
+      </div>
+
+      <!-- PILLS CATEGORÍAS -->
+      <div class="cat-pills fade-up delay-2" id="catPills">
+        <button class="cat-pill active" data-cat="todos">Todas</button>
+        <button class="cat-pill" data-cat="juego">🎮 Juego</button>
+        <button class="cat-pill" data-cat="tarea">📝 Tarea</button>
+        <button class="cat-pill" data-cat="evaluacion">📅 Evaluación</button>
+        <button class="cat-pill" data-cat="duelo">⚔️ Duelo</button>
+        <button class="cat-pill" data-cat="social">🤝 Social</button>
+        <button class="cat-pill" data-cat="especial">⭐ Especial</button>
+        <button class="cat-pill" data-cat="lectura">📖 Lectura</button>
+
+      </div>
+
+      <!-- BULK ACTIONS -->
+      <div class="bulk-bar" id="bulkBar">
+        <span class="bulk-count" id="bulkCount">0 seleccionadas</span>
+        <button class="btn-admin" id="btnBulkActivar" style="padding:.3rem .7rem;font-size:.75rem;">✅ Activar</button>
+        <button class="btn-admin" id="btnBulkDesactivar" style="padding:.3rem .7rem;font-size:.75rem;">⏸
+          Desactivar</button>
+        <button class="btn-admin" id="btnBulkX2"
+          style="padding:.3rem .7rem;font-size:.75rem;border-color:var(--yellow);color:var(--yellow)">⚡ Marcar evento
+          x2</button>
+        <button class="btn-admin btn-danger" id="btnBulkCancelar" style="padding:.3rem .7rem;font-size:.75rem;">✕
+          Cancelar</button>
+      </div>
+
+      <!-- TABLA -->
+      <div class="admin-card fade-up delay-3">
+        <div class="admin-card-header" style="justify-content:space-between;">
+          <span class="admin-card-titulo" id="tablaHeader">📋 MISIONES DEL BANCO</span>
+          <label
+            style="display:flex;align-items:center;gap:.4rem;font-size:.75rem;color:var(--text-dim);cursor:pointer;">
+            <input type="checkbox" id="checkAll" style="accent-color:var(--violet);width:14px;height:14px;"> Sel. todas
+          </label>
+        </div>
+        <div class="bm-tabla-wrap">
+          <table class="bm-tabla">
+            <thead>
+              <tr>
+                <th style="width:30px"></th>
+                <th>MISIÓN</th>
+                <th>CATEGORÍA</th>
+                <th>DIF.</th>
+                <th>RECOMPENSA</th>
+                <th>GRADOS</th>
+                <th>OPCIONES</th>
+                <th>ACTIVA</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="bmTbody">
+              <tr>
+                <td colspan="9" style="text-align:center;padding:2rem;color:var(--text-dim);">Cargando...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <!-- ============ MODAL NUEVA/EDITAR MISIÓN ============ -->
+  <div class="modal-overlay" id="modalMision">
+    <div class="modal modal-xl">
+      <button class="modal-close" id="btnCerrarModalMision">✕</button>
+      <div class="modal-titulo" id="modalMisionTitulo">Nueva Misión</div>
+      <input type="hidden" id="fId" />
+
+      <div class="form-section-title">Identificación</div>
+      <div class="form-grid-2">
+        <div class="form-group">
+          <label class="form-label">Ícono (emoji)</label>
+          <!-- Valor interno guardado aquí -->
+          <input type="hidden" id="fIcono" value="🎯" />
+          <div class="emoji-field-wrap">
+            <button type="button" class="emoji-preview-btn" id="emojiPreviewBtn" onclick="toggleEmojiPicker()">
+              <span class="emoji-preview-big" id="emojiPreviewBig">🎯</span>
+              <span class="emoji-preview-hint">Click para cambiar</span>
+            </button>
+            <div class="emoji-picker-panel" id="emojiPickerPanel">
+              <input type="text" class="emoji-search" id="emojiSearch" placeholder="🔍 Buscar emoji..."
+                oninput="filtrarEmojis(this.value)" />
+              <div class="emoji-cats" id="emojiCats"></div>
+              <div class="emoji-grid" id="emojiGrid"></div>
+              <input type="text" class="emoji-input-manual" id="emojiManual" placeholder="O pega/escribe el emoji aquí"
+                maxlength="4" oninput="seleccionarEmoji(this.value)" />
+            </div>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Tipo (clave interna) *</label>
+          <input type="text" class="form-input" id="fTipo" placeholder="Ej: trivia_completar" />
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Descripción *</label>
+        <input type="text" class="form-input" id="fDesc" placeholder="Ej: Completa una partida de trivia" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">URL destino <span style="color:var(--text-muted);font-size:.72rem;">(ruta directa al
+            hacer click)</span></label>
+        <input type="text" class="form-input" id="fUrl" placeholder="Ej: ../juegos/trivia/trivia.html" />
+      </div>
+
+      <div class="form-section-title">Clasificación</div>
+      <div class="form-grid-3">
+        <div class="form-group">
+          <label class="form-label">Categoría *</label>
+          <select class="form-select" id="fCategoria">
+            <option value="juego">🎮 Juego</option>
+            <option value="tarea">📝 Tarea</option>
+            <option value="evaluacion">📅 Evaluación</option>
+            <option value="duelo">⚔️ Duelo</option>
+            <option value="social">🤝 Social</option>
+            <option value="especial">⭐ Especial</option>
+            <option value="lectura">📖 Lectura</option>
+            <option value="semanal">📅 Semanal</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Dificultad</label>
+          <select class="form-select" id="fDificultad">
+            <option value="1">⭐ Fácil</option>
+            <option value="2">⭐⭐ Media</option>
+            <option value="3">⭐⭐⭐ Difícil</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Peso sorteo (1-10)</label>
+          <input type="number" class="form-input" id="fPeso" value="5" min="1" max="10" />
+        </div>
+      </div>
+
+      <div class="form-section-title">Recompensas</div>
+      <div class="form-grid-3">
+        <div class="form-group">
+          <label class="form-label">EduCoins 🪙</label>
+          <input type="number" class="form-input" id="fMonedas" value="60" min="0" max="9999" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">XP ⭐</label>
+          <input type="number" class="form-input" id="fXP" value="30" min="0" max="9999" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Ptos. mínimos requeridos</label>
+          <input type="number" class="form-input" id="fPuntosMin" value="0" min="0" placeholder="0 = no aplica" />
+        </div>
+      </div>
+
+      <div class="form-section-title">Restricciones</div>
+      <div class="form-grid-3">
+        <div class="form-group">
+          <label class="form-label">Nivel mínimo alumno</label>
+          <input type="number" class="form-input" id="fNivelMin" value="1" min="1" max="99" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Límite semanal (apariciones)</label>
+          <input type="number" class="form-input" id="fLimiteSemanal" value="3" min="1" max="7" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Bonus racha (días consec.)</label>
+          <input type="number" class="form-input" id="fBonusRachaDias" value="0" min="0" placeholder="0 = sin bonus" />
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">EduCoins extra por racha 🪙</label>
+        <input type="number" class="form-input" id="fBonusRachaExtra" value="0" min="0" />
+      </div>
+
+      <div class="form-section-title">Grados aptos <span style="font-weight:400;text-transform:none;">(vacío = todos los
+          grados)</span></div>
+      <div class="grados-mini-grid" id="gradosMiniGrid">
+        <label class="grado-mini"><input type="checkbox" value="1"> 1°</label>
+        <label class="grado-mini"><input type="checkbox" value="2"> 2°</label>
+        <label class="grado-mini"><input type="checkbox" value="3"> 3°</label>
+        <label class="grado-mini"><input type="checkbox" value="4"> 4°</label>
+        <label class="grado-mini"><input type="checkbox" value="5"> 5°</label>
+        <label class="grado-mini"><input type="checkbox" value="6"> 6°</label>
+        <label class="grado-mini"><input type="checkbox" value="7"> 7°</label>
+        <label class="grado-mini"><input type="checkbox" value="8"> 8°</label>
+      </div>
+
+      <!-- ======= SECCIÓN: Condición de cumplimiento ======= -->
+      <div class="form-section-title">¿Cómo se completa esta misión?</div>
+
+      <div class="form-grid-2">
+        <div class="form-group">
+          <label class="form-label">Acción que la activa</label>
+          <select class="form-select" id="fTrigger" onchange="onTriggerChange()">
+            <option value="juego_completado">🎮 Jugar cualquier juego</option>
+            <option value="juego_especifico">🎯 Jugar un juego específico</option>
+            <option value="tarea_subida">📝 Subir una tarea</option>
+            <option value="evaluacion_marcada">📅 Marcar evaluación como estudiada</option>
+            <option value="nota_ingresada">⭐ Registrar nota de prueba</option>
+            <option value="duelo_ganado">⚔️ Ganar un duelo</option>
+            <option value="login_diario">🔑 Iniciar sesión</option>
+            <option value="manual_profesor">👨‍🏫 El profesor la otorga</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Condición para completarla</label>
+          <select class="form-select" id="fCondicion" onchange="onCondicionChange()">
+            <option value="auto">✅ Automática (basta con hacer la acción)</option>
+            <option value="repetir">🔁 Repetir N veces</option>
+            <option value="puntos">🏆 Alcanzar X puntos en una partida</option>
+            <option value="tiempo">⏱️ Completar en menos de X segundos</option>
+            <option value="manual">👨‍🏫 Manual (solo el profesor)</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Juego específico — visible solo cuando trigger = juego_especifico -->
+      <div class="form-group cond-field" id="grupoJuegoId" style="display:none;">
+        <label class="form-label">Juego específico</label>
+        <select class="form-select" id="fJuegoId">
+          <option value="">— Cualquier juego —</option>
+          <option value="trivia">❓ Trivia</option>
+          <option value="memoria">🃏 Memoria</option>
+          <option value="TablaBlast">🔢 Tabla Blast</option>
+          <option value="coinclik">💰 CoinClik</option>
+          <option value="sinonimos">🔤 Sinónimos</option>
+          <option value="HorseRace">🏇 Horse Race</option>
+          <option value="mapaquiz">🗺️ Mapa Quiz</option>
+          <option value="problemas">🧮 Problemas</option>
+        </select>
+      </div>
+
+      <!-- Asignatura — visible solo cuando trigger = tarea_subida o evaluacion_marcada -->
+      <div class="form-group cond-field" id="grupoAsignatura" style="display:none;">
+        <label class="form-label">Asignatura específica <span style="color:var(--text-muted);font-size:.72rem;">(vacío =
+            cualquier asignatura)</span></label>
+        <select class="form-select" id="fParametroValor">
+          <option value="">— Cualquier asignatura —</option>
+          <option value="Matematicas">➕ Matemáticas</option>
+          <option value="Lenguaje">📖 Lenguaje</option>
+          <option value="Historia">🌍 Historia</option>
+          <option value="Ciencias">🔬 Ciencias</option>
+          <option value="Ingles">🇬🇧 Inglés</option>
+          <option value="Ed. Fisica">⚽ Ed. Física</option>
+          <option value="Musica">🎵 Música</option>
+          <option value="Artes">🎨 Artes</option>
+          <option value="Tecnologia">💻 Tecnología</option>
+        </select>
+      </div>
+
+      <!-- Meta cantidad — visible cuando condicion = repetir -->
+      <div class="form-group cond-field" id="grupoMetaCantidad" style="display:none;">
+        <label class="form-label">¿Cuántas veces? <span style="color:var(--text-muted);font-size:.72rem;">(cantidad que
+            hay que repetir)</span></label>
+        <input type="number" class="form-input" id="fMetaCantidad" value="3" min="2" max="99"
+          placeholder="Ej: 3 (jugar 3 partidas)" />
+      </div>
+
+      <!-- Puntos mínimos — visible cuando condicion = puntos -->
+      <div class="form-group cond-field" id="grupoPuntosMinCondicion" style="display:none;">
+        <label class="form-label">Puntos mínimos en la partida 🏆</label>
+        <input type="number" class="form-input" id="fPuntosMinCondicion" value="500" min="1" placeholder="Ej: 500" />
+      </div>
+
+      <!-- Tiempo máximo — visible cuando condicion = tiempo -->
+      <div class="form-group cond-field" id="grupoTiempo" style="display:none;">
+        <label class="form-label">Tiempo máximo ⏱️ <span style="color:var(--text-muted);font-size:.72rem;">(en
+            segundos)</span></label>
+        <input type="number" class="form-input" id="fMetaTiempo" value="60" min="5" placeholder="Ej: 60" />
+      </div>
+
+      <!-- Mensaje logro personalizado -->
+      <div class="form-group">
+        <label class="form-label">Mensaje al completar <span style="color:var(--text-muted);font-size:.72rem;">(vacío =
+            mensaje genérico)</span></label>
+        <input type="text" class="form-input" id="fMensajeLogro" placeholder="Ej: ¡Eres un experto en tablas! 🔢" />
+      </div>
+
+      <!-- ======= SECCIÓN: Opciones especiales ======= -->
+      <div class="form-section-title">Opciones especiales</div>
+      <div style="display:flex;gap:1.5rem;flex-wrap:wrap;margin-bottom:.5rem;">
+        <label style="display:flex;align-items:center;gap:.5rem;cursor:pointer;font-size:.85rem;font-weight:700;">
+          <input type="checkbox" id="fForzada" style="accent-color:var(--violet);width:15px;height:15px;">
+          🔒 Forzada (siempre aparece)
+        </label>
+        <label style="display:flex;align-items:center;gap:.5rem;cursor:pointer;font-size:.85rem;font-weight:700;">
+          <input type="checkbox" id="fEsSemanal" style="accent-color:var(--cyan);width:15px;height:15px;">
+          📅 Es misión semanal
+        </label>
+        <label style="display:flex;align-items:center;gap:.5rem;cursor:pointer;font-size:.85rem;font-weight:700;">
+          <input type="checkbox" id="fOculta" style="accent-color:var(--yellow);width:15px;height:15px;">
+          🎁 Oculta (sorpresa)
+        </label>
+        <label style="display:flex;align-items:center;gap:.5rem;cursor:pointer;font-size:.85rem;font-weight:700;">
+          <input type="checkbox" id="fActivo" checked style="accent-color:var(--green);width:15px;height:15px;">
+          ✅ Activa desde ya
+        </label>
+      </div>
+
+      <button class="btn-submit" id="btnGuardarMision">✅ Guardar Misión</button>
+    </div>
+  </div>
+
+  <!-- ============ MODAL EVENTO x2 ============ -->
+  <div class="modal-overlay" id="modalEvento">
+    <div class="modal">
+      <button class="modal-close" id="btnCerrarModalEvento">✕</button>
+      <div class="modal-titulo">⚡ Configurar Evento de Doble Recompensa</div>
+      <p style="color:var(--text-dim);font-size:.85rem;margin-bottom:1rem;">
+        Durante el evento, las misiones marcadas con ⚡ darán recompensas multiplicadas.
+      </p>
+
+      <div class="form-group">
+        <label class="form-label">Multiplicador</label>
+        <div class="multiplicador-opts" id="multOpts">
+          <button class="mult-opt" data-val="1.5">×1.5</button>
+          <button class="mult-opt active" data-val="2">×2</button>
+          <button class="mult-opt" data-val="3">×3</button>
+        </div>
+        <input type="hidden" id="fMultiplicador" value="2" />
+      </div>
+
+      <div class="form-grid-2">
+        <div class="form-group">
+          <label class="form-label">Fecha inicio</label>
+          <input type="datetime-local" class="form-input" id="fEventoInicio" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Fecha fin *</label>
+          <input type="datetime-local" class="form-input" id="fEventoFin" />
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" style="font-size:.78rem;color:var(--text-dim);">
+          ¿Aplicar a todas las misiones activas o solo a las marcadas con ⚡?
+        </label>
+        <select class="form-select" id="fEventoAlcance">
+          <option value="marcadas">Solo misiones marcadas con evento_activo = true</option>
+          <option value="todas">Todas las misiones activas</option>
+        </select>
+      </div>
+
+      <button class="btn-submit" id="btnActivarEvento">⚡ Activar Evento</button>
+    </div>
+  </div>
+
+  <div class="toast-container" id="toastContainer"></div>
+
+  <script src="../auth/clerk-config.js"></script>
+  <script src="../shared/clerk-guard.js"></script>
+  <script src="../shared/shared.js"></script>
+  <script src="banco-misiones.js"></script>
+</body>
+
+</html>

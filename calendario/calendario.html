@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <!--
+============================================
+ARCHIVO: /calendario/calendario.html
+DESCRIPCIÓN: Calendario de evaluaciones
+ESTILOS:  calendario.css
+SCRIPTS:  calendario.js
+============================================
+ÍNDICE DE SECCIONES
+1.  Head — meta, fuentes, links
+2.  Header fijo
+3.  Layout sidebar + main
+4.  Sidebar navegación
+5.  Main — page header
+6.  Main — stats del mes
+7.  Main — controles de navegación
+8.  Main — grid del calendario
+9.  Main — lista de evaluaciones
+10. Modal — agregar/editar evaluación
+11. Modal — detalle de evaluación
+12. Toast container
+13. Script (SIN type="module")
+============================================
+-->
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Calendario — EduCoins</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Nunito:wght@400;600;700;800;900&display=swap"
+    rel="stylesheet" />
+  <link rel="stylesheet" href="../shared/shared.css" />
+  <link rel="stylesheet" href="calendario.css" />
+
+  <!-- Clerk: carga síncrona con la clave en el data-attribute -->
+  <script data-clerk-publishable-key="pk_test_bG92aW5nLXJhcHRvci0xLmNsZXJrLmFjY291bnRzLmRldiQ"
+    src="https://cdn.jsdelivr.net/npm/@clerk/clerk-js@latest/dist/clerk.browser.js"></script>
+</head>
+
+<body>
+
+  <!-- ============================================
+     2. HEADER FIJO
+============================================ -->
+  <!-- shared.js inyecta el header y sidebar aquí -->
+  <div id="sharedHeader"></div>
+  <main class="main">
+
+      <!-- 5. PAGE HEADER -->
+      <div class="page-header fade-up">
+        <div>
+          <span class="page-tag">📅 CALENDARIO</span>
+          <h1 class="page-title">Evaluaciones del Mes</h1>
+          <p class="page-subtitle">Registra tus pruebas, predice tu nota y gana EduCoins.</p>
+        </div>
+        <!-- Botón añadir — evento en JS -->
+        <button class="btn-primary" id="btnAgregarEval">
+          <span>+</span> Agregar Evaluación
+        </button>
+      </div>
+
+      <!-- 6. STATS DEL MES -->
+      <div class="month-stats fade-up delay-1">
+        <div class="mstat">
+          <span class="mstat-icon">📋</span>
+          <span class="mstat-num" id="statTotal">0</span>
+          <span class="mstat-label">Este mes</span>
+        </div>
+        <div class="mstat">
+          <span class="mstat-icon">⏳</span>
+          <span class="mstat-num" id="statPendientes">0</span>
+          <span class="mstat-label">Pendientes</span>
+        </div>
+        <div class="mstat">
+          <span class="mstat-icon">✅</span>
+          <span class="mstat-num" id="statRendidas">0</span>
+          <span class="mstat-label">Rendidas</span>
+        </div>
+        <div class="mstat">
+          <span class="mstat-icon">⭐</span>
+          <span class="mstat-num" id="statPromedio">—</span>
+          <span class="mstat-label">Promedio</span>
+        </div>
+      </div>
+
+      <!-- 7. CONTROLES DE NAVEGACIÓN -->
+      <div class="cal-controls fade-up delay-2">
+        <!-- Todos los eventos se asignan en calendario.js -->
+        <button class="cal-nav-btn" id="btnMesAnterior">‹</button>
+        <div class="cal-mes-actual">
+          <span class="cal-mes-nombre" id="mesNombre">—</span>
+          <button class="cal-hoy-btn" id="btnHoy">Hoy</button>
+        </div>
+        <button class="cal-nav-btn" id="btnMesSiguiente">›</button>
+
+        <div class="cal-filtro">
+          <select id="filtroAsignatura" class="cal-select">
+            <option value="">Todas las asignaturas</option>
+            <option value="Matematicas">➗ Matemáticas</option>
+            <option value="Lenguaje">📖 Lenguaje</option>
+            <option value="Historia">🏛️ Historia</option>
+            <option value="Ciencias">🔬 Ciencias</option>
+            <option value="Ingles">🇬🇧 Inglés</option>
+            <option value="Ed. Fisica">⚽ Ed. Física</option>
+            <option value="Musica">🎵 Música</option>
+            <option value="Artes">🎨 Artes</option>
+            <option value="Tecnologia">💻 Tecnología</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- 8. GRID DEL CALENDARIO -->
+      <div class="cal-wrapper fade-up delay-3">
+        <div class="cal-weekdays">
+          <div>Lun</div>
+          <div>Mar</div>
+          <div>Mié</div>
+          <div>Jue</div>
+          <div>Vie</div>
+          <div class="weekend">Sáb</div>
+          <div class="weekend">Dom</div>
+        </div>
+        <!-- Celdas generadas por calendario.js -->
+        <div class="cal-grid" id="calGrid"></div>
+      </div>
+
+      <!-- 9. LISTA DE EVALUACIONES -->
+      <div class="eval-lista-section fade-up delay-4">
+        <div class="section-header">
+          <div class="section-title-wrap">
+            <span class="section-title">📋 EVALUACIONES DEL MES</span>
+            <span class="section-chip" id="evalChip">0 evaluaciones</span>
+          </div>
+        </div>
+        <div class="eval-lista" id="evalLista"></div>
+        <div class="eval-empty" id="evalEmpty" style="display:none">
+          <span class="empty-icon">📭</span>
+          <div class="empty-title">Sin evaluaciones este mes</div>
+          <div class="empty-desc">Agrega tu primera prueba para ganar EduCoins</div>
+          <button class="btn-primary" id="btnAgregarEvalEmpty"><span>+</span> Agregar Evaluación</button>
+        </div>
+      </div>
+
+  </main>
+  </div>
+
+  <!-- ============================================
+     10. MODAL — AGREGAR / EDITAR EVALUACIÓN
+============================================ -->
+  <div class="modal-overlay" id="modalEval">
+    <div class="modal">
+      <button class="modal-close" id="btnCerrarModalEval">✕</button>
+      <div class="modal-header">
+        <div class="modal-icon">📅</div>
+        <div>
+          <div class="modal-title" id="modalEvalTitulo">Nueva Evaluación</div>
+          <div class="modal-subtitle">Registra tu prueba y predice tu nota</div>
+        </div>
+      </div>
+
+      <form id="formEval" novalidate>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">ASIGNATURA *</label>
+            <select class="form-select" id="evalAsignatura" required>
+              <option value="">Selecciona...</option>
+              <option value="Matematicas">➗ Matemáticas</option>
+              <option value="Lenguaje">📖 Lenguaje</option>
+              <option value="Historia">🏛️ Historia</option>
+              <option value="Ciencias">🔬 Ciencias</option>
+              <option value="Ingles">🇬🇧 Inglés</option>
+              <option value="Ed. Fisica">⚽ Ed. Física</option>
+              <option value="Musica">🎵 Música</option>
+              <option value="Artes">🎨 Artes</option>
+              <option value="Tecnologia">💻 Tecnología</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">FECHA *</label>
+            <input type="date" class="form-input" id="evalFecha" required />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">CONTENIDOS A ESTUDIAR</label>
+          <textarea class="form-input form-textarea" id="evalContenidos"
+            placeholder="Ej: Fracciones, multiplicación de decimales..."></textarea>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">NOTA QUE ESPERO SACARME</label>
+          <!-- Botones generados por JS -->
+          <div class="nota-selector" id="notaSelector"></div>
+          <div class="nota-rango-preview" id="notaRangoPreview" style="display:none">
+            <span>🎯</span>
+            <span id="notaRangoTexto"></span>
+          </div>
+          <input type="hidden" id="evalNotaEsperada" />
+        </div>
+
+        <div class="form-actions">
+          <button type="button" class="btn-cancel" id="btnCancelarEval">Cancelar</button>
+          <button type="submit" class="btn-submit">💾 Guardar Evaluación</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ============================================
+     11. MODAL — DETALLE DE EVALUACIÓN
+============================================ -->
+  <div class="modal-overlay" id="modalDetalle">
+    <div class="modal modal-wide">
+      <button class="modal-close" id="btnCerrarModalDetalle">✕</button>
+      <div class="modal-header">
+        <div class="modal-icon" id="detalleIcon">📋</div>
+        <div>
+          <div class="modal-title" id="detalleTitulo">Detalle</div>
+          <div class="modal-subtitle" id="detalleSubtitulo">—</div>
+        </div>
+      </div>
+
+      <!-- Contenido dinámico -->
+      <div id="detalleContenido"></div>
+
+      <!-- Sección subir nota (se muestra/oculta según estado) -->
+      <div id="seccionNota" style="display:none">
+        <div class="divider"></div>
+        <div class="form-group">
+          <label class="form-label">📸 FOTO DE LA PRUEBA CORREGIDA</label>
+          <div class="upload-area" id="uploadArea">
+            <span class="upload-icon">📷</span>
+            <div class="upload-text">Click para subir foto</div>
+            <div class="upload-hint">JPG, PNG · Se comprime automáticamente a 800px</div>
+            <input type="file" id="inputFoto" accept="image/*" style="display:none" />
+          </div>
+          <div id="fotoPreview" style="display:none; margin-top:.75rem;">
+            <img id="fotoImg"
+              style="width:100%;border-radius:10px;border:1px solid var(--border);max-height:200px;object-fit:cover;" />
+            <button class="btn-quitar-foto" id="btnQuitarFoto">✕ Quitar foto</button>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">NOTA OBTENIDA</label>
+          <div class="nota-selector" id="notaSelectorDetalle"></div>
+        </div>
+
+        <button class="btn-submit" style="width:100%;margin-top:.5rem;" id="btnRegistrarNota">
+          ⭐ Registrar Nota y Ganar EduCoins
+        </button>
+      </div>
+
+      <!-- Botones de acción (generados por JS) -->
+      <div id="detalleAcciones" class="detalle-acciones"></div>
+    </div>
+  </div>
+
+  <!-- 12. TOAST CONTAINER -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- 13. SCRIPT — SIN type="module" para evitar scope issues con eventos inline -->
+  <script src="../auth/clerk-config.js"></script>
+  <script src="../shared/clerk-guard.js"></script>
+  <script src="../shared/shared.js"></script>
+  <script src="calendario.js"></script>
+
+
+  <script>
+    // Corregir links del header propio con BASE_URL real
+    // (mismo que usa clerk-config.js y shared.js)
+    (function () {
+      var base = window.EDUCOINS_BASE || '';
+      if (!base) return; // En Vercel no hay subcarpeta
+      document.querySelectorAll('a[href^="/"]').forEach(function (a) {
+        var href = a.getAttribute('href');
+        // Solo corregir links internos que NO empiecen ya con la base
+        if (!href.startsWith(base + '/') && !href.startsWith('http')) {
+          a.setAttribute('href', base + href);
+        }
+      });
+    })();
+  </script>
+
+</body>
+
+</html>

@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<!--
+============================================
+ARCHIVO: /admin/juegos-niveles.html
+DESCRIPCIÓN: Gestión de juegos y sus niveles
+ACCESO: Solo administradores
+============================================
+-->
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Juegos y Niveles — Admin EduCoins</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Nunito:wght@400;700;800;900&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="../shared/shared.css"/>
+<script
+  data-clerk-publishable-key="pk_test_bG92aW5nLXJhcHRvci0xLmNsZXJrLmFjY291bnRzLmRldiQ"
+  src="https://cdn.jsdelivr.net/npm/@clerk/clerk-js@latest/dist/clerk.browser.js"
+></script>
+<style>
+:root { --violet:#7c3aed;--cyan:#06b6d4;--yellow:#fbbf24;--green:#22c55e;--red:#ef4444;--bg:#07071a;--bg2:#10102e;--bg3:#1a1a3e;--border:#1e1e4a;--text:#e2e8f0;--text-dim:#64748b; }
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font-family:'Nunito',sans-serif;min-height:100vh;padding:1.5rem 1rem 3rem;}
+.page-header{display:flex;align-items:center;gap:1rem;margin-bottom:1.5rem;flex-wrap:wrap;}
+.page-header h1{font-size:1.2rem;font-weight:900;}
+.page-header a{color:var(--text-dim);text-decoration:none;font-size:.85rem;font-weight:800;}
+.page-header a:hover{color:var(--text);}
+.toolbar{display:flex;align-items:center;gap:.75rem;margin-bottom:1rem;flex-wrap:wrap;}
+.btn{padding:.5rem 1rem;border-radius:10px;border:1px solid;font-weight:900;font-size:.82rem;cursor:pointer;transition:all .2s;font-family:'Nunito',sans-serif;}
+.btn-primary{background:rgba(124,58,237,.15);border-color:var(--violet);color:#a78bfa;}
+.btn-primary:hover{background:rgba(124,58,237,.25);}
+.btn-success{background:rgba(34,197,94,.1);border-color:var(--green);color:#4ade80;}
+.btn-success:hover{background:rgba(34,197,94,.2);}
+.btn-danger{background:rgba(239,68,68,.08);border-color:var(--red);color:#f87171;}
+.btn-danger:hover{background:rgba(239,68,68,.18);}
+.btn-sm{padding:.3rem .65rem;font-size:.72rem;}
+.btn:disabled{opacity:.4;cursor:not-allowed;}
+
+.juegos-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:1rem;margin-bottom:2rem;}
+.juego-admin-card{background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:1rem 1.1rem;transition:border-color .2s;}
+.juego-admin-card:hover{border-color:rgba(124,58,237,.4);}
+.jac-header{display:flex;align-items:center;gap:.6rem;margin-bottom:.6rem;}
+.jac-emoji{font-size:1.6rem;}
+.jac-nombre{font-size:.9rem;font-weight:900;}
+.jac-id{font-size:.68rem;color:var(--text-dim);font-weight:800;}
+.jac-badges{display:flex;gap:.3rem;flex-wrap:wrap;margin-bottom:.6rem;}
+.badge{font-size:.6rem;font-weight:900;padding:.15rem .45rem;border-radius:6px;border:1px solid;}
+.badge-green{background:rgba(34,197,94,.1);border-color:rgba(34,197,94,.3);color:#4ade80;}
+.badge-yellow{background:rgba(251,191,36,.1);border-color:rgba(251,191,36,.3);color:#fbbf24;}
+.badge-violet{background:rgba(124,58,237,.12);border-color:rgba(124,58,237,.3);color:#a78bfa;}
+.badge-red{background:rgba(239,68,68,.1);border-color:rgba(239,68,68,.3);color:#f87171;}
+.badge-dim{background:rgba(255,255,255,.05);border-color:rgba(255,255,255,.1);color:var(--text-dim);}
+.jac-acciones{display:flex;gap:.4rem;flex-wrap:wrap;}
+
+.niveles-inline{margin-top:.6rem;}
+.ni-titulo{font-size:.62rem;font-weight:900;color:var(--text-dim);letter-spacing:.08em;text-transform:uppercase;margin-bottom:.4rem;}
+.ni-lista{display:flex;flex-direction:column;gap:.25rem;}
+.ni-item{display:flex;align-items:center;gap:.5rem;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);border-radius:8px;padding:.35rem .6rem;font-size:.72rem;font-weight:800;cursor:pointer;transition:all .2s;}
+.ni-item:hover{border-color:rgba(124,58,237,.3);background:rgba(124,58,237,.06);}
+.ni-num{width:22px;text-align:center;color:var(--text-dim);}
+.ni-nombre{flex:1;}
+.ni-agregar{width:100%;text-align:center;border:1px dashed rgba(255,255,255,.1);border-radius:8px;padding:.35rem;font-size:.72rem;font-weight:800;color:var(--text-dim);background:transparent;cursor:pointer;margin-top:.3rem;transition:all .2s;font-family:'Nunito',sans-serif;}
+.ni-agregar:hover{border-color:var(--violet);color:#a78bfa;background:rgba(124,58,237,.06);}
+
+.overlay{position:fixed;inset:0;z-index:1000;background:rgba(7,7,26,.88);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .3s;}
+.overlay.active{opacity:1;pointer-events:all;}
+.modal{background:var(--bg2);border:1px solid rgba(124,58,237,.3);border-radius:20px;padding:1.5rem;width:92%;max-width:520px;max-height:88vh;overflow-y:auto;transform:scale(.92);transition:transform .3s;scrollbar-width:thin;scrollbar-color:rgba(124,58,237,.3) transparent;}
+.overlay.active .modal{transform:scale(1);}
+.modal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:1.25rem;padding-bottom:.75rem;border-bottom:1px solid rgba(255,255,255,.08);}
+.modal-titulo{font-size:.95rem;font-weight:900;}
+.modal-cerrar{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:8px;color:var(--text-dim);width:32px;height:32px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:1rem;transition:all .2s;}
+.modal-cerrar:hover{background:rgba(239,68,68,.15);border-color:rgba(239,68,68,.4);color:#f87171;}
+
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:.75rem;}
+.form-grid .full{grid-column:1/-1;}
+.form-group{display:flex;flex-direction:column;gap:.35rem;}
+.form-label{font-size:.68rem;font-weight:900;color:var(--text-dim);letter-spacing:.06em;text-transform:uppercase;}
+.form-input,.form-select,.form-textarea{background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'Nunito',sans-serif;font-size:.82rem;font-weight:700;padding:.5rem .75rem;transition:border-color .2s;width:100%;}
+.form-input:focus,.form-select:focus,.form-textarea:focus{outline:none;border-color:var(--violet);}
+.form-textarea{min-height:80px;resize:vertical;}
+.form-hint{font-size:.65rem;color:var(--text-dim);font-weight:700;}
+.form-check{display:flex;align-items:center;gap:.5rem;font-size:.8rem;font-weight:800;cursor:pointer;}
+.form-check input{accent-color:var(--violet);width:15px;height:15px;}
+.modal-footer{display:flex;justify-content:flex-end;gap:.6rem;margin-top:1.25rem;padding-top:.75rem;border-top:1px solid rgba(255,255,255,.08);}
+
+.toast-container{position:fixed;bottom:1.5rem;right:1rem;z-index:9999;display:flex;flex-direction:column;gap:.5rem;}
+.toast{background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:.6rem 1rem;font-size:.8rem;font-weight:800;max-width:320px;animation:toastIn .3s ease;}
+.toast.success{border-color:rgba(34,197,94,.4);color:#4ade80;}
+.toast.error{border-color:rgba(239,68,68,.4);color:#f87171;}
+@keyframes toastIn{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:none;}}
+.loading{text-align:center;padding:3rem;color:var(--text-dim);font-size:.85rem;font-weight:800;}
+</style>
+</head>
+<body>
+
+<div class="page-header">
+  <a href="admin.html">← Panel Admin</a>
+  <span style="color:var(--border);">/</span>
+  <h1>🎮 Gestión de Juegos y Niveles</h1>
+  <span class="badge badge-dim" id="totalJuegosLabel">—</span>
+</div>
+
+<div class="toolbar">
+  <button class="btn btn-primary" onclick="abrirModalJuego(null)">+ Nuevo juego</button>
+  <span style="font-size:.75rem;color:var(--text-dim);font-weight:800;">Haz click en un nivel para editarlo · + para agregar nivel nuevo</span>
+</div>
+
+<div class="juegos-grid" id="juegosGrid">
+  <div class="loading">Cargando juegos...</div>
+</div>
+
+<!-- MODAL JUEGO -->
+<div class="overlay" id="overlayJuego">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-titulo" id="modalJuegoTitulo">Nuevo Juego</div>
+      <button class="modal-cerrar" onclick="cerrarModal('overlayJuego')">✕</button>
+    </div>
+    <div class="form-grid">
+      <div class="form-group">
+        <label class="form-label">ID del juego *</label>
+        <input class="form-input" id="fJuegoId" placeholder="ej: coinclik"/>
+        <span class="form-hint">Debe coincidir con el código</span>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Nombre visible *</label>
+        <input class="form-input" id="fJuegoNombre" placeholder="ej: COINCLIK"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Emoji</label>
+        <input class="form-input" id="fJuegoEmoji" placeholder="🎮" maxlength="4" style="font-size:1.3rem;"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Dificultad</label>
+        <select class="form-select" id="fJuegoDificultad">
+          <option value="1">1 — Fácil</option>
+          <option value="2" selected>2 — Medio</option>
+          <option value="3">3 — Difícil</option>
+        </select>
+      </div>
+      <div class="form-group full">
+        <label class="form-label">Descripción</label>
+        <input class="form-input" id="fJuegoDesc" placeholder="Descripción breve"/>
+      </div>
+      <div class="form-group full">
+        <label class="form-label">URL relativa *</label>
+        <input class="form-input" id="fJuegoUrl" placeholder="juegos/coinclik/coinclik.html"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Color principal</label>
+        <input class="form-input" id="fJuegoColor" placeholder="#7c3aed"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Recompensa</label>
+        <input class="form-input" id="fJuegoRecompensa" placeholder="hasta +300"/>
+      </div>
+      <div class="form-group full">
+        <label class="form-label">Badge (opcional)</label>
+        <input class="form-input" id="fJuegoBadge" placeholder="🔥 POPULAR"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Orden en lista</label>
+        <input class="form-input" type="number" id="fJuegoOrden" value="10" min="0"/>
+      </div>
+      <div class="form-group" style="justify-content:flex-end;flex-direction:row;gap:1.5rem;align-items:center;" class="full">
+        <label class="form-check"><input type="checkbox" id="fJuegeTieneNiveles"/> ¿Tiene niveles?</label>
+        <label class="form-check"><input type="checkbox" id="fJuegoActivo" checked/> Activo</label>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="cerrarModal('overlayJuego')">Cancelar</button>
+      <button class="btn btn-success" onclick="guardarJuego()" id="btnGuardarJuego">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL NIVEL -->
+<div class="overlay" id="overlayNivel">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-titulo" id="modalNivelTitulo">Nivel</div>
+      <button class="modal-cerrar" onclick="cerrarModal('overlayNivel')">✕</button>
+    </div>
+    <input type="hidden" id="fNivelJuegoId"/>
+    <input type="hidden" id="fNivelId"/>
+    <div class="form-grid">
+      <div class="form-group">
+        <label class="form-label">Número de nivel</label>
+        <input class="form-input" type="number" id="fNivelNum" min="1" max="10" value="1"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Intentos requeridos</label>
+        <input class="form-input" type="number" id="fNivelIntentos" value="3" min="1" max="10"/>
+      </div>
+      <div class="form-group full">
+        <label class="form-label">Nombre *</label>
+        <input class="form-input" id="fNivelNombre" placeholder="ej: Tablas 1-3"/>
+      </div>
+      <div class="form-group full">
+        <label class="form-label">Descripción</label>
+        <input class="form-input" id="fNivelDesc" placeholder="Descripción breve del nivel"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Bonus 🪙 al completar</label>
+        <input class="form-input" type="number" id="fNivelMonedas" value="0" min="0"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Bonus XP al completar</label>
+        <input class="form-input" type="number" id="fNivelXP" value="0" min="0"/>
+      </div>
+      <div class="form-group full">
+        <label class="form-label">Config JSON</label>
+        <textarea class="form-textarea" id="fNivelConfig" placeholder='{"tablas":[1,2,3],"vel_rivales":0.35,"tiempo_decision":7}'></textarea>
+        <span class="form-hint">JSON libre — el juego lo leerá. Campos según el juego específico.</span>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-danger btn-sm" id="btnEliminarNivel" onclick="eliminarNivel()" style="margin-right:auto;display:none;">Eliminar nivel</button>
+      <button class="btn" onclick="cerrarModal('overlayNivel')">Cancelar</button>
+      <button class="btn btn-success" onclick="guardarNivel()" id="btnGuardarNivel">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast-container" id="toastContainer"></div>
+<script src="../auth/clerk-config.js"></script>
+<script src="../shared/clerk-guard.js"></script>
+<script src="../shared/shared.js"></script>
+<script>
+var STATE = { juegos: [], niveles: {} };
+
+document.addEventListener('clerkReady', function() {
+  if (!window.CLERK_TOKEN) return;
+  cargarTodo();
+});
+
+async function getToken() {
+  try { if (window.Clerk&&window.Clerk.session){var t=await window.Clerk.session.getToken();if(t)return t;} } catch(_){}
+  return window.CLERK_TOKEN||'';
+}
+async function apiFetch(url) {
+  var tok=await getToken();
+  var r=await fetch(url,{headers:{'Authorization':'Bearer '+tok}});
+  return r.json();
+}
+async function apiPost(body) {
+  var tok=await getToken();
+  var r=await fetch('/api/juegos',{method:'POST',headers:{'Authorization':'Bearer '+tok,'Content-Type':'application/json'},body:JSON.stringify(body)});
+  return r.json();
+}
+async function apiPut(body) {
+  var tok=await getToken();
+  var r=await fetch('/api/juegos',{method:'PUT',headers:{'Authorization':'Bearer '+tok,'Content-Type':'application/json'},body:JSON.stringify(body)});
+  return r.json();
+}
+async function apiDelete(body) {
+  var tok=await getToken();
+  var r=await fetch('/api/juegos',{method:'DELETE',headers:{'Authorization':'Bearer '+tok,'Content-Type':'application/json'},body:JSON.stringify(body)});
+  return r.json();
+}
+
+async function cargarTodo() {
+  try {
+    var data = await apiFetch('/api/juegos?action=catalogo_admin');
+    STATE.juegos = data.juegos || [];
+    var conNiveles = STATE.juegos.filter(function(j){return j.tiene_niveles;});
+    await Promise.all(conNiveles.map(async function(j) {
+      var d = await apiFetch('/api/juegos?action=mapa_niveles&juego_id='+j.juego_id);
+      STATE.niveles[j.juego_id] = d.mapa_niveles || [];
+    }));
+    renderJuegos();
+  } catch(e) {
+    document.getElementById('juegosGrid').innerHTML = '<div class="loading">Error al cargar. ¿Ejecutaste el SQL de migración?</div>';
+  }
+}
+
+function renderJuegos() {
+  var grid = document.getElementById('juegosGrid');
+  document.getElementById('totalJuegosLabel').textContent = STATE.juegos.length+' juegos';
+  if (!STATE.juegos.length) {
+    grid.innerHTML = '<div class="loading">No hay juegos. Ejecuta niveles_sistema.sql primero.</div>';
+    return;
+  }
+  grid.innerHTML = STATE.juegos.map(function(j) {
+    var difC = j.dificultad===1?'badge-green':j.dificultad===2?'badge-yellow':'badge-red';
+    var difT = j.dificultad===1?'★ Fácil':j.dificultad===2?'★★ Medio':'★★★ Difícil';
+    var nivelesHTML = '';
+    if (j.tiene_niveles) {
+      var nvs = STATE.niveles[j.juego_id]||[];
+      var items = nvs.map(function(n) {
+        return '<div class="ni-item" onclick="abrirModalNivel(\''+j.juego_id+'\','+n.nivel+')">'+
+          '<span class="ni-num">'+n.nivel+'</span>'+
+          '<span class="ni-nombre">'+n.nombre+'</span>'+
+          '<span style="font-size:.62rem;color:var(--text-dim);">×'+n.intentos_requeridos+'</span>'+
+          (n.recompensa_monedas>0?'<span style="font-size:.6rem;color:#fbbf24;">+'+n.recompensa_monedas+'🪙</span>':'')+
+          '<span style="font-size:.62rem;color:var(--text-dim);">✏️</span>'+
+          '</div>';
+      }).join('');
+      nivelesHTML = '<div class="niveles-inline">'+
+        '<div class="ni-titulo">NIVELES ('+nvs.length+'/10)</div>'+
+        '<div class="ni-lista">'+items+'</div>'+
+        (nvs.length<10?'<button class="ni-agregar" onclick="abrirNuevoNivel(\''+j.juego_id+'\','+(nvs.length+1)+')">+ Agregar nivel '+(nvs.length+1)+'</button>':'')+
+        '</div>';
+    }
+    return '<div class="juego-admin-card">'+
+      '<div class="jac-header">'+
+      '<span class="jac-emoji">'+j.emoji+'</span>'+
+      '<div><div class="jac-nombre">'+j.nombre+'</div><div class="jac-id">'+j.juego_id+'</div></div>'+
+      '</div>'+
+      '<div class="jac-badges">'+
+      '<span class="badge '+difC+'">'+difT+'</span>'+
+      (j.tiene_niveles?'<span class="badge badge-violet">🎯 Niveles</span>':'')+
+      (j.activo?'<span class="badge badge-green">Activo</span>':'<span class="badge badge-red">Inactivo</span>')+
+      (j.badge?'<span class="badge badge-yellow">'+j.badge+'</span>':'')+
+      '</div>'+
+      nivelesHTML+
+      '<div class="jac-acciones" style="margin-top:.6rem;">'+
+      '<button class="btn btn-primary btn-sm" onclick="abrirModalJuego(\''+j.juego_id+'\')">✏️ Editar</button>'+
+      (j.tiene_niveles&&(!STATE.niveles[j.juego_id]||STATE.niveles[j.juego_id].length===0)?'<button class="btn btn-success btn-sm" onclick="abrirNuevoNivel(\''+j.juego_id+'\',1)">+ Primer nivel</button>':'')+
+      '</div>'+
+      '</div>';
+  }).join('');
+}
+
+function abrirModalJuego(id) {
+  var j = id?STATE.juegos.find(function(x){return x.juego_id===id;}):null;
+  document.getElementById('modalJuegoTitulo').textContent = j?'Editar — '+j.nombre:'Nuevo Juego';
+  document.getElementById('fJuegoId').value = j?j.juego_id:'';
+  document.getElementById('fJuegoId').disabled = !!j;
+  document.getElementById('fJuegoNombre').value = j?j.nombre:'';
+  document.getElementById('fJuegoEmoji').value  = j?j.emoji:'🎮';
+  document.getElementById('fJuegoDificultad').value = j?String(j.dificultad):'2';
+  document.getElementById('fJuegoDesc').value   = j?(j.descripcion||''):'';
+  document.getElementById('fJuegoUrl').value    = j?j.url:'';
+  document.getElementById('fJuegoColor').value  = j?(j.color||'#7c3aed'):'#7c3aed';
+  document.getElementById('fJuegoRecompensa').value = j?(j.recompensa||'hasta +300'):'hasta +300';
+  document.getElementById('fJuegoBadge').value  = j?(j.badge||''):'';
+  document.getElementById('fJuegoOrden').value  = j?String(j.orden||0):'10';
+  document.getElementById('fJuegeTieneNiveles').checked = j?!!j.tiene_niveles:false;
+  document.getElementById('fJuegoActivo').checked = j?!!j.activo:true;
+  document.getElementById('overlayJuego').classList.add('active');
+}
+
+async function guardarJuego() {
+  var id=document.getElementById('fJuegoId').value.trim();
+  var nombre=document.getElementById('fJuegoNombre').value.trim();
+  var url=document.getElementById('fJuegoUrl').value.trim();
+  if(!id||!nombre||!url){toast('ID, nombre y URL son obligatorios','error');return;}
+  var payload={juego_id:id,nombre,emoji:document.getElementById('fJuegoEmoji').value.trim()||'🎮',
+    descripcion:document.getElementById('fJuegoDesc').value.trim()||null,url,
+    color:document.getElementById('fJuegoColor').value.trim()||'#7c3aed',
+    recompensa:document.getElementById('fJuegoRecompensa').value.trim()||'hasta +300',
+    badge:document.getElementById('fJuegoBadge').value.trim()||null,
+    orden:Number(document.getElementById('fJuegoOrden').value)||0,
+    dificultad:Number(document.getElementById('fJuegoDificultad').value),
+    tiene_niveles:document.getElementById('fJuegeTieneNiveles').checked,
+    activo:document.getElementById('fJuegoActivo').checked};
+  var existente=STATE.juegos.find(function(x){return x.juego_id===id;});
+  var btn=document.getElementById('btnGuardarJuego');btn.disabled=true;
+  try {
+    if(existente) await apiPut(Object.assign({action:'editar_juego'},payload));
+    else await apiPost(Object.assign({action:'crear_juego'},payload));
+    toast(existente?'✅ Juego actualizado':'✅ Juego creado','success');
+    cerrarModal('overlayJuego');await cargarTodo();
+  } catch(e){toast('❌ Error: '+e.message,'error');}
+  finally{btn.disabled=false;}
+}
+
+function abrirNuevoNivel(juegoId,numero) {
+  document.getElementById('modalNivelTitulo').textContent='Nuevo Nivel '+numero+' — '+juegoId;
+  document.getElementById('fNivelJuegoId').value=juegoId;
+  document.getElementById('fNivelId').value='';
+  document.getElementById('fNivelNum').value=String(numero);
+  document.getElementById('fNivelNombre').value='';
+  document.getElementById('fNivelDesc').value='';
+  document.getElementById('fNivelConfig').value='{}';
+  document.getElementById('fNivelIntentos').value='3';
+  document.getElementById('fNivelMonedas').value='0';
+  document.getElementById('fNivelXP').value='0';
+  document.getElementById('btnEliminarNivel').style.display='none';
+  document.getElementById('overlayNivel').classList.add('active');
+}
+
+function abrirModalNivel(juegoId,numero) {
+  var nvs=STATE.niveles[juegoId]||[];
+  var n=nvs.find(function(x){return x.nivel===numero;});
+  if(!n)return;
+  document.getElementById('modalNivelTitulo').textContent='Nivel '+numero+' — '+juegoId;
+  document.getElementById('fNivelJuegoId').value=juegoId;
+  document.getElementById('fNivelId').value=n.id||'';
+  document.getElementById('fNivelNum').value=String(numero);
+  document.getElementById('fNivelNombre').value=n.nombre||'';
+  document.getElementById('fNivelDesc').value=n.descripcion||'';
+  document.getElementById('fNivelConfig').value=n.config?JSON.stringify(n.config,null,2):'{}';
+  document.getElementById('fNivelIntentos').value=String(n.intentos_requeridos||3);
+  document.getElementById('fNivelMonedas').value=String(n.recompensa_monedas||0);
+  document.getElementById('fNivelXP').value=String(n.recompensa_xp||0);
+  document.getElementById('btnEliminarNivel').style.display='inline-flex';
+  document.getElementById('overlayNivel').classList.add('active');
+}
+
+async function guardarNivel() {
+  var juegoId=document.getElementById('fNivelJuegoId').value;
+  var nombre=document.getElementById('fNivelNombre').value.trim();
+  var num=Number(document.getElementById('fNivelNum').value);
+  if(!nombre||!num){toast('Número y nombre son obligatorios','error');return;}
+  var configStr=document.getElementById('fNivelConfig').value.trim()||'{}';
+  var config;try{config=JSON.parse(configStr);}catch(_){toast('❌ JSON inválido','error');return;}
+  var payload={juego_id:juegoId,nivel:num,nombre,
+    descripcion:document.getElementById('fNivelDesc').value.trim()||null,config,
+    intentos_requeridos:Number(document.getElementById('fNivelIntentos').value)||3,
+    recompensa_bonus_monedas:Number(document.getElementById('fNivelMonedas').value)||0,
+    recompensa_bonus_xp:Number(document.getElementById('fNivelXP').value)||0};
+  var nivelId=document.getElementById('fNivelId').value;
+  var btn=document.getElementById('btnGuardarNivel');btn.disabled=true;
+  try {
+    if(nivelId) await apiPut(Object.assign({action:'editar_nivel_juego',id:nivelId},payload));
+    else await apiPost(Object.assign({action:'crear_nivel_juego'},payload));
+    toast(nivelId?'✅ Nivel actualizado':'✅ Nivel creado','success');
+    cerrarModal('overlayNivel');
+    var d=await apiFetch('/api/juegos?action=mapa_niveles&juego_id='+juegoId);
+    STATE.niveles[juegoId]=d.mapa_niveles||[];
+    renderJuegos();
+  } catch(e){toast('❌ Error: '+e.message,'error');}
+  finally{btn.disabled=false;}
+}
+
+async function eliminarNivel() {
+  var juegoId=document.getElementById('fNivelJuegoId').value;
+  var num=Number(document.getElementById('fNivelNum').value);
+  var nivelId=document.getElementById('fNivelId').value;
+  if(!nivelId)return;
+  if(!confirm('¿Eliminar el nivel '+num+' de '+juegoId+'?'))return;
+  try {
+    await apiDelete({action:'eliminar_nivel_juego',id:nivelId});
+    toast('✅ Nivel eliminado','success');
+    cerrarModal('overlayNivel');
+    var d=await apiFetch('/api/juegos?action=mapa_niveles&juego_id='+juegoId);
+    STATE.niveles[juegoId]=d.mapa_niveles||[];
+    renderJuegos();
+  } catch(e){toast('❌ Error: '+e.message,'error');}
+}
+
+function cerrarModal(id){document.getElementById(id).classList.remove('active');}
+function toast(msg,tipo){
+  var c=document.getElementById('toastContainer');
+  var el=document.createElement('div');el.className='toast '+(tipo||'');el.textContent=msg;
+  c.appendChild(el);setTimeout(function(){if(el.parentNode)el.parentNode.removeChild(el);},3500);
+}
+</script>
+</body>
+</html>
