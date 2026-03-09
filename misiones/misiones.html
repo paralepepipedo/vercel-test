@@ -1,0 +1,1249 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <!--
+============================================
+ARCHIVO: /misiones/misiones.html
+ESTILOS:  ../shared/shared.css
+SCRIPTS:  ../shared/shared.js
+          misiones.js
+============================================
+-->
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+  <title>Misiones — EduCoins</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Nunito:wght@400;700;800;900&display=swap"
+    rel="stylesheet" />
+  <link rel="stylesheet" href="../shared/shared.css" />
+  <script data-clerk-publishable-key="pk_test_bG92aW5nLXJhcHRvci0xLmNsZXJrLmFjY291bnRzLmRldiQ"
+    src="https://cdn.jsdelivr.net/npm/@clerk/clerk-js@latest/dist/clerk.browser.js"></script>
+
+  <style>
+    /* =============================================
+   MISIONES — estilos propios
+   ============================================= */
+
+    /* ── PAGE HEADER ── */
+    .misiones-page-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .page-tag {
+      font-size: .7rem;
+      font-weight: 900;
+      color: var(--violet);
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      margin-bottom: .3rem;
+    }
+
+    .page-title {
+      font-size: 1.6rem;
+      font-weight: 900;
+      margin: .2rem 0;
+    }
+
+    .page-subtitle {
+      font-size: .85rem;
+      color: var(--text-dim);
+      font-weight: 700;
+    }
+
+    .header-timer {
+      text-align: right;
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: .7rem 1.1rem;
+      min-width: 140px;
+    }
+
+    .timer-label {
+      font-size: .6rem;
+      font-weight: 800;
+      color: var(--text-muted);
+      letter-spacing: .1em;
+      margin-bottom: .2rem;
+    }
+
+    .timer-value {
+      font-family: 'Press Start 2P', monospace;
+      font-size: .9rem;
+      color: var(--cyan);
+    }
+
+    .timer-sub {
+      font-size: .65rem;
+      color: var(--text-muted);
+      margin-top: .25rem;
+    }
+
+    /* ── ANILLO DE PROGRESO ── */
+    .progreso-general {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 1.25rem 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+      flex-wrap: wrap;
+      margin-bottom: 1.5rem;
+    }
+
+    .ring-wrap-big {
+      position: relative;
+      width: 100px;
+      height: 100px;
+      flex-shrink: 0;
+    }
+
+    .ring-svg {
+      width: 100px;
+      height: 100px;
+      transform: rotate(-90deg);
+    }
+
+    .ring-bg {
+      fill: none;
+      stroke: var(--bg3);
+      stroke-width: 10;
+    }
+
+    .ring-prog {
+      fill: none;
+      stroke: var(--violet);
+      stroke-width: 10;
+      stroke-linecap: round;
+      stroke-dasharray: 327;
+      stroke-dashoffset: 327;
+      transition: stroke-dashoffset .6s ease, stroke .4s;
+    }
+
+    .ring-center {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .ring-num {
+      font-size: 1.1rem;
+      font-weight: 900;
+    }
+
+    .ring-label {
+      font-size: .55rem;
+      color: var(--text-muted);
+      font-weight: 800;
+      letter-spacing: .08em;
+    }
+
+    .progreso-info {
+      flex: 1;
+      min-width: 180px;
+    }
+
+    .progreso-titulo {
+      font-size: 1rem;
+      font-weight: 900;
+      margin-bottom: .25rem;
+    }
+
+    .progreso-sub {
+      font-size: .8rem;
+      color: var(--text-dim);
+      font-weight: 700;
+      margin-bottom: .75rem;
+    }
+
+    .recompensas-row {
+      display: flex;
+      gap: 1.5rem;
+      flex-wrap: wrap;
+      margin-bottom: .75rem;
+    }
+
+    .recompensa-item {
+      display: flex;
+      align-items: center;
+      gap: .5rem;
+    }
+
+    .recompensa-icon {
+      font-size: 1.3rem;
+    }
+
+    .recompensa-num {
+      font-size: 1.1rem;
+      font-weight: 900;
+      color: var(--yellow);
+    }
+
+    .recompensa-label {
+      font-size: .7rem;
+      color: var(--text-muted);
+      font-weight: 700;
+    }
+
+    .barra-progreso-wrap {}
+
+    .barra-progreso-labels {
+      display: flex;
+      justify-content: space-between;
+      font-size: .72rem;
+      color: var(--text-muted);
+      font-weight: 700;
+      margin-bottom: .3rem;
+    }
+
+    .barra-track {
+      background: var(--bg3);
+      border-radius: 99px;
+      height: 8px;
+      overflow: hidden;
+    }
+
+    .barra-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--violet), var(--cyan));
+      border-radius: 99px;
+      width: 0;
+      transition: width .6s ease;
+    }
+
+    /* Bonus lateral */
+    .bonus-lateral {
+      background: rgba(124, 58, 237, .06);
+      border: 1px solid rgba(124, 58, 237, .25);
+      border-radius: 14px;
+      padding: 1rem 1.25rem;
+      text-align: center;
+      min-width: 140px;
+    }
+
+    .bonus-lat-title {
+      font-size: .65rem;
+      font-weight: 900;
+      color: var(--violet);
+      letter-spacing: .08em;
+      margin-bottom: .3rem;
+    }
+
+    .bonus-lat-amount {
+      font-size: 1.2rem;
+      font-weight: 900;
+      color: var(--yellow);
+    }
+
+    .bonus-lat-xp {
+      font-size: .75rem;
+      color: var(--text-dim);
+      font-weight: 700;
+      margin-bottom: .5rem;
+    }
+
+    .bonus-lat-estado {
+      display: flex;
+      align-items: center;
+      gap: .4rem;
+      justify-content: center;
+      font-size: .78rem;
+      font-weight: 800;
+      color: var(--text-muted);
+    }
+
+    .bonus-lat-estado.desbloqueado {
+      color: var(--green);
+    }
+
+    .bonus-lock {
+      font-size: .9rem;
+    }
+
+    .bonus-check {
+      font-size: .9rem;
+    }
+
+    /* ── TABS DIARIA / SEMANAL ── */
+    .tabs-row {
+      display: flex;
+      gap: .5rem;
+      margin-bottom: 1.25rem;
+      flex-wrap: wrap;
+    }
+
+    .tab-btn {
+      padding: .55rem 1.2rem;
+      border-radius: 12px;
+      border: 2px solid transparent;
+      background: var(--bg2);
+      color: var(--text-dim);
+      font-weight: 900;
+      font-size: .82rem;
+      cursor: pointer;
+      transition: all .2s;
+      display: flex;
+      align-items: center;
+      gap: .45rem;
+      line-height: 1;
+    }
+
+    .tab-btn:hover {
+      border-color: var(--border);
+      color: var(--text);
+    }
+
+    .tab-btn.tab-activa-diaria {
+      background: rgba(124, 58, 237, .12);
+      border-color: var(--violet);
+      color: #a78bfa;
+    }
+
+    .tab-btn.tab-activa-semanal {
+      background: rgba(6, 182, 212, .1);
+      border-color: var(--cyan);
+      color: #67e8f9;
+    }
+
+    .tab-badge-count {
+      background: #ef4444;
+      color: #fff;
+      border-radius: 99px;
+      font-size: .6rem;
+      padding: .1rem .42rem;
+      font-weight: 900;
+      min-width: 18px;
+      text-align: center;
+    }
+
+    .tab-badge-ok {
+      background: rgba(34, 197, 94, .2);
+      color: #4ade80;
+      border-radius: 99px;
+      font-size: .6rem;
+      padding: .1rem .42rem;
+      font-weight: 900;
+    }
+
+    /* ── SLIDER (la "puerta") ── */
+    .misiones-outer {
+      overflow: hidden;
+      position: relative;
+    }
+
+    .misiones-slider {
+      display: flex;
+      width: 200%;
+      transition: transform .45s cubic-bezier(.77, 0, .18, 1);
+      align-items: flex-start;
+    }
+
+    .misiones-slider.ver-semanales {
+      transform: translateX(-50%);
+    }
+
+    .panel-misiones {
+      width: 50%;
+      flex-shrink: 0;
+      /* sin padding lateral para no recortar */
+    }
+
+    /* ── ENCABEZADO DE CADA PANEL ── */
+    .panel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: .5rem;
+      margin-bottom: 1rem;
+    }
+
+    .panel-title {
+      font-size: 1rem;
+      font-weight: 900;
+    }
+
+    .panel-sub {
+      font-size: .75rem;
+      color: var(--text-dim);
+      font-weight: 700;
+      margin-top: .15rem;
+    }
+
+    .btn-volver {
+      padding: .45rem .9rem;
+      background: rgba(6, 182, 212, .08);
+      border: 1px solid rgba(6, 182, 212, .4);
+      border-radius: 10px;
+      color: #67e8f9;
+      font-size: .78rem;
+      font-weight: 900;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: .35rem;
+      transition: all .2s;
+    }
+
+    .btn-volver:hover {
+      background: rgba(6, 182, 212, .16);
+    }
+
+    /* ── GRID MISIONES DIARIAS ── */
+    .misiones-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: .85rem;
+    }
+
+    /* Bloque móvil oculto en desktop */
+    .progreso-movil {
+      display: none;
+    }
+
+    /* Bloque desktop oculto en móvil */
+    @media (max-width: 600px) {
+      .misiones-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .misiones-page-header {
+        flex-direction: column;
+        padding-top: 72px;
+      }
+
+      .header-timer {
+        display: none;
+      }
+
+      /* Tabs en fila */
+      .tabs-row {
+        flex-wrap: nowrap;
+      }
+
+      .tab-btn {
+        flex: 1;
+        justify-content: center;
+        padding: .5rem .4rem;
+        font-size: .72rem;
+        white-space: nowrap;
+      }
+
+      /* Ocultar bloque desktop, mostrar bloque móvil */
+      .progreso-desktop {
+        display: none;
+      }
+
+      .progreso-movil {
+        display: block;
+      }
+    }
+
+    /* ── Estilos del bloque móvil ── */
+    .progreso-movil {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      overflow: hidden;
+      margin-bottom: 1.5rem;
+    }
+
+    .pmov-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: .55rem .875rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .pmov-title {
+      font-family: 'Press Start 2P', monospace;
+      font-size: .45rem;
+      color: #fff;
+    }
+
+    .pmov-timer {
+      display: flex;
+      align-items: center;
+      gap: .35rem;
+    }
+
+    .pmov-timer-lbl {
+      font-size: .55rem;
+      font-weight: 800;
+      color: var(--text-muted);
+    }
+
+    .pmov-timer-val {
+      font-family: 'Press Start 2P', monospace;
+      font-size: .6rem;
+      color: var(--cyan);
+    }
+
+    .pmov-body {
+      display: flex;
+      align-items: center;
+      gap: .75rem;
+      padding: .65rem .875rem;
+    }
+
+    .pmov-ring {
+      position: relative;
+      width: 72px;
+      height: 72px;
+      flex-shrink: 0;
+    }
+
+    .pmov-ring svg {
+      width: 72px;
+      height: 72px;
+      transform: rotate(-90deg);
+    }
+
+    .pmov-ring-center {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .pmov-ring-num {
+      font-size: .9rem;
+      font-weight: 900;
+    }
+
+    .pmov-ring-lbl {
+      font-size: .4rem;
+      color: var(--text-muted);
+      font-weight: 800;
+      letter-spacing: .06em;
+    }
+
+    .pmov-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .pmov-titulo {
+      font-size: .82rem;
+      font-weight: 900;
+      margin-bottom: .25rem;
+    }
+
+    .pmov-chips {
+      display: flex;
+      gap: .35rem;
+      align-items: center;
+      margin-bottom: .4rem;
+      flex-wrap: nowrap;
+    }
+
+    .pmov-chip {
+      display: flex;
+      align-items: center;
+      gap: .2rem;
+      background: rgba(255, 255, 255, .04);
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      padding: .2rem .4rem;
+      flex-shrink: 0;
+    }
+
+    .pmov-chip-ico {
+      font-size: .8rem;
+    }
+
+    .pmov-chip-num {
+      font-size: .75rem;
+      font-weight: 900;
+      color: var(--yellow);
+    }
+
+    .pmov-chip-bonus {
+      background: rgba(124, 58, 237, .1);
+      border-color: rgba(124, 58, 237, .3);
+    }
+
+    .pmov-chip-bonus .pmov-chip-num {
+      color: #a78bfa;
+      font-size: .65rem;
+    }
+
+    .pmov-barra-labels {
+      display: flex;
+      justify-content: space-between;
+      font-size: .62rem;
+      color: var(--text-muted);
+      font-weight: 700;
+      margin-bottom: .25rem;
+    }
+
+    .pmov-barra-track {
+      background: var(--bg3);
+      border-radius: 99px;
+      height: 6px;
+      overflow: hidden;
+    }
+
+    .pmov-barra-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--violet), var(--cyan));
+      border-radius: 99px;
+      width: 0;
+      transition: width .6s ease;
+    }
+
+    /* ── CARD MISIÓN DIARIA ── */
+    .mision-card {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 1rem;
+      display: flex;
+      align-items: flex-start;
+      gap: .75rem;
+      cursor: pointer;
+      transition: border-color .2s, transform .15s, box-shadow .2s;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .mision-card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(var(--m-rgb), .06), transparent);
+      pointer-events: none;
+    }
+
+    .mision-card:hover:not(.completada) {
+      border-color: rgba(var(--m-rgb), .5);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 24px rgba(var(--m-rgb), .15);
+    }
+
+    .mision-card.completada {
+      opacity: .75;
+      cursor: default;
+      background: rgba(22, 101, 52, .12);
+      border-color: rgba(34, 197, 94, .4);
+      border-left: 4px solid #22c55e;
+      order: 1;
+    }
+
+    .mision-card.completada .mision-nombre {
+      text-decoration: line-through;
+      color: var(--text-muted);
+    }
+
+    .mision-card.completada .mision-emoji-wrap {
+      background: rgba(34, 197, 94, .15);
+    }
+
+    .mision-card.completada .reward-coins,
+    .mision-card.completada .reward-xp {
+      opacity: .5;
+    }
+
+    .mision-card.completando {
+      opacity: .7;
+      pointer-events: none;
+    }
+
+    .mision-emoji-wrap {
+      font-size: 1.5rem;
+      width: 46px;
+      height: 46px;
+      background: rgba(var(--m-rgb), .12);
+      border-radius: 11px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .mision-body {
+      flex: 1;
+      min-width: 0;
+    }
+
+    /* SIN text-overflow ni truncado — texto completo siempre */
+    .mision-nombre {
+      font-size: .88rem;
+      font-weight: 800;
+      color: var(--text);
+      line-height: 1.45;
+      word-break: break-word;
+      hyphens: auto;
+    }
+
+    .mision-tipo {
+      font-size: .72rem;
+      color: var(--text-muted);
+      font-weight: 700;
+      margin-top: .3rem;
+    }
+
+    .mision-reward {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: .25rem;
+      flex-shrink: 0;
+    }
+
+    .reward-coins {
+      font-size: .78rem;
+      font-weight: 900;
+      color: var(--yellow);
+      white-space: nowrap;
+    }
+
+    .reward-xp {
+      font-size: .72rem;
+      font-weight: 800;
+      color: #a78bfa;
+      white-space: nowrap;
+    }
+
+    /* Mini barra de progreso en cards de tipo 'repetir' */
+    .card-progreso {
+      margin-top: .5rem;
+      width: 100%;
+    }
+
+    .card-prog-label {
+      font-size: .67rem;
+      color: var(--text-muted);
+      font-weight: 700;
+      margin-bottom: .25rem;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .card-prog-track {
+      background: var(--bg3);
+      border-radius: 99px;
+      height: 5px;
+      overflow: hidden;
+    }
+
+    .card-prog-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #f59e0b, #f97316);
+      border-radius: 99px;
+      transition: width .5s ease;
+    }
+
+    /* ── CARDS MISIONES SEMANALES ── */
+    .semanales-list {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .sem-card {
+      background: var(--bg2);
+      border: 1px solid rgba(6, 182, 212, .2);
+      border-left: 4px solid var(--cyan);
+      border-radius: 14px;
+      padding: 1.1rem 1.25rem;
+      transition: border-color .2s, box-shadow .2s;
+    }
+
+    .sem-card:hover:not(.completada) {
+      border-color: rgba(6, 182, 212, .5);
+      box-shadow: 0 4px 20px rgba(6, 182, 212, .1);
+    }
+
+    .sem-card.completada {
+      border-left-color: var(--green);
+      opacity: .75;
+      background: rgba(22, 101, 52, .08);
+    }
+
+    .sem-card.completada .sem-desc {
+      text-decoration: line-through;
+      color: var(--text-muted);
+    }
+
+    .sem-header {
+      display: flex;
+      align-items: flex-start;
+      gap: .85rem;
+      margin-bottom: .85rem;
+    }
+
+    .sem-icono {
+      font-size: 1.7rem;
+      flex-shrink: 0;
+      width: 50px;
+      height: 50px;
+      background: rgba(6, 182, 212, .08);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .sem-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    /* SIN truncado — texto completo */
+    .sem-desc {
+      font-size: .92rem;
+      font-weight: 800;
+      color: var(--text);
+      line-height: 1.45;
+      word-break: break-word;
+      hyphens: auto;
+    }
+
+    .sem-rewards {
+      display: flex;
+      gap: .6rem;
+      margin-top: .4rem;
+      flex-wrap: wrap;
+    }
+
+    .sem-pill {
+      font-size: .72rem;
+      font-weight: 800;
+      padding: .2rem .55rem;
+      border-radius: 99px;
+    }
+
+    .sem-pill-coins {
+      background: rgba(250, 204, 21, .1);
+      color: #fbbf24;
+    }
+
+    .sem-pill-xp {
+      background: rgba(168, 85, 247, .1);
+      color: #c084fc;
+    }
+
+    .sem-prog-bar {
+      background: rgba(255, 255, 255, .06);
+      border-radius: 99px;
+      height: 10px;
+      overflow: hidden;
+    }
+
+    .sem-prog-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--cyan), var(--green));
+      border-radius: 99px;
+      transition: width .6s ease;
+    }
+
+    .sem-prog-txt {
+      display: flex;
+      justify-content: space-between;
+      font-size: .72rem;
+      color: var(--text-muted);
+      font-weight: 700;
+      margin-top: .35rem;
+    }
+
+    /* Nota info en panel semanal */
+    .sem-info-banner {
+      background: rgba(6, 182, 212, .06);
+      border: 1px solid rgba(6, 182, 212, .2);
+      border-radius: 10px;
+      padding: .6rem .9rem;
+      font-size: .78rem;
+      color: #67e8f9;
+      font-weight: 700;
+      margin-bottom: 1.1rem;
+    }
+
+    /* ── HISTORIAL ── */
+    .historial-lista {
+      display: flex;
+      flex-direction: column;
+      gap: .5rem;
+    }
+
+    .historial-item {
+      display: flex;
+      align-items: center;
+      gap: .75rem;
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-left: 3px solid rgba(34, 197, 94, .5);
+      border-radius: 10px;
+      padding: .65rem 1rem;
+      font-size: .82rem;
+    }
+
+    .historial-icono {
+      font-size: 1.2rem;
+      width: 36px;
+      height: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(34, 197, 94, .1);
+      border-radius: 8px;
+      flex-shrink: 0;
+    }
+
+    .historial-body {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .historial-desc {
+      font-weight: 800;
+      font-size: .82rem;
+      color: var(--text);
+    }
+
+    .historial-meta {
+      font-size: .7rem;
+      color: var(--text-muted);
+      font-weight: 700;
+      margin-top: .15rem;
+    }
+
+    .historial-reward {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: .1rem;
+      flex-shrink: 0;
+      font-size: .78rem;
+      font-weight: 900;
+    }
+
+    .hist-dia {
+      color: var(--text-muted);
+      font-weight: 700;
+      min-width: 80px;
+    }
+
+    .hist-emoji {
+      font-size: 1rem;
+    }
+
+    .hist-nombre {
+      flex: 1;
+      font-weight: 800;
+    }
+
+    .hist-reward {
+      font-weight: 900;
+      color: var(--yellow);
+    }
+
+    /* ── EMPTY STATE ── */
+    .empty-state {
+      text-align: center;
+      padding: 2.5rem 1rem;
+      color: var(--text-muted);
+    }
+
+    .empty-state .empty-icon {
+      font-size: 2.5rem;
+      margin-bottom: .75rem;
+    }
+
+    .empty-state p {
+      font-size: .85rem;
+      font-weight: 700;
+    }
+
+    /* ── EVENTO BANNER ── */
+    .evento-banner {
+      background: linear-gradient(90deg, rgba(245, 158, 11, .08), rgba(249, 115, 22, .08));
+      border: 1px solid rgba(245, 158, 11, .35);
+      border-radius: 12px;
+      padding: .7rem 1.1rem;
+      display: flex;
+      align-items: center;
+      gap: .75rem;
+      font-size: .82rem;
+      font-weight: 800;
+      color: #fbbf24;
+      margin-bottom: 1.25rem;
+    }
+
+    .evento-banner .ev-icon {
+      font-size: 1.3rem;
+    }
+
+    /* ── SECTION ── */
+    .section {
+      margin-bottom: 2rem;
+    }
+
+    .section-header {
+      margin-bottom: .85rem;
+    }
+
+    .section-title-wrap {
+      display: flex;
+      align-items: center;
+      gap: .75rem;
+    }
+
+    .section-title {
+      font-size: .85rem;
+      font-weight: 900;
+      letter-spacing: .08em;
+      color: var(--text-dim);
+    }
+
+    .section-chip {
+      font-size: .7rem;
+      font-weight: 900;
+      background: rgba(124, 58, 237, .15);
+      color: var(--violet);
+      border-radius: 99px;
+      padding: .15rem .6rem;
+    }
+
+    /* fade-up */
+    .fade-up {
+      opacity: 0;
+      transform: translateY(18px);
+      animation: fadeUp .5s ease forwards;
+    }
+
+    .delay-1 {
+      animation-delay: .08s;
+    }
+
+    .delay-2 {
+      animation-delay: .16s;
+    }
+
+    .delay-3 {
+      animation-delay: .24s;
+    }
+
+    @keyframes fadeUp {
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <div id="sharedHeader"></div>
+
+  <main class="main">
+
+    <!-- ── PAGE HEADER ── -->
+    <div class="misiones-page-header fade-up">
+      <div>
+        <div class="page-tag">🎯 MISIONES</div>
+        <h1 class="page-title">Misiones</h1>
+        <p class="page-subtitle" id="pageSubtitle">Completa las 8 misiones diarias y desbloquea el bonus de +200
+          EduCoins.</p>
+      </div>
+      <div class="header-timer">
+        <div class="timer-label" id="timerLabel">REINICIO EN</div>
+        <div class="timer-value" id="timerReinicio">--:--:--</div>
+        <div class="timer-sub" id="timerSub">Las misiones se renuevan cada día</div>
+      </div>
+    </div>
+
+    <!-- ── EVENTO BANNER (se muestra si hay evento activo) ── -->
+    <div class="evento-banner fade-up delay-1" id="eventoBanner" style="display:none;">
+      <span class="ev-icon">⚡</span>
+      <span id="eventoTexto">Evento activo: recompensas ×2</span>
+    </div>
+
+    <!-- ── ANILLO DE PROGRESO DIARIO ── -->
+    <div class="progreso-general progreso-desktop fade-up delay-1" id="progresoBlock">
+      <div class="ring-wrap-big">
+        <svg class="ring-svg" viewBox="0 0 120 120">
+          <circle class="ring-bg" cx="60" cy="60" r="52" />
+          <circle class="ring-prog" id="ringProg" cx="60" cy="60" r="52" />
+        </svg>
+        <div class="ring-center">
+          <div class="ring-num" id="ringNum">0/8</div>
+          <div class="ring-label">MISIONES</div>
+        </div>
+      </div>
+
+      <div class="progreso-info">
+        <div class="progreso-titulo" id="progresoTitulo">¡Empieza el día!</div>
+        <div class="progreso-sub" id="progresoSub">Completa misiones para ganar EduCoins y XP</div>
+        <div class="recompensas-row">
+          <div class="recompensa-item">
+            <span class="recompensa-icon"><img src="../shared/coin.png" alt="coin"
+                style="width:14px; height:14px; object-fit:contain; display:inline-block; vertical-align:middle; image-rendering:pixelated;"></span>
+            <div>
+              <div class="recompensa-num" id="monedasGanadas">0</div>
+              <div class="recompensa-label">EduCoins ganados hoy</div>
+            </div>
+          </div>
+          <div class="recompensa-item">
+            <span class="recompensa-icon">⭐</span>
+            <div>
+              <div class="recompensa-num" id="xpGanado">0</div>
+              <div class="recompensa-label">XP ganado hoy</div>
+            </div>
+          </div>
+        </div>
+        <div class="barra-progreso-wrap">
+          <div class="barra-progreso-labels">
+            <span>Progreso diario</span>
+            <span id="porcentajeProg">0%</span>
+          </div>
+          <div class="barra-track">
+            <div class="barra-fill" id="barraFill"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="bonus-lateral">
+        <div class="bonus-lat-title">🏆 BONUS 8/8</div>
+        <div class="bonus-lat-amount">+200 <img src="../shared/coin.png" alt="coin"
+            style="width:14px; height:14px; object-fit:contain; display:inline-block; vertical-align:middle; image-rendering:pixelated;">
+        </div>
+        <div class="bonus-lat-xp">+100 XP extra</div>
+        <div class="bonus-lat-estado" id="bonusEstado">
+          <span class="bonus-lock">🔒</span>
+          <span id="bonusTexto">Faltan 8 misiones</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── BLOQUE PROGRESO MÓVIL (oculto en desktop) ── -->
+    <div class="progreso-movil fade-up delay-1" id="progresoBlockMov">
+      <div class="pmov-top">
+        <span class="pmov-title">🎯 MISIONES</span>
+        <div class="pmov-timer">
+          <span class="pmov-timer-lbl">REINICIO</span>
+          <span class="pmov-timer-val" id="timerReinicioMov">--:--:--</span>
+        </div>
+      </div>
+      <div class="pmov-body">
+        <div class="pmov-ring">
+          <svg viewBox="0 0 120 120">
+            <circle fill="none" stroke="var(--bg3)" stroke-width="10" cx="60" cy="60" r="52" />
+            <circle id="ringProgMov" fill="none" stroke="var(--violet)" stroke-width="10" stroke-linecap="round"
+              stroke-dasharray="327" stroke-dashoffset="327" cx="60" cy="60" r="52"
+              style="transition:stroke-dashoffset .6s ease,stroke .4s" />
+          </svg>
+          <div class="pmov-ring-center">
+            <div class="pmov-ring-num" id="ringNumMov">0/8</div>
+            <div class="pmov-ring-lbl">MISIONES</div>
+          </div>
+        </div>
+        <div class="pmov-info">
+          <div class="pmov-titulo" id="progresoTituloMov">¡Empieza el día!</div>
+          <div class="pmov-chips">
+            <div class="pmov-chip">
+              <span class="pmov-chip-ico"><img src="../shared/coin.png" alt="coin"
+                  style="width:13px;height:13px;object-fit:contain;vertical-align:middle;image-rendering:pixelated;"></span>
+              <span class="pmov-chip-num" id="monedasGanadasMov">0</span>
+            </div>
+            <div class="pmov-chip">
+              <span class="pmov-chip-ico">⭐</span>
+              <span class="pmov-chip-num" id="xpGanadoMov">0</span>
+            </div>
+            <div class="pmov-chip pmov-chip-bonus" id="bonusChipMov">
+              <span class="pmov-chip-ico">🏆</span>
+              <span class="pmov-chip-num" id="bonusTextoMov">+200 · Faltan 8</span>
+            </div>
+          </div>
+          <div class="pmov-barra-labels">
+            <span>Progreso diario</span>
+            <span id="porcentajeProgMov">0%</span>
+          </div>
+          <div class="pmov-barra-track">
+            <div class="pmov-barra-fill" id="barraFillMov"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── TABS ── -->
+    <div class="tabs-row fade-up delay-2">
+      <button class="tab-btn tab-activa-diaria" id="tabDiaria" onclick="cambiarPanel('diaria')">
+        📋 Misiones Diarias
+        <span class="tab-badge-count" id="badgeDiaria">8</span>
+      </button>
+      <button class="tab-btn" id="tabSemanal" onclick="cambiarPanel('semanal')">
+        📅 Misiones Semanales
+        <span class="tab-badge-count" id="badgeSemanal">0</span>
+      </button>
+    </div>
+
+    <!-- ── SLIDER ── -->
+    <div class="misiones-outer fade-up delay-2">
+      <div class="misiones-slider" id="misionesSlider">
+
+        <!-- PANEL IZQUIERDO: Diarias -->
+        <div class="panel-misiones" id="panelDiarias">
+          <div class="panel-header">
+            <div>
+              <div class="panel-title">⚔️ Misiones de hoy</div>
+              <div class="panel-sub" id="fechaDiaria">Cargando...</div>
+            </div>
+            <span class="section-chip" id="misionChip">0 completadas</span>
+          </div>
+          <div class="misiones-grid" id="misionesGrid"></div>
+        </div>
+
+        <!-- PANEL DERECHO: Semanales -->
+        <div class="panel-misiones" id="panelSemanales">
+          <div class="panel-header">
+            <div>
+              <div class="panel-title">📅 Misiones Semanales</div>
+              <div class="panel-sub" id="fechaSemanal">Esta semana</div>
+            </div>
+            <button class="btn-volver" onclick="cambiarPanel('diaria')">← Volver</button>
+          </div>
+          <div class="sem-info-banner">
+            📅 Las misiones semanales se renuevan cada lunes. Tienen mayor recompensa porque requieren más esfuerzo.
+          </div>
+          <div class="semanales-list" id="semanalesList"></div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ── HISTORIAL ── -->
+    <section class="section fade-up delay-3" id="seccionHistorial">
+      <div class="section-header">
+        <div class="section-title-wrap">
+          <span class="section-title">📜 HISTORIAL RECIENTE</span>
+        </div>
+      </div>
+      <div class="historial-lista" id="historialLista"></div>
+    </section>
+
+  </main>
+
+  <div class="toast-container" id="toastContainer"></div>
+
+  <script src="../auth/clerk-config.js"></script>
+  <script src="../shared/clerk-guard.js"></script>
+  <script src="../shared/shared.js"></script>
+  <script src="misiones.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <!--
+============================================
+ARCHIVO: /perfil/perfil.html
+DESCRIPCIÓN: Perfil del alumno — avatar,
+             stats, logros y configuración
+ESTILOS:  ../shared/shared.css, perfil.css
+SCRIPTS:  perfil.js
+SHARED:   ../shared/shared.css
+          ../shared/shared.js → initShared('perfil')
+============================================
+ÍNDICE DE SECCIONES
+1.  Head
+2.  Header inyectado por shared.js (#sharedHeader)
+3.  Layout + main
+4.  Main — hero del perfil (avatar + stats)
+5.  Main — barra XP detallada
+6.  Main — grid de stats secundarias
+7.  Main — logros / badges
+8.  Main — configuración de cuenta
+9.  Modal — cambiar avatar
+10. Toast container
+11. Script
+============================================
+-->
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mi Perfil — EduCoins</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Nunito:wght@400;600;700;800;900&display=swap"
+    rel="stylesheet" />
+  <link rel="stylesheet" href="../shared/shared.css" />
+  <link rel="stylesheet" href="perfil.css" />
+
+  <!-- Clerk: carga síncrona con la clave en el data-attribute -->
+  <script data-clerk-publishable-key="pk_test_bG92aW5nLXJhcHRvci0xLmNsZXJrLmFjY291bnRzLmRldiQ"
+    src="https://cdn.jsdelivr.net/npm/@clerk/clerk-js@latest/dist/clerk.browser.js"></script>
+</head>
+
+<body>
+
+  <!-- ============================================
+     2. HEADER + SIDEBAR — inyectados por shared.js
+============================================ -->
+  <div id="sharedHeader"></div>
+
+  <!-- ============================================
+     3. LAYOUT
+============================================ -->
+  <div class="layout">
+
+    <!-- MAIN -->
+    <main class="main">
+
+      <!-- 5. HERO DEL PERFIL -->
+      <div class="perfil-hero fade-up">
+
+        <!-- Avatar grande con botón editar -->
+        <div class="avatar-wrap">
+          <div class="avatar-grande" id="avatarGrande">🐰</div>
+          <button class="avatar-edit-btn" id="btnCambiarAvatar" title="Cambiar avatar">✏️</button>
+          <div class="avatar-nivel-badge" id="avatarNivelBadge">Nv.12</div>
+        </div>
+
+        <!-- Info principal -->
+        <div class="perfil-info">
+          <div class="perfil-nombre" id="perfilNombre">ConejitoMath</div>
+          <div class="perfil-rango" id="perfilRango">
+            <span class="rango-cat" id="rangoCat">Aventurero</span>
+            <span class="rango-sep">·</span>
+            <span class="rango-sub" id="rangoSub">Plata</span>
+          </div>
+          <div class="perfil-grado" id="perfilGrado">6° Básico</div>
+
+          <!-- Stats rápidas hero -->
+          <div class="hero-stats">
+            <div class="hero-stat">
+              <span class="hstat-num" id="heroMonedas">—</span>
+              <span class="hstat-label">EduCoins</span>
+            </div>
+            <div class="hstat-divider"></div>
+            <div class="hero-stat">
+              <span class="hstat-num" id="heroRacha">—</span>
+              <span class="hstat-label">Días racha</span>
+            </div>
+            <div class="hstat-divider"></div>
+            <div class="hero-stat">
+              <span class="hstat-num" id="heroLogros">—</span>
+              <span class="hstat-label">Logros</span>
+            </div>
+            <div class="hstat-divider"></div>
+            <div class="hero-stat">
+              <span class="hstat-num" id="heroRank">—</span>
+              <span class="hstat-label">Ranking</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Acciones del perfil -->
+        <div class="perfil-acciones">
+          <button class="btn-accion btn-primario" id="btnEditarNombre">✏️ Editar nombre</button>
+          <button class="btn-accion btn-secundario" id="btnConectarTelegram">📱 Conectar Telegram</button>
+        </div>
+
+      </div>
+
+      <!-- 6. BARRA XP DETALLADA -->
+      <div class="xp-detalle fade-up delay-1">
+        <div class="xp-det-header">
+          <div>
+            <span class="xp-det-label">EXPERIENCIA — NIVEL <span id="xpNivel">12</span></span>
+            <div class="xp-det-nums">
+              <span id="xpActual">1,240</span>
+              <span class="xp-sep">/</span>
+              <span id="xpSiguiente">2,000</span>
+              <span class="xp-unidad">XP</span>
+            </div>
+          </div>
+          <div class="xp-siguiente-nivel">
+            <span class="xp-falta-label">Para nivel <span id="xpNivelSig">13</span></span>
+            <span class="xp-falta-num" id="xpFalta">— XP</span>
+          </div>
+        </div>
+        <div class="xp-barra-track">
+          <div class="xp-barra-fill" id="xpBarraFill"></div>
+        </div>
+        <div class="xp-milestones" id="xpMilestones">
+          <!-- Marcadores de hitos generados por JS -->
+        </div>
+      </div>
+
+      <!-- 7. GRID DE STATS SECUNDARIAS -->
+      <div class="stats-secundarias fade-up delay-2">
+
+        <div class="stat-sec-card">
+          <span class="stat-sec-icon">📅</span>
+          <div class="stat-sec-body">
+            <div class="stat-sec-titulo">Evaluaciones</div>
+            <div class="stat-sec-num" id="statEvals">—</div>
+            <div class="stat-sec-sub" id="statEvalsPromedio">Promedio: —</div>
+          </div>
+        </div>
+
+        <div class="stat-sec-card">
+          <span class="stat-sec-icon">🎮</span>
+          <div class="stat-sec-body">
+            <div class="stat-sec-titulo">Juegos jugados</div>
+            <div class="stat-sec-num" id="statJuegos">—</div>
+            <div class="stat-sec-sub" id="statJuegosFav">Favorito: —</div>
+          </div>
+        </div>
+
+        <div class="stat-sec-card">
+          <span class="stat-sec-icon">⚔️</span>
+          <div class="stat-sec-body">
+            <div class="stat-sec-titulo">Duelos</div>
+            <div class="stat-sec-num" id="statDuelos">—</div>
+            <div class="stat-sec-sub" id="statDuelosWin">Ganados: —</div>
+          </div>
+        </div>
+
+        <div class="stat-sec-card">
+          <span class="stat-sec-icon">🔥</span>
+          <div class="stat-sec-body">
+            <div class="stat-sec-titulo">Racha máxima</div>
+            <div class="stat-sec-num" id="statRachaMax">—</div>
+            <div class="stat-sec-sub">días consecutivos</div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- 8. LOGROS -->
+      <section class="section fade-up delay-3">
+        <div class="section-header">
+          <div class="section-title-wrap">
+            <span class="section-title">🏅 MIS LOGROS</span>
+            <span class="section-chip" id="logrosChip">0 / 11</span>
+          </div>
+          <span class="section-sub" id="logrosSub">Desbloquea logros completando metas</span>
+        </div>
+        <div class="logros-grid" id="logrosGrid">
+          <!-- Generado por perfil.js -->
+        </div>
+      </section>
+
+      <!-- 9. CONFIGURACIÓN -->
+      <section class="section fade-up delay-4">
+        <div class="section-header">
+          <div class="section-title-wrap">
+            <span class="section-title">⚙️ CONFIGURACIÓN</span>
+          </div>
+        </div>
+        <div class="config-lista">
+
+          <!-- Nombre -->
+          <div class="config-item" id="configNombre">
+            <div class="config-item-info">
+              <span class="config-icon">👤</span>
+              <div>
+                <div class="config-titulo">Nombre de usuario</div>
+                <div class="config-valor" id="configNombreVal">ConejitoMath</div>
+              </div>
+            </div>
+            <button class="config-btn" id="btnConfigNombre">Cambiar</button>
+          </div>
+
+          <!-- Grado -->
+          <div class="config-item">
+            <div class="config-item-info">
+              <span class="config-icon">📚</span>
+              <div>
+                <div class="config-titulo">Grado escolar</div>
+                <div class="config-valor" id="configGradoVal">6° Básico</div>
+              </div>
+            </div>
+            <button class="config-btn" id="btnConfigGrado">Cambiar</button>
+          </div>
+
+          <!-- Colegio -->
+          <div class="config-item">
+            <div class="config-item-info">
+              <span class="config-icon">🏫</span>
+              <div>
+                <div class="config-titulo">Colegio</div>
+                <div class="config-valor" id="configColegioVal">—</div>
+              </div>
+            </div>
+            <button class="config-btn" id="btnConfigColegio">Cambiar</button>
+          </div>
+
+          <!-- Telegram -->
+          <div class="config-item">
+            <div class="config-item-info">
+              <span class="config-icon">📱</span>
+              <div>
+                <div class="config-titulo">Alertas por Telegram</div>
+                <div class="config-valor" id="configTelegramVal">No conectado</div>
+              </div>
+            </div>
+            <button class="config-btn config-btn-destacado" id="btnConfigTelegram">Conectar</button>
+          </div>
+
+          <!-- Privacidad ranking -->
+          <div class="config-item">
+            <div class="config-item-info">
+              <span class="config-icon">🏆</span>
+              <div>
+                <div class="config-titulo">Aparecer en el ranking</div>
+                <div class="config-valor">Visible para todos</div>
+              </div>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" id="toggleRanking" checked />
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+
+          <!-- Zona peligrosa -->
+          <div class="config-item config-danger">
+            <div class="config-item-info">
+              <span class="config-icon">🗑️</span>
+              <div>
+                <div class="config-titulo">Cerrar sesión</div>
+                <div class="config-valor">Volver a la pantalla de inicio</div>
+              </div>
+            </div>
+            <button class="config-btn config-btn-danger" id="btnCerrarSesion">Salir</button>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- Panel editar nombre (inline, se muestra/oculta) -->
+      <div class="edit-nombre-panel" id="editNombrePanel" style="display:none">
+        <input type="text" class="edit-nombre-input" id="editNombreInput" placeholder="Nuevo nombre..."
+          maxlength="20" />
+        <button class="btn-guardar-nombre" id="btnGuardarNombre">Guardar</button>
+        <button class="btn-cancelar-nombre" id="btnCancelarNombre">✕</button>
+      </div>
+
+      <!-- Panel cambiar grado (inline) -->
+      <div class="edit-nombre-panel" id="editGradoPanel" style="display:none">
+        <select class="edit-nombre-input" id="editGradoSelect" style="cursor:pointer">
+          <option value="1">1° Básico</option>
+          <option value="2">2° Básico</option>
+          <option value="3">3° Básico</option>
+          <option value="4">4° Básico</option>
+          <option value="5">5° Básico</option>
+          <option value="6">6° Básico</option>
+          <option value="7">7° Básico</option>
+          <option value="8">8° Básico</option>
+        </select>
+        <button class="btn-guardar-nombre" id="btnGuardarGrado">Guardar</button>
+        <button class="btn-cancelar-nombre" id="btnCancelarGrado">✕</button>
+      </div>
+
+      <!-- Panel cambiar colegio (inline) -->
+      <div class="edit-nombre-panel" id="editColegioPanel" style="display:none">
+        <select class="edit-nombre-input" id="editColegioSelect" style="cursor:pointer">
+          <option value="">Cargando colegios...</option>
+        </select>
+        <button class="btn-guardar-nombre" id="btnGuardarColegio">Guardar</button>
+        <button class="btn-cancelar-nombre" id="btnCancelarColegio">✕</button>
+      </div>
+
+      <!-- Panel conectar Telegram (inline) -->
+      <div class="telegram-panel" id="telegramPanel" style="display:none">
+        <div class="telegram-steps">
+          <div class="tg-step">
+            <span class="tg-step-num">1</span>
+            <div>Abre Telegram y busca <strong>@Educoin_web_Bot</strong></div>
+          </div>
+          <div class="tg-step">
+            <span class="tg-step-num">2</span>
+            <div>Escríbele <code>/start</code> al bot</div>
+          </div>
+          <div class="tg-step">
+            <span class="tg-step-num">3</span>
+            <div>Genera tu código abajo y envíaselo al bot</div>
+          </div>
+        </div>
+        <div class="tg-codigo-box" id="tgCodigoBox" style="display:none">
+          <div class="tg-codigo" id="tgCodigo">——————</div>
+          <div class="tg-codigo-sub" id="tgCodigoSub">Válido por 30 minutos</div>
+        </div>
+        <div class="tg-input-row" style="margin-top:.75rem">
+          <button class="btn-guardar-nombre" id="btnGenerarCodigo">🔑 Generar código</button>
+          <button class="btn-cancelar-nombre" id="btnCancelarTelegram">✕</button>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <!-- ============================================
+     10. MODAL — CAMBIAR AVATAR
+============================================ -->
+  <div class="modal-overlay" id="modalAvatar">
+    <div class="modal">
+      <button class="modal-close" id="btnCerrarModalAvatar">✕</button>
+      <div class="modal-header">
+        <div class="modal-icon">🐰</div>
+        <div>
+          <div class="modal-title">Elige tu Avatar</div>
+          <div class="modal-subtitle">Selecciona el personaje que te represente</div>
+        </div>
+      </div>
+      <div class="avatar-grid" id="avatarGrid">
+        <!-- Generado por perfil.js -->
+      </div>
+      <div style="margin-top:1rem;text-align:center;">
+        <button class="btn-submit" id="btnConfirmarAvatar">✅ Confirmar avatar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 11. TOAST CONTAINER -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- 12. SCRIPT -->
+  <script src="../auth/clerk-config.js"></script>
+  <script src="../shared/clerk-guard.js"></script>
+  <script src="../shared/shared.js"></script>
+  <script src="perfil.js"></script>
+
+
+</body>
+
+</html>

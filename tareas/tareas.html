@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <!--
+============================================
+ARCHIVO: /tareas/tareas.html
+ESTILOS:  ../shared/shared.css  (primero)
+          tareas.css
+SCRIPTS:  ../shared/shared.js   (primero)
+          tareas.js
+============================================
+-->
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tareas — EduCoins</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Nunito:wght@400;600;700;800;900&display=swap"
+    rel="stylesheet" />
+  <link rel="stylesheet" href="../shared/shared.css" />
+  <link rel="stylesheet" href="tareas.css" />
+
+  <!-- Clerk: carga síncrona con la clave en el data-attribute -->
+  <script data-clerk-publishable-key="pk_test_bG92aW5nLXJhcHRvci0xLmNsZXJrLmFjY291bnRzLmRldiQ"
+    src="https://cdn.jsdelivr.net/npm/@clerk/clerk-js@latest/dist/clerk.browser.js"></script>
+  <style>
+    .tareas-tabs {
+      display: flex;
+      gap: .5rem;
+      margin-bottom: 1.25rem;
+    }
+
+    .tareas-tab {
+      padding: .55rem 1.2rem;
+      border-radius: 12px;
+      border: 2px solid transparent;
+      background: var(--bg2, #0f0f2e);
+      color: #94a3b8;
+      font-weight: 900;
+      font-size: .82rem;
+      cursor: pointer;
+      transition: all .2s;
+    }
+
+    .tareas-tab.active {
+      background: rgba(124, 58, 237, .12);
+      border-color: #7c3aed;
+      color: #a78bfa;
+    }
+
+    .admin-filtros {
+      display: flex;
+      align-items: center;
+      gap: .75rem;
+      flex-wrap: wrap;
+      margin-bottom: 1.25rem;
+    }
+
+    .admin-contador {
+      font-size: .82rem;
+      font-weight: 700;
+      color: #94a3b8;
+    }
+
+    .admin-tarea-card {
+      background: var(--bg2, #0f0f2e);
+      border: 1px solid rgba(255, 255, 255, .08);
+      border-left: 4px solid #06b6d4;
+      border-radius: 14px;
+      padding: 1rem 1.25rem;
+      margin-bottom: .75rem;
+      cursor: pointer;
+      transition: border-color .2s, box-shadow .2s;
+    }
+
+    .admin-tarea-card:hover {
+      border-color: #06b6d4;
+      box-shadow: 0 4px 20px rgba(6, 182, 212, .1);
+    }
+
+    .admin-tarea-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: .5rem;
+    }
+
+    .admin-tarea-alumno {
+      font-weight: 900;
+      font-size: .9rem;
+    }
+
+    .admin-tarea-asig {
+      font-size: .75rem;
+      font-weight: 800;
+      color: #06b6d4;
+    }
+
+    .admin-tarea-fecha {
+      font-size: .72rem;
+      color: #64748b;
+      font-weight: 700;
+    }
+
+    .admin-tarea-desc {
+      font-size: .82rem;
+      color: #94a3b8;
+      font-weight: 700;
+      margin-bottom: .5rem;
+    }
+
+    .admin-tarea-foto {
+      max-width: 100%;
+      max-height: 120px;
+      border-radius: 8px;
+      margin-top: .5rem;
+      object-fit: cover;
+    }
+
+    .btn-rev-opcion {
+      flex: 1;
+      padding: .6rem;
+      border-radius: 10px;
+      border: 2px solid rgba(255, 255, 255, .1);
+      background: rgba(255, 255, 255, .04);
+      color: #e2e8f0;
+      font-weight: 900;
+      font-size: .85rem;
+      cursor: pointer;
+      transition: all .2s;
+    }
+
+    .btn-rev-opcion.selected {
+      background: rgba(34, 197, 94, .15);
+      border-color: #22c55e;
+      color: #4ade80;
+    }
+
+    .btn-rev-incorrecta.selected {
+      background: rgba(239, 68, 68, .15);
+      border-color: #ef4444;
+      color: #fca5a5;
+    }
+
+    .rev-slider {
+      width: 100%;
+      accent-color: #7c3aed;
+      margin-top: .5rem;
+    }
+
+    .rev-recompensa {
+      background: rgba(250, 204, 21, .08);
+      border: 1px solid rgba(250, 204, 21, .2);
+      border-radius: 10px;
+      padding: .6rem 1rem;
+      font-weight: 900;
+      color: #facc15;
+      font-size: .9rem;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div id="sharedHeader"></div>
+
+  <div class="layout">
+    <main class="main">
+
+      <!-- PAGE HEADER -->
+      <div class="page-header fade-up">
+        <div>
+          <span class="page-tag">📝 TAREAS</span>
+          <h1 class="page-title" id="pageTitle">Mis Tareas</h1>
+          <p class="page-subtitle" id="pageSubtitle">Sube tus tareas y gana EduCoins al registrarlas a tiempo.</p>
+        </div>
+        <button class="btn-nueva-tarea" id="btnNuevaTarea">+ Nueva Tarea</button>
+      </div>
+
+      <!-- TABS (solo admin) -->
+      <div class="tareas-tabs fade-up" id="tareasTabsWrap" style="display:none">
+        <button class="tareas-tab active" id="tabAlumno">📝 Mis Tareas</button>
+        <button class="tareas-tab" id="tabAdmin">📋 Revisión Admin</button>
+      </div>
+
+      <!-- STATS -->
+      <div class="tareas-stats fade-up delay-1">
+        <div class="ts-card">
+          <span class="ts-icon">📋</span>
+          <div class="ts-num" id="statTotal">—</div>
+          <div class="ts-label">Total tareas</div>
+        </div>
+        <div class="ts-card">
+          <span class="ts-icon">⏳</span>
+          <div class="ts-num" id="statPendientes">—</div>
+          <div class="ts-label">Pendientes</div>
+        </div>
+        <div class="ts-card">
+          <span class="ts-icon">✅</span>
+          <div class="ts-num" id="statEntregadas">—</div>
+          <div class="ts-label">Entregadas</div>
+        </div>
+        <div class="ts-card">
+          <span class="ts-icon">🪙</span>
+          <div class="ts-num" id="statMonedas">—</div>
+          <div class="ts-label">EduCoins ganados</div>
+        </div>
+      </div>
+
+      <!-- FILTROS -->
+      <div class="filtros-bar fade-up delay-2">
+        <button class="filtro-btn active" data-filtro="todas" id="filtroTodas">Todas</button>
+        <button class="filtro-btn" data-filtro="pendiente" id="filtroPendiente">⏳ Pendientes</button>
+        <button class="filtro-btn" data-filtro="entregada" id="filtroEntregada">✅ Entregadas</button>
+        <button class="filtro-btn" data-filtro="vencida" id="filtroVencida">❌ Vencidas</button>
+        <select class="filtro-select" id="filtroAsig">
+          <option value="">Todas las asignaturas</option>
+          <option value="Matemáticas">Matemáticas</option>
+          <option value="Lenguaje">Lenguaje</option>
+          <option value="Historia">Historia</option>
+          <option value="Ciencias">Ciencias</option>
+          <option value="Inglés">Inglés</option>
+          <option value="Arte">Arte</option>
+          <option value="Ed. Física">Ed. Física</option>
+        </select>
+      </div>
+
+      <!-- LISTA DE TAREAS -->
+      <div class="tareas-lista fade-up delay-3" id="tareasLista"></div>
+
+      <!-- VACÍO -->
+      <div class="tareas-vacio" id="tareasVacio" style="display:none">
+        <div class="vacio-emoji">📭</div>
+        <div class="vacio-titulo">No hay tareas aquí</div>
+        <div class="vacio-sub">Agrega una nueva tarea con el botón de arriba</div>
+      </div>
+
+      <!-- PANEL ADMIN (oculto por defecto) -->
+      <div id="panelAdmin" style="display:none">
+        <div class="admin-filtros fade-up">
+          <select class="filtro-select" id="adminFiltroAsig">
+            <option value="">Todas las asignaturas</option>
+            <option value="Matemáticas">Matemáticas</option>
+            <option value="Lenguaje">Lenguaje</option>
+            <option value="Historia">Historia</option>
+            <option value="Ciencias">Ciencias</option>
+            <option value="Inglés">Inglés</option>
+            <option value="Arte">Arte</option>
+            <option value="Ed. Física">Ed. Física</option>
+          </select>
+          <button class="filtro-btn active" id="adminFiltroBtn" onclick="cargarTareasAdmin()">🔄 Actualizar</button>
+          <span class="admin-contador" id="adminContador">— tareas pendientes de revisión</span>
+        </div>
+        <div class="tareas-lista" id="tareasAdminLista"></div>
+        <div class="tareas-vacio" id="tareasAdminVacio" style="display:none">
+          <div class="vacio-emoji">🎉</div>
+          <div class="vacio-titulo">¡Todo revisado!</div>
+          <div class="vacio-sub">No hay tareas pendientes de corrección</div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <!-- MODAL NUEVA/EDITAR TAREA -->
+  <div class="modal-overlay" id="modalTarea">
+    <div class="modal">
+      <button class="modal-close" id="btnCerrarModal">✕</button>
+      <div class="modal-header">
+        <div class="modal-icon">📝</div>
+        <div>
+          <div class="modal-title" id="modalTitulo">Nueva Tarea</div>
+          <div class="modal-subtitle">Registra los detalles de tu tarea</div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Asignatura *</label>
+        <select class="form-select" id="fAsig">
+          <option value="">Seleccionar...</option>
+          <option value="Matemáticas">➗ Matemáticas</option>
+          <option value="Lenguaje">📖 Lenguaje</option>
+          <option value="Historia">🏛️ Historia</option>
+          <option value="Ciencias">🔬 Ciencias</option>
+          <option value="Inglés">🌎 Inglés</option>
+          <option value="Arte">🎨 Arte</option>
+          <option value="Ed. Física">⚽ Ed. Física</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Descripción de la tarea *</label>
+        <textarea class="form-textarea" id="fDescripcion" placeholder="Ej: Resolver ejercicios pág. 45-48 del libro..."
+          maxlength="200" rows="3"></textarea>
+        <div class="form-hint">Máx. 200 caracteres</div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Fecha de entrega *</label>
+          <input type="date" class="form-input" id="fFecha" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Prioridad</label>
+          <select class="form-select" id="fPrioridad">
+            <option value="normal">Normal</option>
+            <option value="alta">🔥 Alta</option>
+            <option value="urgente">🚨 Urgente</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Upload foto de la tarea -->
+      <div class="form-group">
+        <label class="form-label">Foto de la tarea (opcional)</label>
+        <div class="upload-area" id="uploadArea">
+          <input type="file" id="fFoto" accept="image/*" style="display:none" />
+          <div class="upload-placeholder" id="uploadPlaceholder">
+            <span class="upload-icon">📷</span>
+            <div class="upload-txt">Click para subir foto</div>
+            <div class="upload-hint">JPG, PNG — máx 5MB</div>
+          </div>
+          <div class="upload-preview" id="uploadPreview" style="display:none">
+            <img id="previewImg" src="" alt="Preview" />
+            <button class="upload-quitar" id="btnQuitarFoto">✕ Quitar</button>
+          </div>
+        </div>
+      </div>
+
+      <button class="btn-submit" id="btnGuardarTarea">✅ Guardar Tarea</button>
+    </div>
+  </div>
+
+  <!-- MODAL DETALLE -->
+  <div class="modal-overlay" id="modalDetalle">
+    <div class="modal">
+      <button class="modal-close" id="btnCerrarDetalle">✕</button>
+      <div class="modal-header">
+        <div class="modal-icon" id="detAsig">📝</div>
+        <div>
+          <div class="modal-title" id="detTitulo">—</div>
+          <div class="modal-subtitle" id="detFecha">—</div>
+        </div>
+      </div>
+      <div class="detalle-body" id="detBody"></div>
+      <div class="detalle-acciones" id="detAcciones"></div>
+    </div>
+  </div>
+
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- MODAL REVISIÓN ADMIN -->
+  <div class="modal-overlay" id="modalRevision">
+    <div class="modal">
+      <button class="modal-close" id="btnCerrarRevision">✕</button>
+      <div class="modal-header">
+        <div class="modal-icon" id="revAsigIcon">📝</div>
+        <div>
+          <div class="modal-title" id="revTitulo">Revisar Tarea</div>
+          <div class="modal-subtitle" id="revAlumno">—</div>
+        </div>
+      </div>
+      <div class="detalle-body" id="revBody"></div>
+      <div style="margin-top:1.25rem">
+        <div class="form-group">
+          <label class="form-label">¿La tarea es correcta?</label>
+          <div style="display:flex;gap:.75rem;margin-top:.5rem">
+            <button class="btn-rev-opcion" id="btnRevCorrecta">✅ Correcta</button>
+            <button class="btn-rev-opcion btn-rev-incorrecta" id="btnRevIncorrecta">❌ Incorrecta</button>
+          </div>
+        </div>
+        <div class="form-group" id="revPctWrap">
+          <label class="form-label">Porcentaje obtenido: <span id="revPctVal">100</span>%</label>
+          <input type="range" min="0" max="100" value="100" id="revPct" class="rev-slider"
+            oninput="document.getElementById('revPctVal').textContent=this.value">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Recompensa estimada</label>
+          <div class="rev-recompensa" id="revRecompensa">—</div>
+        </div>
+        <button class="btn-submit" id="btnGuardarRevision">💾 Guardar Revisión</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Auth: config → guard → shared → módulo (orden obligatorio) -->
+  <script src="../auth/clerk-config.js"></script>
+  <script src="../shared/clerk-guard.js"></script>
+  <script src="../shared/shared.js"></script>
+  <script src="tareas.js"></script>
+</body>
+
+</html>

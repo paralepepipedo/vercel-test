@@ -1,0 +1,1837 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+  <title>Tienda — EduCoins</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Nunito:wght@400;700;800;900&display=swap"
+    rel="stylesheet" />
+  <link rel="stylesheet" href="../shared/shared.css" />
+
+  <style>
+    /* ============================================
+   TIENDA — variables & reset
+   ============================================ */
+    :root {
+      --yellow: #facc15;
+      --orange: #f97316;
+      --green: #22c55e;
+      --red: #ef4444;
+      --bg2: #1a1a2e;
+      --bg3: #16213e;
+      --card: #0f3460;
+      --border: rgba(255, 255, 255, .08);
+      --text-dim: rgba(255, 255, 255, .6);
+      --text-muted: rgba(255, 255, 255, .35);
+      --radius: 12px;
+      --radius-sm: 8px;
+    }
+
+    /* ============================================
+   CABECERA DE PÁGINA
+   ============================================ */
+    .page-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: 1.5rem;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .page-tag {
+      font-family: 'Press Start 2P', monospace;
+      font-size: .38rem;
+      color: var(--yellow);
+      display: block;
+      margin-bottom: .5rem;
+      letter-spacing: .04em;
+    }
+
+    .page-title {
+      font-family: 'Press Start 2P', monospace;
+      font-size: clamp(.75rem, 2vw, 1rem);
+      color: white;
+      line-height: 1.6;
+      margin-bottom: .4rem;
+    }
+
+    .page-subtitle {
+      font-size: .875rem;
+      color: var(--text-dim);
+      font-weight: 700;
+    }
+
+    /* ============================================
+   SALDO HEADER
+   ============================================ */
+    .saldo-header {
+      background: linear-gradient(135deg, rgba(250, 204, 21, .1), rgba(249, 115, 22, .06));
+      border: 1px solid rgba(250, 204, 21, .35);
+      border-radius: var(--radius);
+      padding: 1.25rem 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+      margin-bottom: 1.5rem;
+      flex-wrap: wrap;
+    }
+
+    .saldo-icon img {
+      width: 2.5rem;
+      height: 2.5rem;
+      object-fit: contain;
+      image-rendering: pixelated;
+    }
+
+    .saldo-label {
+      font-family: 'Press Start 2P', monospace;
+      font-size: .35rem;
+      color: var(--text-muted);
+      margin-bottom: .4rem;
+      letter-spacing: .06em;
+    }
+
+    .saldo-num {
+      font-family: 'Press Start 2P', monospace;
+      font-size: clamp(1rem, 3vw, 1.5rem);
+      color: var(--yellow);
+    }
+
+    .saldo-suffix {
+      font-family: 'Press Start 2P', monospace;
+      font-size: .4rem;
+      color: var(--text-dim);
+      margin-left: .5rem;
+    }
+
+    /* ============================================
+   CATEGORÍAS
+   ============================================ */
+    .cats {
+      display: flex;
+      gap: .5rem;
+      margin-bottom: 1.5rem;
+      flex-wrap: wrap;
+    }
+
+    .cat-btn {
+      padding: .5rem 1.1rem;
+      border-radius: 20px;
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      color: var(--text-dim);
+      font-size: .8rem;
+      font-weight: 800;
+      cursor: pointer;
+      transition: all .2s;
+      font-family: 'Nunito', sans-serif;
+    }
+
+    .cat-btn:hover {
+      border-color: var(--yellow);
+      color: white;
+    }
+
+    .cat-btn.active {
+      background: rgba(250, 204, 21, .12);
+      border-color: var(--yellow);
+      color: var(--yellow);
+    }
+
+    /* ============================================
+   GRID DE ÍTEMS
+   ============================================ */
+    .tienda-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1rem;
+    }
+
+    @media(max-width:1100px) {
+      .tienda-grid {
+        grid-template-columns: repeat(3, 1fr);
+      }
+    }
+
+    @media(max-width:800px) {
+      .tienda-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media(max-width:400px) {
+      .tienda-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* ============================================
+   CARD DE ÍTEM — layout horizontal compacto
+   ============================================ */
+    .item-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: .6rem .8rem;
+      display: flex;
+      align-items: center;
+      gap: .8rem;
+      position: relative;
+      overflow: hidden;
+      transition: transform .2s, border-color .2s, opacity .2s;
+    }
+
+    /* Estados */
+    .item-card.disponible {
+      cursor: pointer;
+      border-color: rgba(74, 222, 128, .2);
+    }
+
+    .item-card.disponible:hover {
+      transform: translateY(-2px);
+      border-color: rgba(74, 222, 128, .55);
+      box-shadow: 0 6px 20px rgba(74, 222, 128, .1);
+    }
+
+    .item-card.sin-saldo {
+      opacity: .72;
+      border-color: rgba(250, 204, 21, .12);
+      cursor: default;
+    }
+
+    .item-card.bloqueado {
+      opacity: .45;
+      cursor: default;
+    }
+
+    .item-card.comprado {
+      opacity: .55;
+      border-color: rgba(96, 165, 250, .15);
+      cursor: default;
+    }
+
+    /* Zona imagen / emoji */
+    .card-img-wrap {
+      flex-shrink: 0;
+      width: 80px;
+      height: 46px;
+      border-radius: 7px;
+      overflow: hidden;
+      background: rgba(0, 0, 0, .3);
+      border: 1px solid rgba(255, 255, 255, .07);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .card-img-wrap img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      display: block;
+    }
+
+    .card-img-wrap .card-emoji {
+      font-size: 1.8rem;
+      line-height: 1;
+    }
+
+    /* Info central */
+    .card-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .card-nombre {
+      font-family: 'Press Start 2P', monospace;
+      font-size: .4rem;
+      color: white;
+      line-height: 1.7;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .card-subtipo {
+      font-size: .65rem;
+      color: rgba(255, 255, 255, .38);
+      margin-top: .1rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* Derecha: precio + botón */
+    .card-derecha {
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: .3rem;
+    }
+
+    .card-precio {
+      display: flex;
+      align-items: center;
+      gap: .2rem;
+      font-family: 'Press Start 2P', monospace;
+      font-size: .46rem;
+      color: var(--yellow);
+    }
+
+    .card-precio img {
+      height: .85em;
+      width: .85em;
+      object-fit: contain;
+      image-rendering: pixelated;
+    }
+
+    /* Botones de card */
+    .btn-card {
+      border-radius: 6px;
+      padding: .28rem .55rem;
+      font-family: 'Press Start 2P', monospace;
+      font-size: .3rem;
+      cursor: pointer;
+      border: 1px solid;
+      transition: background .15s;
+      white-space: nowrap;
+    }
+
+    .btn-card.bc-verde {
+      background: rgba(74, 222, 128, .15);
+      border-color: rgba(74, 222, 128, .35);
+      color: #4ade80;
+    }
+
+    .btn-card.bc-verde:hover {
+      background: rgba(74, 222, 128, .3);
+    }
+
+    .btn-card.bc-amarillo {
+      background: rgba(250, 204, 21, .08);
+      border-color: rgba(250, 204, 21, .2);
+      color: var(--yellow);
+    }
+
+    .btn-card.bc-gris {
+      background: rgba(255, 255, 255, .04);
+      border-color: rgba(255, 255, 255, .08);
+      color: rgba(255, 255, 255, .28);
+      cursor: default;
+    }
+
+    .btn-card.bc-azul {
+      background: rgba(96, 165, 250, .1);
+      border-color: rgba(96, 165, 250, .2);
+      color: #60a5fa;
+      cursor: default;
+    }
+
+    /* Separador de grupo en el grid */
+    .card-grupo-titulo {
+      grid-column: 1 / -1;
+      font-size: .7rem;
+      font-weight: 900;
+      color: rgba(255, 255, 255, .28);
+      padding: .5rem 0 .15rem;
+      border-top: 1px solid rgba(255, 255, 255, .06);
+      margin-top: .1rem;
+    }
+
+    .card-grupo-titulo:first-child {
+      border-top: none;
+      padding-top: 0;
+    }
+
+    /* Badge de estado */
+    .item-badge {
+      position: absolute;
+      top: .35rem;
+      right: .35rem;
+      font-size: .52rem;
+      line-height: 1;
+      padding: .12rem .28rem;
+      border-radius: 5px;
+      font-weight: 900;
+      font-family: 'Nunito', sans-serif;
+    }
+
+    .item-badge.badge-owned {
+      background: rgba(96, 165, 250, .15);
+      border: 1px solid rgba(96, 165, 250, .25);
+      color: #60a5fa;
+    }
+
+    .item-badge.badge-locked {
+      background: rgba(255, 255, 255, .05);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+    }
+
+    .item-badge.badge-saldo {
+      background: rgba(250, 204, 21, .1);
+      border: 1px solid rgba(250, 204, 21, .2);
+      color: var(--yellow);
+    }
+
+
+
+    /* ============================================
+   ESTADOS DE CARGA / VACÍO / ERROR
+   ============================================ */
+    .tienda-estado {
+      grid-column: 1 / -1;
+      text-align: center;
+      padding: 4rem 2rem;
+      color: var(--text-dim);
+      font-family: 'Press Start 2P', monospace;
+      font-size: .5rem;
+      line-height: 2.2;
+    }
+
+    .tienda-estado .estado-icon {
+      font-size: 2.5rem;
+      display: block;
+      margin-bottom: 1rem;
+    }
+
+    /* ============================================
+   MODAL DE CONFIRMACIÓN
+   ============================================ */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, .7);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+      backdrop-filter: blur(4px);
+    }
+
+    .modal-overlay.active {
+      display: flex;
+    }
+
+    .modal-compra {
+      background: var(--bg2);
+      border: 1px solid rgba(250, 204, 21, .25);
+      border-radius: var(--radius);
+      padding: 2rem 1.75rem;
+      max-width: 400px;
+      width: 100%;
+      text-align: center;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, .5);
+      animation: modalIn .25s ease;
+    }
+
+    @keyframes modalIn {
+      from {
+        transform: scale(.92) translateY(10px);
+        opacity: 0;
+      }
+
+      to {
+        transform: scale(1) translateY(0);
+        opacity: 1;
+      }
+    }
+
+    .modal-emoji {
+      font-size: 4rem;
+      display: block;
+      margin-bottom: 1rem;
+      line-height: 1;
+    }
+
+    .modal-titulo {
+      font-family: 'Press Start 2P', monospace;
+      font-size: .55rem;
+      color: white;
+      line-height: 1.8;
+      margin-bottom: .5rem;
+    }
+
+    .modal-precio {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 1.1rem;
+      color: var(--yellow);
+      margin: 1rem 0 .5rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: .4rem;
+    }
+
+    .modal-precio img {
+      width: 1.2rem;
+      height: 1.2rem;
+      object-fit: contain;
+      image-rendering: pixelated;
+    }
+
+    .modal-saldo {
+      font-size: .8rem;
+      color: var(--text-dim);
+      font-weight: 700;
+      margin-bottom: 1.75rem;
+      line-height: 1.5;
+    }
+
+    .modal-saldo strong {
+      color: white;
+    }
+
+    /* Modal mejorado */
+    .modal-close {
+      position: absolute;
+      top: .75rem;
+      right: .75rem;
+      background: rgba(255, 255, 255, .08);
+      border: 1px solid var(--border);
+      color: var(--text-dim);
+      border-radius: 50%;
+      width: 1.8rem;
+      height: 1.8rem;
+      cursor: pointer;
+      font-size: .85rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background .15s;
+    }
+
+    .modal-close:hover {
+      background: rgba(255, 255, 255, .15);
+      color: white;
+    }
+
+    .modal-compra {
+      position: relative;
+    }
+
+    .mc-visual {
+      margin-bottom: .75rem;
+    }
+
+    .mc-visual img.mc-img {
+      width: 140px;
+      height: 90px;
+      object-fit: contain;
+      border-radius: 8px;
+      border: 1px solid rgba(250, 204, 21, .2);
+    }
+
+    .modal-desc {
+      font-size: .75rem;
+      color: var(--text-dim);
+      line-height: 1.6;
+      margin-bottom: .75rem;
+      max-width: 280px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .mc-unit {
+      font-size: .6rem;
+      color: var(--text-dim);
+      margin-left: .2rem;
+    }
+
+    .mc-cantidad {
+      background: rgba(255, 255, 255, .05);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: .75rem 1rem;
+      margin-bottom: 1rem;
+    }
+
+    .mc-cant-label {
+      font-size: .65rem;
+      color: var(--text-dim);
+      display: block;
+      margin-bottom: .5rem;
+    }
+
+    .mc-cant-ctrl {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 1rem;
+      margin-bottom: .5rem;
+    }
+
+    .mc-cant-ctrl button {
+      background: rgba(250, 204, 21, .15);
+      border: 1px solid rgba(250, 204, 21, .3);
+      color: var(--yellow);
+      border-radius: 6px;
+      width: 2rem;
+      height: 2rem;
+      font-size: 1.2rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background .15s;
+    }
+
+    .mc-cant-ctrl button:hover {
+      background: rgba(250, 204, 21, .3);
+    }
+
+    .mc-cant-ctrl button:disabled {
+      opacity: .3;
+      cursor: not-allowed;
+    }
+
+    #mc_cant_val {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 1rem;
+      color: white;
+      min-width: 2rem;
+      text-align: center;
+    }
+
+    .mc-cant-total {
+      font-size: .7rem;
+      color: var(--text-dim);
+      text-align: center;
+    }
+
+    .mc-cant-total strong {
+      color: var(--yellow);
+    }
+
+    /* Paso 2 — overlay de confirmación encima del paso 1 */
+    .confirm-overlay {
+      display: none;
+      position: absolute;
+      inset: 0;
+      background: rgba(0, 0, 0, .78);
+      backdrop-filter: blur(5px);
+      border-radius: var(--radius);
+      align-items: center;
+      justify-content: center;
+      padding: 1.25rem;
+      z-index: 10;
+    }
+
+    .confirm-overlay.active {
+      display: flex;
+    }
+
+    .confirm-box {
+      background: var(--bg3);
+      border: 1px solid rgba(250, 204, 21, .3);
+      border-radius: 14px;
+      padding: 1.5rem 1.25rem;
+      text-align: center;
+      width: 100%;
+      animation: modalIn .2s ease;
+    }
+
+    .confirm-icon {
+      font-size: 2.2rem;
+      margin-bottom: .6rem;
+    }
+
+    .confirm-titulo {
+      font-family: 'Press Start 2P', monospace;
+      font-size: .48rem;
+      color: white;
+      line-height: 1.8;
+      margin-bottom: .5rem;
+    }
+
+    .confirm-resumen {
+      font-size: .78rem;
+      color: rgba(255, 255, 255, .45);
+      line-height: 1.8;
+      margin-bottom: 1.1rem;
+    }
+
+    .confirm-resumen strong {
+      color: var(--yellow);
+    }
+
+    .confirm-resumen .resto-positivo {
+      color: #4ade80;
+    }
+
+    .confirm-resumen .resto-negativo {
+      color: #ef4444;
+    }
+
+    .confirm-btns {
+      display: flex;
+      gap: .6rem;
+    }
+
+    .btn-cancelar-conf {
+      flex: 1;
+      padding: .75rem;
+      background: rgba(255, 255, 255, .06);
+      border: 1px solid var(--border);
+      color: rgba(255, 255, 255, .45);
+      border-radius: 9px;
+      font-family: 'Press Start 2P', monospace;
+      font-size: .33rem;
+      cursor: pointer;
+      transition: background .15s, color .15s;
+    }
+
+    .btn-cancelar-conf:hover {
+      background: rgba(255, 255, 255, .12);
+      color: white;
+    }
+
+    .btn-confirmar-ok {
+      flex: 1;
+      padding: .75rem;
+      background: #4ade80;
+      color: #0a1a0f;
+      border: none;
+      border-radius: 9px;
+      font-family: 'Press Start 2P', monospace;
+      font-size: .33rem;
+      font-weight: 900;
+      cursor: pointer;
+      transition: opacity .15s, transform .1s;
+    }
+
+    .btn-confirmar-ok:hover:not(:disabled) {
+      opacity: .88;
+      transform: translateY(-1px);
+    }
+
+    .btn-confirmar-ok:disabled {
+      background: rgba(255, 255, 255, .08);
+      color: rgba(255, 255, 255, .3);
+      cursor: not-allowed;
+    }
+
+    .modal-btns {
+      display: flex;
+      gap: .75rem;
+    }
+
+    .modal-btns button {
+      flex: 1;
+      padding: .85rem .5rem;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      font-family: 'Press Start 2P', monospace;
+      font-size: .35rem;
+      transition: opacity .15s, transform .15s;
+    }
+
+    .modal-btns button:hover {
+      opacity: .85;
+      transform: translateY(-1px);
+    }
+
+    .modal-btns button:active {
+      transform: translateY(0);
+    }
+
+    .btn-cancel {
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      color: var(--text-dim);
+    }
+
+    .btn-confirm {
+      background: linear-gradient(135deg, var(--yellow), var(--orange));
+      border: none;
+      color: #1a0a00;
+      font-weight: 900;
+    }
+
+    .btn-confirm:disabled {
+      opacity: .7;
+      cursor: default;
+      transform: none !important;
+    }
+
+    /* ============================================
+   TOASTS (por si shared.css no los tiene)
+   ============================================ */
+    .toast-container {
+      position: fixed;
+      bottom: 1.5rem;
+      right: 1.5rem;
+      z-index: 9999;
+      display: flex;
+      flex-direction: column;
+      gap: .5rem;
+      pointer-events: none;
+    }
+
+    .toast {
+      background: var(--bg2);
+      border: 1px solid rgba(255, 255, 255, .15);
+      border-radius: var(--radius-sm);
+      padding: .75rem 1rem;
+      display: flex;
+      align-items: center;
+      gap: .6rem;
+      font-size: .85rem;
+      font-weight: 700;
+      color: white;
+      font-family: 'Nunito', sans-serif;
+      min-width: 220px;
+      max-width: 320px;
+      animation: toastIn .3s ease;
+      pointer-events: auto;
+    }
+
+    @keyframes toastIn {
+      from {
+        opacity: 0;
+        transform: translateX(20px);
+      }
+
+      to {
+        opacity: 1;
+        transform: none;
+      }
+    }
+
+    @keyframes toastOut {
+      from {
+        opacity: 1;
+        transform: none;
+      }
+
+      to {
+        opacity: 0;
+        transform: translateX(20px);
+      }
+    }
+
+    /* ============================================
+   ANIMACIONES FADE
+   ============================================ */
+    .fade-up {
+      opacity: 0;
+      transform: translateY(16px);
+      animation: fadeUp .5s ease forwards;
+    }
+
+    .delay-1 {
+      animation-delay: .1s;
+    }
+
+    .delay-2 {
+      animation-delay: .2s;
+    }
+
+    .delay-3 {
+      animation-delay: .3s;
+    }
+
+    @keyframes fadeUp {
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+  </style>
+
+  <!-- SDK de Clerk (carga síncrona — sin async/defer) -->
+  <script data-clerk-publishable-key="pk_test_bG92aW5nLXJhcHRvci0xLmNsZXJrLmFjY291bnRzLmRldiQ"
+    src="https://cdn.jsdelivr.net/npm/@clerk/clerk-js@latest/dist/clerk.browser.js"></script>
+</head>
+
+<body>
+  <!-- Header global inyectado por shared.js -->
+  <div id="sharedHeader"></div>
+
+  <div class="layout">
+    <main class="main">
+
+      <!-- Título de página -->
+      <div class="page-header fade-up">
+        <div>
+          <span class="page-tag">🛒 TIENDA</span>
+          <h1 class="page-title">Tienda EduCoins</h1>
+          <p class="page-subtitle">Gasta tus monedas en avatares, accesorios y ventajas.</p>
+        </div>
+      </div>
+
+      <!-- Saldo disponible -->
+      <div class="saldo-header fade-up delay-1">
+        <span class="saldo-icon">
+          <img src="../shared/coin.png" alt="moneda EduCoin" />
+        </span>
+        <div>
+          <div class="saldo-label">SALDO DISPONIBLE</div>
+          <div>
+            <span class="saldo-num" id="saldoNum">—</span>
+            <span class="saldo-suffix">EduCoins</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tabs: Tienda | Inventario -->
+      <div id="tabsBar" class="fade-up delay-1" style="
+      display:flex;gap:.5rem;margin-bottom:1.25rem;
+      border-bottom:1px solid rgba(255,255,255,.07);padding-bottom:.75rem">
+        <button class="tab-btn active" data-tab="tienda" style="
+        font-family:'Press Start 2P',monospace;font-size:.42rem;padding:.55rem 1.1rem;
+        border-radius:10px;border:1px solid rgba(255,255,255,.1);cursor:pointer;
+        background:rgba(250,204,21,.12);border-color:rgba(250,204,21,.4);color:#facc15;
+        transition:all .2s">🛍️ TIENDA</button>
+        <button class="tab-btn" data-tab="inventario" style="
+        font-family:'Press Start 2P',monospace;font-size:.42rem;padding:.55rem 1.1rem;
+        border-radius:10px;border:1px solid rgba(255,255,255,.1);cursor:pointer;
+        background:rgba(255,255,255,.04);color:rgba(255,255,255,.5);
+        transition:all .2s;position:relative">🎒 MI MOCHILA
+          <span id="tabInvBadge" style="
+          position:absolute;top:-.4rem;right:-.4rem;
+          background:#ef4444;color:white;border-radius:50%;
+          width:1.1rem;height:1.1rem;font-size:.5rem;
+          display:flex;align-items:center;justify-content:center;
+          font-family:Nunito,sans-serif;font-weight:900"></span>
+        </button>
+      </div>
+
+      <style>
+        .tab-btn.active {
+          background: rgba(250, 204, 21, .12) !important;
+          border-color: rgba(250, 204, 21, .4) !important;
+          color: #facc15 !important;
+        }
+
+        .tab-btn:not(.active):hover {
+          background: rgba(255, 255, 255, .08) !important;
+          color: white !important;
+        }
+      </style>
+
+      <!-- Barra de categorías (solo en tab tienda) -->
+      <div class="cats fade-up delay-2" id="catsBar"></div>
+
+      <!-- Título inventario (oculto por defecto) -->
+      <div id="invTitle" style="display:none;margin-bottom:1rem">
+        <p style="font-size:.8rem;color:rgba(255,255,255,.5);font-weight:700">
+          Aquí aparecen todos los ítems que compraste, ganaste en misiones o recibiste como regalo.
+          Los boosts debes <strong style="color:#a78bfa">activarlos manualmente</strong>.
+        </p>
+      </div>
+
+      <!-- Grid de ítems / inventario -->
+      <div class="tienda-grid fade-up delay-3" id="tiendaGrid">
+        <div class="tienda-estado">
+          <span class="estado-icon">⏳</span>
+          Cargando tienda...
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <!-- Modal de confirmación de compra -->
+  <div class="modal-overlay" id="modalCompra" role="dialog" aria-modal="true" aria-labelledby="mc_nombre">
+    <div class="modal-compra" style="position:relative">
+
+      <!-- ── PASO 1: Detalle del ítem ── -->
+      <button class="modal-close" id="btnCerrarX" aria-label="Cerrar">✕</button>
+      <div class="mc-visual" id="mc_visual">
+        <div class="modal-emoji" id="mc_emoji" aria-hidden="true">🛒</div>
+      </div>
+      <div class="modal-titulo" id="mc_nombre">ÍTEM</div>
+      <div class="modal-desc" id="mc_desc"></div>
+      <div class="modal-precio">
+        <img src="../shared/coin.png" alt="moneda" />
+        <span id="mc_precio">0</span>
+        <span class="mc-unit">EC c/u</span>
+      </div>
+      <div class="modal-saldo" id="mc_saldo"></div>
+      <div class="mc-cantidad" id="mc_cantidad" style="display:none">
+        <span class="mc-cant-label">Cantidad:</span>
+        <div class="mc-cant-ctrl">
+          <button id="mc_menos" aria-label="Menos">−</button>
+          <span id="mc_cant_val">1</span>
+          <button id="mc_mas" aria-label="Más">+</button>
+        </div>
+        <div class="mc-cant-total">
+          Total: <strong id="mc_total">0</strong>
+          <img src="../shared/coin.png" alt="EC" style="width:.9rem;vertical-align:middle;margin-left:.2rem" />
+        </div>
+      </div>
+      <div class="modal-btns">
+        <button class="btn-cancel" id="btnCancelar">✕ Cancelar</button>
+        <button class="btn-confirm" id="btnConfirmar">🛒 Comprar</button>
+      </div>
+
+      <!-- ── PASO 2: Confirmación encima ── -->
+      <div class="confirm-overlay" id="confirmOverlay">
+        <div class="confirm-box">
+          <div class="confirm-icon">🤔</div>
+          <div class="confirm-titulo">¿Estás seguro?</div>
+          <div class="confirm-resumen" id="confirm_resumen"></div>
+          <div class="confirm-btns">
+            <button class="btn-cancelar-conf" id="btnConfCancelar">✕ Volver</button>
+            <button class="btn-confirmar-ok" id="btnConfOk">✅ Confirmar</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Toasts -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- Scripts (en este orden exacto) -->
+  <script src="../auth/clerk-config.js"></script>
+  <script src="../shared/clerk-guard.js"></script>
+  <script src="../shared/shared.js"></script>
+
+  <script>
+    /* ==============================================
+       TIENDA v2.1 — lógica de página
+       Tabs: Tienda | Inventario
+       Versión: 2025-03-07-v2.1
+       ============================================== */
+    console.log('[tienda] versión 2.1 cargada');
+    (function () {
+      'use strict';
+
+      // ------------------------------------------------
+      // Estado
+      // ------------------------------------------------
+      var monedas = 0;
+      var items = [];
+      var inventario = [];
+      var catActual = 'todos';
+      var tabActual = 'tienda';
+      var itemPendiente = null;
+      var cantidadModal = 1;
+      var cargando = false;
+
+      var CATEGORIAS = [
+        { id: 'todos', label: '🛍️ Todo' },
+        { id: 'avatares', label: '🐰 Avatares' },
+        { id: 'cosmético', label: '✨ Cosméticos' },
+        { id: 'decoracion', label: '🎨 Decoración' },
+        { id: 'ventajas', label: '⚡ Ventajas' },
+        { id: 'power_up', label: '🚀 Power Ups' },
+        { id: 'accesorio', label: '💎 Accesorios' },
+        { id: 'título', label: '🏅 Títulos' },
+        { id: 'canje', label: '💵 Canje CLP' },
+      ];
+
+      // ------------------------------------------------
+      // Inicialización al cargar el DOM
+      // ------------------------------------------------
+      document.addEventListener('DOMContentLoaded', function () {
+        initShared('tienda');
+        renderTabs();
+        renderCats();
+        bindModal();
+
+        // ── Anti race-condition ──────────────────────────────
+        // clerkReady puede dispararse ANTES de que este listener
+        // esté registrado (Clerk carga en el <head> sin defer).
+        // Si el token ya existe al llegar aquí → cargar directo.
+        // Si no → esperar el evento normalmente.
+        if (window.CLERK_TOKEN) {
+          console.log('[tienda] token ya disponible en DOMContentLoaded → cargando');
+          cargarTienda();
+          cargarInventario();
+        } else {
+          console.log('[tienda] esperando clerkReady...');
+        }
+      });
+
+      // Cuando Clerk confirma la sesión → cargar tienda + inventario
+      document.addEventListener('clerkReady', function () {
+        console.log('[tienda] clerkReady recibido, token:', !!window.CLERK_TOKEN);
+        if (window.CLERK_TOKEN) {
+          cargarTienda();
+          cargarInventario();
+        } else {
+          // Token aún no disponible — esperar renovarToken (máx 1s)
+          var intentos = 0;
+          var espera = setInterval(function () {
+            intentos++;
+            if (window.CLERK_TOKEN) {
+              clearInterval(espera);
+              console.log('[tienda] token llegó en intento', intentos);
+              cargarTienda();
+              cargarInventario();
+            } else if (intentos >= 10) {
+              clearInterval(espera);
+              mostrarEstado('🔑', 'Sin sesión — ejecuta en modo autenticado.');
+            }
+          }, 100);
+        }
+      });
+
+      // ------------------------------------------------
+      // API: cargar ítems y saldo
+      // ------------------------------------------------
+      // ------------------------------------------------
+      // API: cargar catálogo de la tienda
+      // ------------------------------------------------
+      function cargarTienda() {
+        if (cargando) return;
+        cargando = true;
+        mostrarEstado('⏳', 'Cargando tienda...');
+
+        fetch(BASE_URL + '/api/tienda', {
+          credentials: 'include',
+          headers: {
+            ...(window.CLERK_TOKEN ? { 'Authorization': 'Bearer ' + window.CLERK_TOKEN } : {})
+          }
+        })
+          .then(function (r) {
+            if (!r.ok) throw new Error('HTTP ' + r.status);
+            return r.json();
+          })
+          .then(function (data) {
+            cargando = false;
+            monedas = Number(data.saldo || 0);
+            items = Array.isArray(data.items) ? data.items : [];
+            actualizarSaldo(monedas, true);
+            if (tabActual === 'tienda') renderItems();
+          })
+          .catch(function (err) {
+            cargando = false;
+            console.error('[tienda] Error al cargar:', err);
+            mostrarEstado('❌', 'Error al cargar la tienda.\nIntenta recargar la página.');
+          });
+      }
+
+      // ------------------------------------------------
+      // API: cargar inventario del alumno
+      // ------------------------------------------------
+      function cargarInventario() {
+        fetch(BASE_URL + '/api/tienda?action=inventario', {
+          credentials: 'include',
+          headers: {
+            ...(window.CLERK_TOKEN ? { 'Authorization': 'Bearer ' + window.CLERK_TOKEN } : {})
+          }
+        })
+          .then(function (r) { return r.ok ? r.json() : null; })
+          .then(function (data) {
+            if (!data) return;
+            inventario = Array.isArray(data.inventario) ? data.inventario : [];
+            if (tabActual === 'inventario') renderInventario();
+            // Actualizar badge de la tab inventario
+            var badge = document.getElementById('tabInvBadge');
+            var pendientes = inventario.filter(function (i) { return i.estado === 'inactivo' || i.estado === 'pendiente'; }).length;
+            if (badge) badge.textContent = pendientes > 0 ? pendientes : '';
+          })
+          .catch(function () { });
+      }
+
+      // ------------------------------------------------
+      // API: activar ítem del inventario
+      // ------------------------------------------------
+      function activarItem(invId) {
+        fetch(BASE_URL + '/api/tienda', {
+          method: 'POST',
+          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(window.CLERK_TOKEN ? { 'Authorization': 'Bearer ' + window.CLERK_TOKEN } : {})
+          },
+          body: JSON.stringify({ action: 'activar', inventario_id: invId }),
+        })
+          .then(function (r) { return r.json(); })
+          .then(function (data) {
+            if (data.error) { toast('⚠️ ' + (data.mensaje || 'No se pudo activar'), 'warning'); return; }
+            // Actualizar estado local
+            var inv = inventario.find(function (i) { return i.id === invId; });
+            if (inv) {
+              inv.estado = 'activo';
+              inv.activado_at = new Date().toISOString();
+              inv.expira_at = data.expira_at || null;
+            }
+            renderInventario();
+            var horas = inv && inv.expira_at
+              ? Math.ceil((new Date(inv.expira_at) - new Date()) / 3600000) + 'h'
+              : '∞';
+            toast('🔥 ¡Boost activado! Dura ' + horas, 'success');
+          })
+          .catch(function () { toast('❌ Error de conexión', 'error'); });
+      }
+
+      // ------------------------------------------------
+      // API: confirmar compra
+      // ------------------------------------------------
+      function comprar(item, cantidad) {
+        cantidad = cantidad || 1;
+        var btnOk = document.getElementById('btnConfOk');
+        btnOk.disabled = true;
+        btnOk.textContent = '⏳ Procesando...';
+
+        fetch(BASE_URL + '/api/tienda', {
+          method: 'POST',
+          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(window.CLERK_TOKEN ? { 'Authorization': 'Bearer ' + window.CLERK_TOKEN } : {})
+          },
+          body: JSON.stringify({ action: 'comprar', item_id: item.id, cantidad: cantidadModal || 1 }),
+        })
+          .then(function (r) {
+            if (!r.ok) throw new Error('HTTP ' + r.status);
+            return r.json();
+          })
+          .then(function (data) {
+            btnOk.disabled = false;
+            btnOk.textContent = '✅ Confirmar';
+            cerrarModal();
+
+            if (data.error) {
+              toast('⚠️ ' + (data.mensaje || 'Error al comprar'), 'warning');
+              return;
+            }
+
+            // Actualizar estado local sin recargar
+            monedas = Number(data.saldo_nuevo != null ? data.saldo_nuevo : monedas - item.precio);
+
+            var itemLocal = items.find(function (i) { return i.id === item.id; });
+            if (itemLocal) {
+              itemLocal.comprado = true;
+              itemLocal.puede_comprar = false;
+            }
+
+            // Actualizar contadores visibles
+            actualizarSaldo(monedas, true);
+
+            // También actualizar saldo del header global
+            var headerCoins = document.getElementById('headerCoins');
+            if (headerCoins) animarContador('headerCoins', monedas, 600);
+
+            renderItems();
+            toast(data.mensaje || '🎉 ¡Compra realizada!', 'success');
+          })
+          .catch(function (err) {
+            console.error('[tienda] Error al comprar:', err);
+            btnOk.disabled = false;
+            btnOk.textContent = '✅ Confirmar';
+            cerrarModal();
+            toast('❌ Error de conexión. Intenta de nuevo.', 'error');
+          });
+      }
+
+      // ------------------------------------------------
+      // Render: tabs principales (Tienda | Inventario)
+      // ------------------------------------------------
+      function renderTabs() {
+        var bar = document.getElementById('tabsBar');
+        if (!bar) return;
+        bar.addEventListener('click', function (e) {
+          var btn = e.target.closest('.tab-btn');
+          if (!btn) return;
+          tabActual = btn.dataset.tab;
+          bar.querySelectorAll('.tab-btn').forEach(function (b) { b.classList.remove('active'); });
+          btn.classList.add('active');
+
+          var catsEl = document.getElementById('catsBar');
+          var invTitle = document.getElementById('invTitle');
+
+          if (tabActual === 'tienda') {
+            if (catsEl) catsEl.style.display = '';
+            if (invTitle) invTitle.style.display = 'none';
+            renderItems();
+          } else {
+            if (catsEl) catsEl.style.display = 'none';
+            if (invTitle) invTitle.style.display = '';
+            if (inventario.length > 0) {
+              renderInventario();
+            } else {
+              cargarInventario();
+            }
+          }
+        });
+      }
+
+      // ------------------------------------------------
+      // Render: categorías
+      // ------------------------------------------------
+      function renderCats() {
+        var bar = document.getElementById('catsBar');
+        if (!bar) return;
+
+        bar.innerHTML = CATEGORIAS.map(function (c) {
+          return '<button class="cat-btn' + (c.id === 'todos' ? ' active' : '') + '"' +
+            ' data-cat="' + c.id + '">' + c.label + '</button>';
+        }).join('');
+
+        bar.addEventListener('click', function (e) {
+          var btn = e.target.closest('.cat-btn');
+          if (!btn) return;
+
+          bar.querySelectorAll('.cat-btn').forEach(function (b) { b.classList.remove('active'); });
+          btn.classList.add('active');
+          catActual = btn.dataset.cat;
+          renderItems();
+        });
+      }
+
+      // ------------------------------------------------
+      // Render: grid de ítems
+      // ------------------------------------------------
+      function renderItems() {
+        var grid = document.getElementById('tiendaGrid');
+        if (!grid) return;
+
+        var filtrados = items.filter(function (i) {
+          return catActual === 'todos' || i.categoria === catActual;
+        });
+
+        if (filtrados.length === 0) {
+          grid.innerHTML =
+            '<div class="tienda-estado">' +
+            '<span class="estado-icon">🗂️</span>' +
+            'No hay ítems en esta categoría.' +
+            '</div>';
+          return;
+        }
+
+        // Ordenar: disponibles → sin saldo → bloqueados por nivel → comprados
+        function ordenItem(i) {
+          var comprado = Boolean(i.comprado) && !i.compra_repetida;
+          var sinStock = i.stock !== null && i.stock !== undefined && (i.stock - (i.stock_usado || 0)) <= 0;
+          var nivelBloq = Boolean(i.nivel_minimo && i.nivel_minimo > 1 && !i.puede_comprar && !comprado);
+          var sinSaldo = !i.puede_comprar && !comprado && !nivelBloq && !sinStock;
+          if (comprado) return 3;
+          if (nivelBloq || sinStock) return 2;
+          if (sinSaldo) return 1;
+          return 0;
+        }
+        filtrados.sort(function (a, b) { return ordenItem(a) - ordenItem(b); });
+
+        // Agregar separadores de grupo
+        var grupos = ['✅ Puedes comprar', '💸 Sin saldo suficiente', '🔒 Bloqueados por nivel', '✔️ Ya tienes'];
+        var grupoActual = -1;
+        var html = '';
+        filtrados.forEach(function (item) {
+          var g = ordenItem(item);
+          if (g !== grupoActual) {
+            grupoActual = g;
+            html += '<div class="card-grupo-titulo">' + grupos[g] + '</div>';
+          }
+          html += buildCard(item);
+        });
+        grid.innerHTML = html;
+
+        // Eventos de clic en cards y botones
+        grid.querySelectorAll('.item-card').forEach(function (card) {
+          card.addEventListener('click', function (e) {
+            var id = card.dataset.id;
+            var item = items.find(function (i) { return i.id === id; });
+            if (!item) return;
+
+            var comprado = Boolean(item.comprado) && !item.compra_repetida;
+            var sinStock = item.stock !== null && item.stock !== undefined && (item.stock - (item.stock_usado || 0)) <= 0;
+            var nivelBloq = Boolean(item.nivel_minimo && item.nivel_minimo > 1 && !item.puede_comprar && !comprado);
+            var sinSaldo = !item.puede_comprar && !comprado && !nivelBloq && !sinStock;
+            var disponible = Boolean(item.puede_comprar) && !comprado && !sinStock;
+
+            if (disponible) {
+              abrirModal(item);
+            } else if (sinSaldo) {
+              var faltan = item.precio - monedas;
+              toast('💸 Te faltan ' + faltan.toLocaleString('es-CL') + ' EduCoins', 'warning');
+            } else if (nivelBloq) {
+              toast('🔒 Necesitas llegar al nivel ' + item.nivel_minimo + ' para desbloquear este ítem', 'info');
+            } else if (sinStock) {
+              toast('📦 Este ítem está agotado', 'info');
+            }
+            // comprado: no hace nada
+          });
+        });
+      }
+
+      // ------------------------------------------------
+      // Construir HTML de una tarjeta de tienda
+      // ------------------------------------------------
+      function buildCard(item) {
+        var tipo = item.tipo || 'cosmético';
+        var comprado = Boolean(item.comprado) && !item.compra_repetida;
+        var sinStock = item.stock !== null && item.stock !== undefined &&
+          (item.stock - (item.stock_usado || 0)) <= 0;
+        var nivelBloq = Boolean(item.nivel_minimo && item.nivel_minimo > 1 && !item.puede_comprar && !comprado);
+        var sinSaldo = !item.puede_comprar && !comprado && !nivelBloq && !sinStock;
+        var disponible = Boolean(item.puede_comprar) && !comprado && !sinStock;
+
+        // Clase de la card
+        var claseCard = 'item-card' +
+          (disponible ? ' disponible' :
+            sinSaldo ? ' sin-saldo' :
+              nivelBloq ? ' bloqueado' :
+                comprado ? ' comprado' : ' bloqueado');
+
+        // Badge estado (esquina superior derecha)
+        var badge = comprado
+          ? '<span class="item-badge badge-owned">✔️ Tuyo</span>'
+          : nivelBloq
+            ? '<span class="item-badge badge-locked">🔒 Nv.' + item.nivel_minimo + '</span>'
+            : sinSaldo
+              ? '<span class="item-badge badge-saldo">💸</span>'
+              : sinStock
+                ? '<span class="item-badge badge-locked">📦 Agotado</span>'
+                : '';
+
+        // Subtype label para la card
+        var tipoLabel = {
+          'canjeable': '💵 Canjeable', 'activable': '⚡ Activable',
+          'consumible': '🎯 Consumible', 'cosmético': '✨ Cosmético'
+        };
+        var subtipoTexto = (tipoLabel[tipo] || tipo);
+        if (tipo === 'activable' && item.duracion_horas) {
+          subtipoTexto += ' · ' + item.duracion_horas + 'h · x' + (item.multiplicador || 1);
+        }
+        if (tipo === 'canjeable') {
+          var clp = Math.round(item.precio / 10);
+          subtipoTexto += ' · $' + clp.toLocaleString('es-CL') + ' CLP';
+        }
+
+        // Imagen/emoji zona
+        var imgHTML;
+        if (item.imagen_url) {
+          var src = 'images/' + item.imagen_url.replace('images/', '');
+          imgHTML = '<div class="card-img-wrap">' +
+            '<img src="' + escapeHtml(src) + '" alt="' + escapeHtml(item.nombre) + '" ' +
+            'onerror="this.style.display=\'none\';this.nextSibling.style.display=\'flex\'">' +
+            '<span class="card-emoji" style="display:none">' + escapeHtml(item.emoji) + '</span>' +
+            '</div>';
+        } else {
+          imgHTML = '<div class="card-img-wrap">' +
+            '<span class="card-emoji">' + escapeHtml(item.emoji) + '</span>' +
+            '</div>';
+        }
+
+        // Botón según estado
+        var btnClase, btnTxt;
+        if (comprado) {
+          btnClase = 'bc-azul'; btnTxt = '✔️ Tienes';
+        } else if (sinSaldo) {
+          btnClase = 'bc-amarillo'; btnTxt = '💸 Ver';
+        } else if (nivelBloq || sinStock) {
+          btnClase = 'bc-gris'; btnTxt = nivelBloq ? '🔒 Nv.' + item.nivel_minimo : '📦 Agotado';
+        } else {
+          btnClase = 'bc-verde';
+          btnTxt = tipo === 'canjeable' ? '💵 Canjear' : '🛒 Ver';
+        }
+
+        return '<div class="' + claseCard + '" data-id="' + escapeHtml(item.id) + '">' +
+          badge +
+          imgHTML +
+          '<div class="card-info">' +
+          '<div class="card-nombre">' + escapeHtml(item.nombre) + '</div>' +
+          '<div class="card-subtipo">' + subtipoTexto + '</div>' +
+          '</div>' +
+          '<div class="card-derecha">' +
+          '<div class="card-precio">' +
+          item.precio.toLocaleString('es-CL') +
+          ' <img src="../shared/coin.png" alt="EC">' +
+          '</div>' +
+          '<button class="btn-card ' + btnClase + '" data-id="' + escapeHtml(item.id) + '">' +
+          btnTxt +
+          '</button>' +
+          '</div>' +
+          '</div>';
+      }
+
+      // ------------------------------------------------
+      // Render: tab de inventario del alumno
+      // ------------------------------------------------
+      function renderInventario() {
+        var grid = document.getElementById('tiendaGrid');
+        if (!grid) return;
+
+        if (inventario.length === 0) {
+          grid.innerHTML =
+            '<div class="tienda-estado">' +
+            '<span class="estado-icon">🎒</span>' +
+            'Tu inventario está vacío.<br>Compra ítems en la tienda.' +
+            '</div>';
+          return;
+        }
+
+        var ahora = new Date();
+        var limite30 = new Date(ahora.getTime() - 30 * 24 * 3600 * 1000);
+
+        // Separar historial (entregados hace +30 días / expirados/usados) vs mochila activa
+        var mochila = [];
+        var historial = [];
+
+        inventario.forEach(function (inv) {
+          var estado = inv.estado;
+          if (estado === 'expirado' || estado === 'usado') {
+            historial.push(inv);
+          } else if (estado === 'entregado') {
+            var entregadoEn = inv.entregado_at ? new Date(inv.entregado_at) : new Date(inv.updated_at || inv.created_at);
+            if (entregadoEn < limite30) {
+              historial.push(inv); // ya pasaron 30 días → historial
+            } else {
+              mochila.push(inv);   // aún dentro de los 30 días → mochila con banda
+            }
+          } else {
+            mochila.push(inv);
+          }
+        });
+
+        // Agrupar mochila por estado
+        var grupos = {
+          activo: mochila.filter(function (i) { return i.estado === 'activo'; }),
+          inactivo: mochila.filter(function (i) { return i.estado === 'inactivo'; }),
+          pendiente: mochila.filter(function (i) { return i.estado === 'pendiente'; }),
+          entregado: mochila.filter(function (i) { return i.estado === 'entregado'; }),
+        };
+
+        var html = '';
+
+        function seccion(titulo, lista, color) {
+          if (!lista.length) return '';
+          return '<div style="grid-column:1/-1;margin:1rem 0 .4rem;font-family:\'Press Start 2P\',monospace;' +
+            'font-size:.38rem;color:' + color + ';letter-spacing:.06em">' + titulo + '</div>' +
+            lista.map(buildInvCard).join('');
+        }
+
+        // Los canjeables inactivos son "pendientes de entrega" — mostrar en sección propia
+        var canjeablesPend = grupos.inactivo.filter(function (i) { return (i.tipo || i.item_tipo) === 'canjeable'; });
+        var otrosInactivos = grupos.inactivo.filter(function (i) { return (i.tipo || i.item_tipo) !== 'canjeable'; });
+
+        html += seccion('⚡ ACTIVOS AHORA', grupos.activo, '#22c55e');
+        html += seccion('🎒 EN TU MOCHILA', otrosInactivos, '#a78bfa');
+        html += seccion('⏳ CANJES PENDIENTES', canjeablesPend, '#f97316');
+        html += seccion('✅ ENTREGADOS', grupos.entregado, '#4ade80');
+
+        // Historial colapsable
+        if (historial.length > 0) {
+          html += '<div style="grid-column:1/-1;margin-top:1.5rem">' +
+            '<div id="historialToggle" style="display:flex;align-items:center;justify-content:space-between;' +
+            'padding:.65rem .9rem;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.09);' +
+            'border-radius:8px;cursor:pointer;font-size:.8rem;font-weight:900;color:rgba(255,255,255,.45);' +
+            'user-select:none;transition:background .15s" ' +
+            'onclick="toggleHistorial(this)">' +
+            '<span>📋 Historial (' + historial.length + ' ítems)</span>' +
+            '<span id="historialChevron" style="transition:transform .25s">▾</span>' +
+            '</div>' +
+            '<div id="historialBody" style="display:none;border:1px solid rgba(255,255,255,.09);' +
+            'border-top:none;border-radius:0 0 8px 8px;overflow:hidden">' +
+            historial.map(function (inv) {
+              var fecha = inv.entregado_at || inv.updated_at || inv.created_at;
+              var fechaTxt = fecha ? new Date(fecha).toLocaleDateString('es-CL', { day: 'numeric', month: 'short', year: 'numeric' }) : '—';
+              var estadoLabel = inv.estado === 'expirado' ? '💨 Expirado'
+                : inv.estado === 'usado' ? '✔️ Usado'
+                  : '✅ Entregado';
+              return '<div style="display:flex;align-items:center;gap:.75rem;padding:.55rem .9rem;' +
+                'border-bottom:1px solid rgba(255,255,255,.05);font-size:.72rem">' +
+                '<span style="font-size:1.2rem;flex-shrink:0">' + (inv.emoji || '🎁') + '</span>' +
+                '<div style="flex:1">' +
+                '<div style="font-weight:800;color:white">' + escapeHtml(inv.nombre || '') + '</div>' +
+                '<div style="color:rgba(255,255,255,.4);font-size:.65rem">' + fechaTxt +
+                (inv.entregado_por ? ' · Entregado' : '') + '</div>' +
+                '</div>' +
+                '<div style="font-size:.62rem;font-weight:900;padding:.15rem .35rem;border-radius:4px;' +
+                'background:rgba(255,255,255,.06);color:rgba(255,255,255,.4)">' + estadoLabel + '</div>' +
+                '</div>';
+            }).join('') +
+            '</div>' +
+            '</div>';
+        }
+
+        grid.innerHTML = html;
+
+        // Eventos botón activar
+        grid.querySelectorAll('.btn-activar').forEach(function (btn) {
+          btn.addEventListener('click', function () {
+            activarItem(this.dataset.invid);
+          });
+        });
+      }
+
+      // Toggle historial colapsable
+      window.toggleHistorial = function (toggle) {
+        var body = document.getElementById('historialBody');
+        var chevron = document.getElementById('historialChevron');
+        var abierto = body.style.display !== 'none';
+        body.style.display = abierto ? 'none' : 'block';
+        chevron.style.transform = abierto ? '' : 'rotate(180deg)';
+        toggle.style.background = abierto ? 'rgba(255,255,255,.03)' : 'rgba(255,255,255,.07)';
+        toggle.style.color = abierto ? 'rgba(255,255,255,.45)' : 'white';
+      };
+
+      function buildInvCard(inv) {
+        var tipo = inv.item_tipo || inv.tipo || 'cosmético';
+        var estado = inv.estado;
+        var esCanjeable = tipo === 'canjeable';
+
+        // Para canjeables inactivos → tratarlos como "pendiente de entrega"
+        if (esCanjeable && estado === 'inactivo') estado = 'pendiente';
+
+        var accentColor = {
+          activo: '#22c55e', inactivo: '#a78bfa', pendiente: '#f97316',
+          entregado: '#4ade80', expirado: '#334155', usado: '#334155'
+        }[estado] || '#64748b';
+
+        // Banda diagonal para canjeables
+        var bandaHTML = '';
+        if (esCanjeable && estado === 'pendiente') {
+          bandaHTML = '<div style="position:absolute;inset:0;overflow:hidden;pointer-events:none;z-index:3;border-radius:inherit">' +
+            '<div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%) rotate(-35deg);' +
+            'background:rgba(249,115,22,.85);color:white;white-space:nowrap;padding:.3rem 2.5rem;' +
+            'font-family:\'Press Start 2P\',monospace;font-size:.32rem;letter-spacing:.08em;' +
+            'box-shadow:0 2px 12px rgba(249,115,22,.4)">⏳ PENDIENTE</div>' +
+            '</div>';
+        } else if (esCanjeable && estado === 'entregado') {
+          bandaHTML = '<div style="position:absolute;inset:0;overflow:hidden;pointer-events:none;z-index:3;border-radius:inherit">' +
+            '<div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%) rotate(-35deg);' +
+            'background:rgba(74,222,128,.8);color:#0a1a0f;white-space:nowrap;padding:.3rem 2.5rem;' +
+            'font-family:\'Press Start 2P\',monospace;font-size:.32rem;letter-spacing:.08em;' +
+            'box-shadow:0 2px 12px rgba(74,222,128,.3)">✅ ENTREGADO</div>' +
+            '</div>';
+        }
+
+        // Tiempo restante para activables activos
+        var tiempoRest = '';
+        if (estado === 'activo' && inv.expira_at) {
+          var horas = Math.max(0, Math.ceil((new Date(inv.expira_at) - new Date()) / 3600000));
+          tiempoRest = '<div style="font-size:.65rem;color:#22c55e;font-weight:900;margin:.3rem 0">⏱ ' + horas + 'h restantes</div>';
+        }
+
+        // Origen badge
+        var origenLabel = { compra: '🛒 Comprado', mision: '🎯 Misión', regalo_admin: '🎁 Regalo', regalo_sistema: '⭐ Sistema' };
+        var origenBadge = '<span style="font-size:.55rem;color:#475569;font-weight:800">' +
+          (origenLabel[inv.origen] || inv.origen) + '</span>';
+
+        // Multiplicador info
+        var multInfo = '';
+        if (tipo === 'activable' && inv.multiplicador) {
+          multInfo = '<div style="font-size:.65rem;color:#a78bfa;font-weight:800">x' +
+            inv.multiplicador + ' · ' + (inv.alcance || 'todo') + '</div>';
+        }
+
+        // Botón de acción según tipo y estado
+        var accionBtn = '';
+        if (tipo === 'activable' && estado === 'inactivo') {
+          accionBtn = '<button class="btn-comprar estado-comprar btn-activar" data-invid="' + inv.id + '" ' +
+            'style="background:linear-gradient(135deg,#7c3aed,#4f46e5)">⚡ Activar ahora</button>';
+        } else if (estado === 'activo') {
+          accionBtn = '<button class="btn-comprar estado-comprado" disabled>✅ Activo</button>';
+        } else if (estado === 'pendiente') {
+          accionBtn = '<button class="btn-comprar" disabled ' +
+            'style="background:rgba(249,115,22,.12);border:1px solid rgba(249,115,22,.3);color:#f97316">' +
+            '⏳ Pendiente de entrega</button>';
+        } else if (estado === 'entregado') {
+          accionBtn = '<button class="btn-comprar" disabled ' +
+            'style="background:rgba(74,222,128,.1);border:1px solid rgba(74,222,128,.25);color:#4ade80">' +
+            '✅ Entregado</button>';
+        } else {
+          accionBtn = '<button class="btn-comprar estado-sin-fondos" disabled>💨 ' +
+            (estado === 'usado' ? 'Usado' : 'Expirado') + '</button>';
+        }
+
+        var iconoHTML = inv.imagen_url
+          ? '<img src="images/' + escapeHtml((inv.imagen_url || '').replace('images/', '')) + '" ' +
+          'style="width:100%;max-height:70px;object-fit:cover;border-radius:6px;margin-bottom:.35rem;display:block"' +
+          ' onerror="this.style.display=\'none\'">'
+          : '<span class="item-emoji" style="font-size:2.2rem">' + escapeHtml(inv.emoji || '🎁') + '</span>';
+
+        return '<div class="item-card" ' +
+          'style="border-color:' + accentColor + '44;padding-bottom:1.5rem;opacity:' +
+          (estado === 'expirado' || estado === 'usado' ? '.4' : '1') + ';position:relative;overflow:hidden">' +
+          bandaHTML +
+          iconoHTML +
+          '<div class="item-nombre">' + escapeHtml(inv.nombre || 'Ítem') + '</div>' +
+          tiempoRest + multInfo + origenBadge +
+          accionBtn +
+          '</div>';
+      }
+
+      // ------------------------------------------------
+      // Modal de confirmación
+      // ------------------------------------------------
+      function bindModal() {
+        document.getElementById('btnCancelar').addEventListener('click', cerrarModal);
+        document.getElementById('btnCerrarX').addEventListener('click', cerrarModal);
+
+        // Paso 1 → Paso 2: mostrar confirmación
+        document.getElementById('btnConfirmar').addEventListener('click', function () {
+          if (!itemPendiente) return;
+          mostrarConfirmacion();
+        });
+
+        // Paso 2 → volver al Paso 1
+        document.getElementById('btnConfCancelar').addEventListener('click', function () {
+          document.getElementById('confirmOverlay').classList.remove('active');
+        });
+
+        // Paso 2 → confirmar compra real
+        document.getElementById('btnConfOk').addEventListener('click', function () {
+          if (itemPendiente) comprar(itemPendiente, cantidadModal);
+        });
+
+        document.getElementById('mc_menos').addEventListener('click', function () {
+          if (cantidadModal > 1) {
+            cantidadModal--;
+            document.getElementById('mc_cant_val').textContent = cantidadModal;
+            actualizarTotalModal();
+          }
+        });
+        document.getElementById('mc_mas').addEventListener('click', function () {
+          cantidadModal++;
+          document.getElementById('mc_cant_val').textContent = cantidadModal;
+          actualizarTotalModal();
+        });
+        document.getElementById('modalCompra').addEventListener('click', function (e) {
+          if (e.target === this) cerrarModal();
+        });
+        document.addEventListener('keydown', function (e) {
+          if (e.key === 'Escape') {
+            var conf = document.getElementById('confirmOverlay');
+            if (conf.classList.contains('active')) {
+              conf.classList.remove('active');
+            } else {
+              cerrarModal();
+            }
+          }
+        });
+      }
+
+      function mostrarConfirmacion() {
+        var total = itemPendiente.precio * cantidadModal;
+        var resto = monedas - total;
+        var resumen = 'Vas a comprar<br>' +
+          '<strong>' + cantidadModal + '× ' + escapeHtml(itemPendiente.nombre) + '</strong><br>' +
+          'por <strong>' + total.toLocaleString('es-CL') + ' EC</strong><br><br>' +
+          'Te quedarán <strong class="' + (resto < 0 ? 'resto-negativo' : 'resto-positivo') + '">' +
+          resto.toLocaleString('es-CL') + ' EC</strong>';
+
+        document.getElementById('confirm_resumen').innerHTML = resumen;
+        var btnOk = document.getElementById('btnConfOk');
+        if (resto < 0) {
+          btnOk.disabled = true;
+          btnOk.textContent = '⚠️ Sin saldo';
+        } else {
+          btnOk.disabled = false;
+          btnOk.textContent = '✅ Confirmar';
+        }
+        document.getElementById('confirmOverlay').classList.add('active');
+      }
+
+      function abrirModal(item) {
+        itemPendiente = item;
+        cantidadModal = 1;
+
+        // Visual: imagen o emoji
+        var visual = document.getElementById('mc_visual');
+        if (item.imagen_url) {
+          var img = new Image();
+          img.className = 'mc-img';
+          img.alt = item.nombre;
+          img.onerror = function () {
+            visual.innerHTML = '<div class="modal-emoji" id="mc_emoji">' + item.emoji + '</div>';
+          };
+          img.src = item.imagen_url;
+          visual.innerHTML = '';
+          visual.appendChild(img);
+        } else {
+          visual.innerHTML = '<div class="modal-emoji" id="mc_emoji">' + item.emoji + '</div>';
+        }
+
+        document.getElementById('mc_nombre').textContent = item.nombre;
+        document.getElementById('mc_desc').textContent = item.descripcion || '';
+        document.getElementById('mc_precio').textContent = item.precio.toLocaleString('es-CL');
+
+        // Saldo
+        actualizarSaldoModal();
+
+        // Cantidad (solo si es compra_repetida = canjeable multiple)
+        var secCant = document.getElementById('mc_cantidad');
+        if (item.compra_repetida) {
+          secCant.style.display = 'block';
+          document.getElementById('mc_cant_val').textContent = '1';
+          actualizarTotalModal();
+        } else {
+          secCant.style.display = 'none';
+        }
+
+        var btnConf = document.getElementById('btnConfirmar');
+        btnConf.disabled = false;
+        btnConf.textContent = '🛒 Confirmar';
+
+        document.getElementById('modalCompra').classList.add('active');
+        document.body.style.overflow = 'hidden';
+      }
+
+      function actualizarSaldoModal() {
+        var total = (itemPendiente ? itemPendiente.precio : 0) * cantidadModal;
+        var resto = monedas - total;
+        document.getElementById('mc_saldo').innerHTML =
+          'Tu saldo: <strong>' + monedas.toLocaleString('es-CL') + ' EC</strong>' +
+          ' → quedarán <strong style="color:' + (resto < 0 ? '#ef4444' : 'white') + '">' +
+          resto.toLocaleString('es-CL') + '</strong>';
+        var btnConf = document.getElementById('btnConfirmar');
+        btnConf.disabled = resto < 0;
+      }
+
+      function actualizarTotalModal() {
+        if (!itemPendiente) return;
+        var total = itemPendiente.precio * cantidadModal;
+        document.getElementById('mc_total').textContent = total.toLocaleString('es-CL');
+        document.getElementById('mc_precio').textContent = itemPendiente.precio.toLocaleString('es-CL');
+        actualizarSaldoModal();
+      }
+
+      function cerrarModal() {
+        document.getElementById('modalCompra').classList.remove('active');
+        document.getElementById('confirmOverlay').classList.remove('active');
+        document.body.style.overflow = '';
+        itemPendiente = null;
+        cantidadModal = 1;
+      }
+
+      // ------------------------------------------------
+      // Helpers de UI
+      // ------------------------------------------------
+      function actualizarSaldo(valor, animar) {
+        var el = document.getElementById('saldoNum');
+        if (!el) return;
+        if (animar) {
+          animarContador('saldoNum', valor, 700);
+        } else {
+          el.textContent = valor.toLocaleString('es-CL');
+        }
+      }
+
+      function mostrarEstado(icon, texto) {
+        var grid = document.getElementById('tiendaGrid');
+        if (!grid) return;
+        grid.innerHTML =
+          '<div class="tienda-estado">' +
+          '<span class="estado-icon">' + icon + '</span>' +
+          texto.replace(/\n/g, '<br>') +
+          '</div>';
+      }
+
+      function escapeHtml(str) {
+        if (str == null) return '';
+        return String(str)
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;');
+      }
+
+    })();
+  </script>
+</body>
+
+</html>

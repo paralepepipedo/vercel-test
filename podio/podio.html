@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+  <title>Ranking — EduCoins</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Nunito:wght@400;700;800;900&display=swap"
+    rel="stylesheet" />
+  <link rel="stylesheet" href="../shared/shared.css" />
+  <style>
+    .page-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: 1.5rem;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .page-tag {
+      font-family: 'Press Start 2P', monospace;
+      font-size: .4rem;
+      color: var(--yellow);
+      display: block;
+      margin-bottom: .5rem;
+    }
+
+    .page-title {
+      font-family: 'Press Start 2P', monospace;
+      font-size: clamp(.75rem, 2vw, 1rem);
+      color: white;
+      line-height: 1.5;
+      margin-bottom: .4rem;
+    }
+
+    .page-subtitle {
+      font-size: .875rem;
+      color: var(--text-dim);
+      font-weight: 700;
+    }
+
+    /* TABS */
+    .tabs {
+      display: flex;
+      gap: .5rem;
+      margin-bottom: 1.75rem;
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: .375rem;
+    }
+
+    .tab {
+      flex: 1;
+      padding: .625rem;
+      border: none;
+      background: none;
+      border-radius: 10px;
+      cursor: pointer;
+      font-family: 'Press Start 2P', monospace;
+      font-size: .38rem;
+      color: var(--text-dim);
+      transition: all .2s;
+    }
+
+    .tab:hover {
+      color: var(--text);
+    }
+
+    .tab.active {
+      background: linear-gradient(135deg, var(--violet), rgba(6, 182, 212, .3));
+      color: white;
+    }
+
+    /* PODIO TOP 3 */
+    .podio-wrap {
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      gap: 1.5rem;
+      margin-bottom: 2rem;
+    }
+
+    .podio-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: .625rem;
+    }
+
+    .podio-corona {
+      font-size: 1.5rem;
+    }
+
+    .podio-avatar {
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 3px solid;
+    }
+
+    .podio-primero .podio-avatar {
+      width: 80px;
+      height: 80px;
+      font-size: 3rem;
+      border-color: var(--yellow);
+      box-shadow: 0 0 25px rgba(250, 204, 21, .4);
+    }
+
+    .podio-segundo .podio-avatar {
+      width: 65px;
+      height: 65px;
+      font-size: 2.4rem;
+      border-color: #94a3b8;
+    }
+
+    .podio-tercero .podio-avatar {
+      width: 58px;
+      height: 58px;
+      font-size: 2rem;
+      border-color: #c77c48;
+    }
+
+    .podio-nombre {
+      font-family: 'Press Start 2P', monospace;
+      font-size: .42rem;
+      color: white;
+      text-align: center;
+    }
+
+    .podio-puntos {
+      font-family: 'Press Start 2P', monospace;
+      font-size: .55rem;
+      color: var(--yellow);
+    }
+
+    .podio-pedestal {
+      border-radius: 8px 8px 0 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 90px;
+    }
+
+    .podio-primero .podio-pedestal {
+      height: 80px;
+      background: linear-gradient(135deg, rgba(250, 204, 21, .25), rgba(249, 115, 22, .1));
+      border: 1px solid rgba(250, 204, 21, .4);
+    }
+
+    .podio-segundo .podio-pedestal {
+      height: 55px;
+      background: rgba(148, 163, 184, .1);
+      border: 1px solid rgba(148, 163, 184, .3);
+    }
+
+    .podio-tercero .podio-pedestal {
+      height: 40px;
+      background: rgba(199, 124, 72, .1);
+      border: 1px solid rgba(199, 124, 72, .3);
+    }
+
+    .pos-txt {
+      font-family: 'Press Start 2P', monospace;
+      font-size: .6rem;
+    }
+
+    .podio-primero .pos-txt {
+      color: var(--yellow);
+    }
+
+    .podio-segundo .pos-txt {
+      color: #94a3b8;
+    }
+
+    .podio-tercero .pos-txt {
+      color: #c77c48;
+    }
+
+    /* TABLA RANKING */
+    .ranking-tabla {
+      display: flex;
+      flex-direction: column;
+      gap: .5rem;
+    }
+
+    .rank-row {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: .875rem 1.25rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      transition: all .2s;
+    }
+
+    .rank-row:hover {
+      border-color: var(--violet);
+      transform: translateX(4px);
+    }
+
+    .rank-row.es-yo {
+      border-color: var(--violet);
+      background: rgba(124, 58, 237, .08);
+    }
+
+    .rank-pos {
+      font-family: 'Press Start 2P', monospace;
+      font-size: .55rem;
+      width: 32px;
+      text-align: center;
+      color: var(--text-muted);
+    }
+
+    .rank-pos.top4 {
+      color: var(--yellow);
+    }
+
+    .rank-avatar {
+      font-size: 1.5rem;
+    }
+
+    .rank-info {
+      flex: 1;
+    }
+
+    .rank-nombre {
+      font-weight: 800;
+      font-size: .9rem;
+      color: var(--text);
+    }
+
+    .rank-you {
+      font-family: 'Press Start 2P', monospace;
+      font-size: .32rem;
+      color: var(--violet-light);
+      margin-left: .5rem;
+    }
+
+    .rank-grado {
+      font-size: .72rem;
+      color: var(--text-dim);
+      font-weight: 700;
+    }
+
+    .rank-pts {
+      font-family: 'Press Start 2P', monospace;
+      font-size: .5rem;
+      color: var(--yellow);
+      flex-shrink: 0;
+    }
+
+    /* MI POSICIÓN */
+    .mi-posicion {
+      background: linear-gradient(135deg, rgba(124, 58, 237, .12), rgba(6, 182, 212, .06));
+      border: 1px solid var(--border-b);
+      border-radius: var(--radius);
+      padding: 1.25rem 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1.5rem;
+      flex-wrap: wrap;
+      gap: .875rem;
+    }
+
+    .mip-label {
+      font-family: 'Press Start 2P', monospace;
+      font-size: .38rem;
+      color: var(--text-muted);
+      margin-bottom: .35rem;
+    }
+
+    .mip-val {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 1.2rem;
+      color: white;
+    }
+
+    .mip-sub {
+      font-size: .78rem;
+      color: var(--text-dim);
+      font-weight: 700;
+      margin-top: .2rem;
+    }
+  </style>
+
+  <!-- Clerk: carga síncrona con la clave en el data-attribute -->
+  <script data-clerk-publishable-key="pk_test_bG92aW5nLXJhcHRvci0xLmNsZXJrLmFjY291bnRzLmRldiQ"
+    src="https://cdn.jsdelivr.net/npm/@clerk/clerk-js@latest/dist/clerk.browser.js"></script>
+</head>
+
+<body>
+  <div id="sharedHeader"></div>
+  <div class="layout">
+    <main class="main">
+
+      <div class="page-header fade-up">
+        <div>
+          <span class="page-tag">🏆 RANKING</span>
+          <h1 class="page-title">Podio Global</h1>
+          <p class="page-subtitle">Los mejores alumnos de EduCoins esta semana.</p>
+        </div>
+      </div>
+
+      <div class="mi-posicion fade-up delay-1">
+        <div>
+          <div class="mip-label">MI POSICIÓN</div>
+          <div class="mip-val" id="mipPos">—</div>
+          <div class="mip-sub" id="mipPosSub">Cargando...</div>
+        </div>
+        <div>
+          <div class="mip-label">MIS MONEDAS</div>
+          <div class="mip-val" id="mipMonedas">—</div>
+          <div class="mip-sub" id="mipMonedasSub">—</div>
+        </div>
+        <div>
+          <div class="mip-label">RACHA</div>
+          <div class="mip-val" id="mipRacha">—</div>
+          <div class="mip-sub" id="mipRango">—</div>
+        </div>
+      </div>
+
+      <div class="tabs fade-up delay-2">
+        <button class="tab active" data-tab="global" id="tabGlobal">🌍 Global</button>
+        <button class="tab" data-tab="grado" id="tabGrado">📚 Mi Grado</button>
+        <button class="tab" data-tab="semanal" id="tabSemanal">📅 Semanal</button>
+      </div>
+
+      <!-- PODIO TOP 3 -->
+      <div class="podio-wrap fade-up delay-3" id="podioWrap"></div>
+
+      <!-- TABLA 4-20 -->
+      <div class="ranking-tabla fade-up delay-4" id="rankingTabla"></div>
+
+    </main>
+  </div>
+
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- Auth: config → guard → shared → módulo (orden obligatorio) -->
+  <script src="../auth/clerk-config.js"></script>
+  <script src="../shared/clerk-guard.js"></script>
+  <script src="../shared/shared.js"></script>
+  <script>
+    // ============================================
+    // ARCHIVO: /podio/podio.html (inline script)
+    // DESCRIPCIÓN: Ranking y podio global
+    // VERSIÓN: v1.1
+    // ============================================
+
+    var STATE_RANKING = {
+      global: [],
+      grado: [],
+      semanal: [],
+      miPerfil: null,
+      miPos: null,
+      gradoActual: null,
+    };
+    var tabActual = 'global';
+
+    // avatar_base puede ser emoji directo o nombre de animal
+    var AVATAR_EMOJIS = { conejo: '🐰', oso: '🐻', zorro: '🦊', pinguino: '🐧', gato: '🐱', perro: '🐶', pajaro: '🐦' };
+    function avatarEmoji(base) {
+      if (!base) return '🐰';
+      // Si ya es emoji (no es texto ascii puro) devolver directo
+      if (base.length <= 2 && base.charCodeAt(0) > 127) return base;
+      return AVATAR_EMOJIS[base] || base;
+    }
+
+    function mapearRanking(lista, miPosicion, campoPosicion) {
+      return (lista || []).map(function (u, i) {
+        return {
+          pos: Number(u.posicion || i + 1),
+          avatar: avatarEmoji(u.avatar_base),
+          nombre: u.nombre,
+          grado: (u.grado_actual || '') + '° Básico',
+          pts: Number(u.monedas),
+          yo: miPosicion && Number(u.posicion) === Number(miPosicion[campoPosicion]),
+        };
+      });
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+      initShared('podio');
+      document.querySelectorAll('.tab').forEach(function (tab) {
+        tab.addEventListener('click', function () {
+          document.querySelectorAll('.tab').forEach(function (t) { t.classList.remove('active'); });
+          this.classList.add('active');
+          tabActual = this.dataset.tab;
+          renderRankingActual();
+        });
+      });
+    });
+
+    document.addEventListener('clerkReady', function () { cargarRanking(); });
+    if (window.CLERK_USER) { cargarRanking(); }
+
+    function cargarRanking() {
+      var hdrs = {
+        credentials: 'include',
+        headers: window.CLERK_TOKEN ? { 'Authorization': 'Bearer ' + window.CLERK_TOKEN } : {},
+      };
+
+      Promise.all([
+        fetch(BASE_URL + '/api/ranking?tipo=global&limit=20', hdrs).then(function (r) { return r.ok ? r.json() : null; }),
+        fetch(BASE_URL + '/api/ranking?mi_posicion=1', hdrs).then(function (r) { return r.ok ? r.json() : null; }),
+        fetch(BASE_URL + '/api/perfil', hdrs).then(function (r) { return r.ok ? r.json() : null; }),
+        fetch(BASE_URL + '/api/ranking?tipo=semanal&limit=20', hdrs).then(function (r) { return r.ok ? r.json() : null; }),
+      ])
+        .then(function (res) {
+          var globalData = res[0];
+          var miPosData = res[1];
+          var perfilData = res[2];
+          var semanalData = res[3];
+
+          STATE_RANKING.miPerfil = perfilData;
+          STATE_RANKING.miPos = miPosData;
+          STATE_RANKING.gradoActual = miPosData ? Number(miPosData.grado_actual) : null;
+
+          // Actualizar label tab grado
+          if (STATE_RANKING.gradoActual) {
+            var tg = document.getElementById('tabGrado');
+            if (tg) tg.textContent = '📚 ' + STATE_RANKING.gradoActual + '° Grado';
+          }
+
+          // Mapear rankings
+          STATE_RANKING.global = mapearRanking(globalData && globalData.ranking, miPosData, 'posicion_global');
+          STATE_RANKING.semanal = mapearRanking(semanalData && semanalData.ranking, miPosData, 'posicion_global');
+          // Si ya está activo el tab semanal al cargar, renderizarlo
+          if (tabActual === 'semanal') renderRankingActual();
+
+          // Panel Mi Posición
+          actualizarMiPosicion(miPosData, perfilData);
+
+          renderRankingActual();
+
+          // Cargar ranking de grado
+          if (STATE_RANKING.gradoActual) {
+            fetch(BASE_URL + '/api/ranking?tipo=grado&grado=' + STATE_RANKING.gradoActual + '&limit=20', hdrs)
+              .then(function (r) { return r.ok ? r.json() : null; })
+              .then(function (data) {
+                if (!data) return;
+                STATE_RANKING.grado = mapearRanking(data.ranking, miPosData, 'posicion_grado');
+                if (tabActual === 'grado') renderRankingActual();
+              });
+          }
+        })
+        .catch(function () { });
+    }
+
+    function actualizarMiPosicion(miPos, perfil) {
+      if (!miPos && !perfil) return;
+
+      // Posición global
+      var elPos = document.getElementById('mipPos');
+      var elPosSub = document.getElementById('mipPosSub');
+      if (elPos && miPos) {
+        elPos.textContent = '#' + miPos.posicion_global;
+        if (elPosSub) elPosSub.textContent = 'Grado: #' + (miPos.posicion_grado || '—');
+      }
+
+      // Monedas
+      var elMonedas = document.getElementById('mipMonedas');
+      var elMonedasSub = document.getElementById('mipMonedasSub');
+      if (elMonedas && perfil) {
+        elMonedas.textContent = Number(perfil.monedas).toLocaleString('es-CL') + ' 🪙';
+        var anterior = STATE_RANKING.global.find(function (r) {
+          return miPos && r.pos === (Number(miPos.posicion_global) - 1);
+        });
+        if (elMonedasSub) {
+          if (anterior) {
+            var diff = anterior.pts - Number(perfil.monedas);
+            elMonedasSub.textContent = diff > 0
+              ? 'Faltan ' + diff.toLocaleString('es-CL') + ' para el #' + (Number(miPos.posicion_global) - 1)
+              : '¡Estás en el top!';
+          } else {
+            elMonedasSub.textContent = 'Nivel ' + (perfil.nivel || 1);
+          }
+        }
+      }
+
+      // Racha y rango
+      var elRacha = document.getElementById('mipRacha');
+      var elRango = document.getElementById('mipRango');
+      if (elRacha && perfil) {
+        elRacha.textContent = (perfil.racha_dias || 0) + ' 🔥';
+        if (elRango) elRango.textContent = perfil.rango_completo || ((perfil.categoria_rango || '') + ' ' + (perfil.sub_rango || ''));
+      }
+    }
+
+    function renderRankingActual() {
+      var data = STATE_RANKING[tabActual];
+      if (!data || data.length === 0) {
+        document.getElementById('podioWrap').innerHTML = '<p style="text-align:center;color:var(--text-dim);padding:2rem">Sin datos aún</p>';
+        document.getElementById('rankingTabla').innerHTML = '';
+        return;
+      }
+
+      var top3 = data.slice(0, 3);
+      var resto = data.slice(3);
+
+      // Podio: orden visual 2°, 1°, 3° — clase explícita por posición
+      var ordenPodio = [top3[1], top3[0], top3[2]].filter(Boolean);
+      document.getElementById('podioWrap').innerHTML = ordenPodio.map(function (r) {
+        var corona = r.pos === 1 ? '👑' : r.pos === 2 ? '🥈' : '🥉';
+        var posClass = r.pos === 1 ? 'podio-primero' : r.pos === 2 ? 'podio-segundo' : 'podio-tercero';
+        return '<div class="podio-item ' + posClass + '">' +
+          '<span class="podio-corona">' + corona + '</span>' +
+          '<div class="podio-avatar">' + r.avatar + '</div>' +
+          '<div class="podio-nombre">' + r.nombre + '</div>' +
+          '<div class="podio-puntos">' + r.pts.toLocaleString('es-CL') + ' ' + COIN_IMG + '</div>' +
+          '<div class="podio-pedestal"><span class="pos-txt">#' + r.pos + '</span></div>' +
+          '</div>';
+      }).join('');
+
+      document.getElementById('rankingTabla').innerHTML = resto.map(function (r) {
+        return '<div class="rank-row' + (r.yo ? ' es-yo' : '') + '">' +
+          '<span class="rank-pos' + (r.pos <= 3 ? ' top4' : '') + '">' + r.pos + '</span>' +
+          '<span class="rank-avatar">' + r.avatar + '</span>' +
+          '<div class="rank-info">' +
+          '<div class="rank-nombre">' + r.nombre + (r.yo ? '<span class="rank-you">TÚ</span>' : '') + '</div>' +
+          '<div class="rank-grado">' + r.grado + '</div>' +
+          '</div>' +
+          '<span class="rank-pts">' + r.pts.toLocaleString('es-CL') + ' ' + COIN_IMG + '</span>' +
+          '</div>';
+      }).join('');
+    }
+  </script>
+</body>
+
+</html>

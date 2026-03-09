@@ -1,0 +1,437 @@
+/* ============================================
+   ARCHIVO: /misiones/misiones.css
+   ============================================
+   ÍNDICE
+   1.  Variables y reset
+   2.  Header
+   3.  Layout sidebar + main
+   4.  Sidebar
+   5.  Page header y timer
+   6.  Progreso general (ring + info + bonus)
+   7.  Ring SVG grande
+   8.  Recompensas acumuladas
+   9.  Barra de progreso lineal
+   10. Bonus lateral
+   11. Grid de misiones
+   12. Tarjeta de misión
+   13. Estado completada / animación
+   14. Historial reciente
+   15. Toasts
+   16. Animaciones y responsive
+   ============================================ */
+
+/* ============================================
+   1. VARIABLES Y RESET
+============================================ */
+:root {
+  --bg:           #07071a;
+  --bg2:          #0d0d2b;
+  --bg3:          #12122e;
+  --violet:       #7c3aed;
+  --violet-light: #a855f7;
+  --violet-dim:   rgba(124,58,237,0.15);
+  --cyan:         #06b6d4;
+  --green:        #22c55e;
+  --yellow:       #facc15;
+  --orange:       #f97316;
+  --red:          #ef4444;
+  --pink:         #ec4899;
+  --text:         #e2e8f0;
+  --text-dim:     #94a3b8;
+  --text-muted:   #475569;
+  --border:       rgba(124,58,237,0.25);
+  --border-b:     rgba(124,58,237,0.5);
+  --card:         rgba(13,13,43,0.9);
+  --sidebar-w:    240px;
+  --header-h:     64px;
+  --radius:       14px;
+  --radius-sm:    8px;
+  --ease:         0.2s ease;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: 'Nunito', sans-serif;
+  background: var(--bg); color: var(--text);
+  min-height: 100vh; overflow-x: hidden;
+}
+body::before {
+  content: ''; position: fixed; inset: 0; z-index: 9999; pointer-events: none;
+  background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.04) 2px, rgba(0,0,0,0.04) 4px);
+}
+
+/* ============================================
+   2. HEADER
+============================================ */
+.header {
+  position: fixed; top: 0; left: 0; right: 0; height: var(--header-h); z-index: 1000;
+  background: rgba(7,7,26,0.92); backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; padding: 0 1.25rem; gap: 1rem;
+}
+.header-logo { display: flex; align-items: center; gap: .625rem; text-decoration: none; flex-shrink: 0; }
+.logo-box {
+  width: 36px; height: 36px; border-radius: 8px; font-size: 1.1rem;
+  background: linear-gradient(135deg, var(--violet), var(--cyan));
+  display: flex; align-items: center; justify-content: center;
+  animation: logoPulse 3s ease-in-out infinite;
+}
+@keyframes logoPulse {
+  0%,100% { box-shadow: 0 0 8px rgba(124,58,237,0.4); }
+  50%      { box-shadow: 0 0 20px rgba(124,58,237,0.8); }
+}
+.logo-name { font-family: 'Press Start 2P', monospace; font-size: .6rem; color: var(--violet-light); display: block; }
+.logo-sub  { font-family: 'Press Start 2P', monospace; font-size: .38rem; color: var(--cyan); display: block; margin-top: 3px; }
+.header-spacer { flex: 1; }
+.sidebar-toggle-btn { display: none; background: none; border: none; cursor: pointer; color: var(--text); font-size: 1.3rem; }
+
+.header-energy {
+  display: flex; align-items: center; gap: .5rem;
+  background: rgba(249,115,22,0.1); border: 1px solid rgba(249,115,22,0.3);
+  border-radius: 20px; padding: .35rem .875rem;
+  font-size: .75rem; font-weight: 800; color: var(--orange);
+}
+.energy-bar-mini { width: 70px; height: 6px; background: rgba(255,255,255,0.1); border-radius: 3px; overflow: hidden; }
+.energy-fill-mini { height: 100%; background: linear-gradient(90deg, var(--orange), var(--yellow)); border-radius: 3px; transition: width 1s ease; }
+.header-coins {
+  display: flex; align-items: center; gap: .4rem;
+  background: rgba(250,204,21,0.1); border: 1px solid rgba(250,204,21,0.3);
+  border-radius: 20px; padding: .35rem .875rem;
+  font-family: 'Press Start 2P', monospace; font-size: .45rem; color: var(--yellow);
+}
+.header-avatar {
+  width: 36px; height: 36px; border-radius: 50%;
+  background: var(--bg3); border: 2px solid var(--violet);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.2rem; text-decoration: none; transition: border-color var(--ease);
+}
+.header-avatar:hover { border-color: var(--cyan); }
+
+/* ============================================
+   3. LAYOUT
+============================================ */
+.layout { display: flex; min-height: 100vh; padding-top: var(--header-h); }
+
+/* ============================================
+   4. SIDEBAR
+============================================ */
+.sidebar {
+  width: var(--sidebar-w); flex-shrink: 0;
+  background: var(--bg2); border-right: 1px solid var(--border);
+  position: fixed; top: var(--header-h); left: 0; bottom: 0;
+  overflow-y: auto; display: flex; flex-direction: column;
+  z-index: 100; transition: transform var(--ease);
+}
+.sidebar::-webkit-scrollbar { width: 3px; }
+.sidebar::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+.sidebar-section { padding: 1rem .75rem .5rem; }
+.sidebar-label { font-family: 'Press Start 2P', monospace; font-size: .35rem; color: var(--text-muted); letter-spacing: 1.5px; padding: 0 .5rem; margin-bottom: .5rem; display: block; }
+.nav-item {
+  display: flex; align-items: center; gap: .75rem;
+  padding: .625rem .75rem; border-radius: 10px; text-decoration: none;
+  color: var(--text-dim); font-size: .875rem; font-weight: 700;
+  transition: all var(--ease); position: relative; margin-bottom: 2px;
+}
+.nav-item:hover { background: var(--violet-dim); color: var(--text); }
+.nav-item.active { background: linear-gradient(135deg, rgba(124,58,237,0.25), rgba(6,182,212,0.1)); color: var(--violet-light); border: 1px solid var(--border); }
+.nav-item.active::before { content: ''; position: absolute; left: 0; top: 50%; transform: translateY(-50%); width: 3px; height: 60%; background: var(--violet); border-radius: 0 2px 2px 0; }
+.nav-icon { font-size: 1.1rem; flex-shrink: 0; width: 22px; text-align: center; }
+.nav-badge { margin-left: auto; background: var(--violet); color: white; font-family: 'Press Start 2P', monospace; font-size: .35rem; padding: 2px 6px; border-radius: 10px; }
+.nav-badge.green { background: var(--green); }
+.sidebar-divider { height: 1px; background: var(--border); margin: .5rem .75rem; }
+.sidebar-profile { margin: auto 0 0; padding: 1rem .75rem; border-top: 1px solid var(--border); }
+.profile-mini { display: flex; align-items: center; gap: .75rem; background: var(--bg3); border: 1px solid var(--border); border-radius: 10px; padding: .75rem; text-decoration: none; transition: border-color var(--ease); }
+.profile-mini:hover { border-color: var(--violet); }
+.profile-avatar-big { font-size: 1.8rem; }
+.profile-name { font-weight: 800; font-size: .875rem; color: var(--text); }
+.profile-rank { font-size: .7rem; color: var(--text-dim); font-weight: 700; }
+
+/* ============================================
+   5. PAGE HEADER Y TIMER
+============================================ */
+.main {
+  margin-left: var(--sidebar-w); flex: 1; padding: 1.75rem 1.5rem;
+  background-image: linear-gradient(rgba(124,58,237,0.02) 1px, transparent 1px), linear-gradient(90deg, rgba(124,58,237,0.02) 1px, transparent 1px);
+  background-size: 50px 50px;
+}
+.page-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem; }
+.page-tag { font-family: 'Press Start 2P', monospace; font-size: .4rem; color: var(--cyan); display: block; margin-bottom: .5rem; }
+.page-title { font-family: 'Press Start 2P', monospace; font-size: clamp(.75rem, 2vw, 1rem); color: white; line-height: 1.5; margin-bottom: .4rem; }
+.page-subtitle { font-size: .875rem; color: var(--text-dim); font-weight: 700; }
+
+.header-timer {
+  background: var(--card); border: 1px solid var(--border-b);
+  border-radius: var(--radius); padding: 1rem 1.5rem;
+  text-align: center;
+  box-shadow: 0 0 20px rgba(124,58,237,0.15);
+}
+.timer-label { font-family: 'Press Start 2P', monospace; font-size: .35rem; color: var(--text-muted); margin-bottom: .4rem; }
+.timer-value { font-family: 'Press Start 2P', monospace; font-size: 1.1rem; color: var(--cyan); letter-spacing: 2px; }
+.timer-sub   { font-size: .72rem; color: var(--text-muted); font-weight: 700; margin-top: .3rem; }
+
+/* ============================================
+   6. PROGRESO GENERAL
+============================================ */
+.progreso-general {
+  display: flex; align-items: center; gap: 1.5rem;
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 1.5rem;
+  margin-bottom: 1.75rem;
+  box-shadow: 0 0 30px rgba(124,58,237,0.08);
+  flex-wrap: wrap;
+}
+
+/* ============================================
+   7. RING SVG GRANDE
+============================================ */
+.ring-wrap-big {
+  flex-shrink: 0; position: relative;
+  width: 120px; height: 120px;
+}
+.ring-svg { transform: rotate(-90deg); width: 120px; height: 120px; }
+.ring-bg {
+  fill: none; stroke: rgba(255,255,255,0.07); stroke-width: 8;
+}
+.ring-prog {
+  fill: none; stroke: var(--violet); stroke-width: 8;
+  stroke-linecap: round;
+  stroke-dasharray: 327;   /* 2π × 52 */
+  stroke-dashoffset: 327;
+  transition: stroke-dashoffset 1.5s cubic-bezier(0.4,0,0.2,1), stroke .3s;
+  filter: drop-shadow(0 0 6px rgba(124,58,237,0.7));
+}
+.ring-center {
+  position: absolute; inset: 0;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+}
+.ring-num   { font-family: 'Press Start 2P', monospace; font-size: 1.1rem; color: white; }
+.ring-label { font-family: 'Press Start 2P', monospace; font-size: .32rem; color: var(--text-muted); margin-top: 4px; }
+
+/* ============================================
+   8. RECOMPENSAS ACUMULADAS
+============================================ */
+.progreso-info { flex: 1; min-width: 220px; }
+.progreso-titulo { font-family: 'Press Start 2P', monospace; font-size: .6rem; color: white; margin-bottom: .5rem; }
+.progreso-sub    { font-size: .875rem; color: var(--text-dim); font-weight: 700; margin-bottom: 1rem; }
+
+.recompensas-row { display: flex; gap: 1.5rem; margin-bottom: 1rem; flex-wrap: wrap; }
+.recompensa-item { display: flex; align-items: center; gap: .625rem; }
+.recompensa-icon { font-size: 1.5rem; }
+.recompensa-num  { font-family: 'Press Start 2P', monospace; font-size: .75rem; color: white; }
+.recompensa-label { font-size: .72rem; color: var(--text-dim); font-weight: 700; margin-top: 2px; }
+
+/* ============================================
+   9. BARRA DE PROGRESO LINEAL
+============================================ */
+.barra-progreso-wrap { margin-top: .25rem; }
+.barra-progreso-labels {
+  display: flex; justify-content: space-between;
+  font-size: .75rem; color: var(--text-dim); font-weight: 700; margin-bottom: 6px;
+}
+.barra-track { height: 10px; background: rgba(255,255,255,0.08); border-radius: 5px; overflow: hidden; }
+.barra-fill {
+  height: 100%; border-radius: 5px;
+  background: linear-gradient(90deg, var(--violet), var(--cyan));
+  transition: width 1.5s ease;
+  position: relative;
+}
+.barra-fill::after {
+  content: ''; position: absolute; top: 0; right: 0;
+  width: 4px; height: 100%; background: white; border-radius: 2px;
+  opacity: .5; animation: barShine 1.5s ease-in-out infinite;
+}
+@keyframes barShine { 0%,100%{opacity:.2} 50%{opacity:.7} }
+
+/* ============================================
+   10. BONUS LATERAL
+============================================ */
+.bonus-lateral {
+  flex-shrink: 0; width: 160px;
+  background: linear-gradient(135deg, rgba(250,204,21,0.08), rgba(249,115,22,0.06));
+  border: 1px solid rgba(250,204,21,0.35);
+  border-radius: var(--radius); padding: 1.25rem 1rem;
+  text-align: center;
+}
+.bonus-lat-title  { font-family: 'Press Start 2P', monospace; font-size: .4rem; color: var(--yellow); margin-bottom: .5rem; }
+.bonus-lat-amount { font-family: 'Press Start 2P', monospace; font-size: 1rem; color: var(--yellow); margin-bottom: .25rem; }
+.bonus-lat-xp     { font-family: 'Press Start 2P', monospace; font-size: .38rem; color: var(--cyan); margin-bottom: .875rem; }
+.bonus-lat-estado { display: flex; flex-direction: column; align-items: center; gap: .3rem; }
+.bonus-lock  { font-size: 1.5rem; }
+.bonus-check { font-size: 1.5rem; animation: bonusPop .5s cubic-bezier(0.34,1.56,0.64,1); }
+@keyframes bonusPop { 0%{transform:scale(0)} 100%{transform:scale(1)} }
+.bonus-lat-estado span:last-child { font-size: .72rem; font-weight: 800; color: var(--text-dim); }
+.bonus-lat-estado.desbloqueado span:last-child { color: var(--green); }
+
+/* ============================================
+   11. GRID DE MISIONES
+============================================ */
+.misiones-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+}
+
+/* ============================================
+   12. TARJETA DE MISIÓN
+============================================ */
+.mision-card {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 1.25rem;
+  display: flex; align-items: center; gap: 1rem;
+  cursor: pointer; transition: all .25s ease;
+  position: relative; overflow: hidden;
+  border-left: 4px solid var(--m-color, var(--violet));
+}
+.mision-card::before {
+  content: ''; position: absolute; left: 0; top: 0; bottom: 0;
+  width: 60px;
+  background: linear-gradient(90deg, rgba(var(--m-rgb, 124,58,237),0.08), transparent);
+  pointer-events: none;
+}
+.mision-card:hover:not(.completada) {
+  transform: translateX(4px);
+  border-color: var(--m-color, var(--violet));
+  box-shadow: 0 0 20px rgba(var(--m-rgb, 124,58,237),0.2);
+}
+.mision-card:active:not(.completada) { transform: translateX(2px) scale(0.99); }
+
+/* Estado completada */
+.mision-card.completada {
+  background: rgba(34,197,94,0.04);
+  border-left-color: var(--green);
+  border-color: rgba(34,197,94,0.2);
+  cursor: default;
+}
+.mision-card.completada::after {
+  content: '✅'; position: absolute; top: .75rem; right: .875rem;
+  font-size: 1rem;
+}
+
+/* Animación al completar */
+.mision-card.completando {
+  animation: completarMision .5s cubic-bezier(0.34,1.56,0.64,1);
+}
+@keyframes completarMision {
+  0%  { transform: scale(1); }
+  40% { transform: scale(1.04); box-shadow: 0 0 30px rgba(34,197,94,0.5); }
+  100%{ transform: scale(1); }
+}
+
+.mision-emoji-wrap {
+  width: 50px; height: 50px; flex-shrink: 0;
+  background: rgba(var(--m-rgb, 124,58,237), 0.12);
+  border: 1px solid rgba(var(--m-rgb, 124,58,237), 0.25);
+  border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.5rem; transition: transform .2s;
+}
+.mision-card:hover:not(.completada) .mision-emoji-wrap { transform: scale(1.1) rotate(-5deg); }
+.mision-card.completada .mision-emoji-wrap { filter: grayscale(.5); }
+
+.mision-body { flex: 1; min-width: 0; }
+.mision-nombre {
+  font-size: .9rem; font-weight: 800; color: var(--text);
+  margin-bottom: .25rem;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.mision-card.completada .mision-nombre { text-decoration: line-through; color: var(--text-dim); }
+
+.mision-tipo   { font-size: .72rem; color: var(--text-muted); font-weight: 700; }
+
+.mision-reward {
+  flex-shrink: 0;
+  display: flex; flex-direction: column; align-items: flex-end; gap: .3rem;
+}
+.reward-coins {
+  font-family: 'Press Start 2P', monospace; font-size: .42rem;
+  padding: .3rem .625rem; border-radius: 20px;
+  background: rgba(250,204,21,0.1); color: var(--yellow);
+  border: 1px solid rgba(250,204,21,0.25);
+  white-space: nowrap;
+}
+.mision-card.completada .reward-coins {
+  background: rgba(34,197,94,0.1); color: var(--green);
+  border-color: rgba(34,197,94,0.3);
+}
+.reward-xp {
+  font-family: 'Press Start 2P', monospace; font-size: .35rem;
+  color: var(--violet-light);
+}
+
+/* Botón acción dentro de la card (solo pendientes) */
+.mision-action-btn {
+  position: absolute; inset: 0;
+  background: transparent; border: none; cursor: pointer;
+  border-radius: var(--radius);
+}
+
+/* ============================================
+   13. SECCIONES
+============================================ */
+.section { margin-bottom: 2rem; }
+.section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.25rem; flex-wrap: wrap; gap: .75rem; }
+.section-title-wrap { display: flex; align-items: center; gap: .75rem; }
+.section-title { font-family: 'Press Start 2P', monospace; font-size: .6rem; color: white; }
+.section-chip {
+  font-family: 'Press Start 2P', monospace; font-size: .35rem;
+  padding: .3rem .625rem; border-radius: 20px;
+  background: var(--violet-dim); color: var(--violet-light);
+  border: 1px solid var(--border-b);
+}
+
+/* ============================================
+   14. HISTORIAL RECIENTE
+============================================ */
+.historial-lista { display: flex; flex-direction: column; gap: .625rem; }
+.historial-item {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: var(--radius-sm); padding: .875rem 1rem;
+  display: flex; align-items: center; gap: 1rem;
+  opacity: .75;
+}
+.hist-dia {
+  font-family: 'Press Start 2P', monospace; font-size: .38rem;
+  color: var(--text-muted); flex-shrink: 0; width: 80px;
+}
+.hist-emoji { font-size: 1.2rem; flex-shrink: 0; }
+.hist-nombre { flex: 1; font-size: .85rem; font-weight: 700; color: var(--text-dim); }
+.hist-reward { font-family: 'Press Start 2P', monospace; font-size: .38rem; color: var(--green); flex-shrink: 0; }
+
+/* ============================================
+   15. TOASTS
+============================================ */
+.toast-container { position: fixed; bottom: 2rem; right: 2rem; z-index: 10001; display: flex; flex-direction: column; gap: .75rem; }
+.toast {
+  background: var(--bg2); border: 1px solid var(--border); border-radius: 12px;
+  padding: .875rem 1.25rem; display: flex; align-items: center; gap: .75rem;
+  min-width: 260px; max-width: 360px; font-weight: 700; font-size: .875rem;
+  box-shadow: 0 4px 20px rgba(0,0,0,.4); animation: toastIn .3s ease;
+}
+@keyframes toastIn  { from{transform:translateX(100%);opacity:0} to{transform:translateX(0);opacity:1} }
+@keyframes toastOut { from{transform:translateX(0);opacity:1} to{transform:translateX(100%);opacity:0} }
+
+/* ============================================
+   16. ANIMACIONES Y RESPONSIVE
+============================================ */
+.fade-up { opacity: 0; transform: translateY(18px); animation: fadeUp .5s ease forwards; }
+@keyframes fadeUp { to { opacity: 1; transform: translateY(0); } }
+.delay-1 { animation-delay: .05s; }
+.delay-2 { animation-delay: .10s; }
+.delay-3 { animation-delay: .15s; }
+
+@media (max-width: 900px) {
+  .sidebar { transform: translateX(-100%); }
+  .sidebar.open { transform: translateX(0); box-shadow: 4px 0 20px rgba(0,0,0,.5); }
+  .sidebar-toggle-btn { display: block; }
+  .main { margin-left: 0; padding: 1.25rem 1rem; }
+  .misiones-grid { grid-template-columns: 1fr; }
+  .progreso-general { flex-direction: column; }
+  .ring-wrap-big { align-self: center; }
+  .bonus-lateral { width: 100%; }
+}
+@media (max-width: 520px) {
+  .misiones-grid { grid-template-columns: 1fr; }
+  .recompensas-row { gap: 1rem; }
+}

@@ -1,0 +1,929 @@
+<!DOCTYPE html>
+<!--
+  objetivos/objetivos.html — Objetivos mensuales EduCoins
+  VERSIÓN: 1.1.0 — 2026-03-08
+  Changelog:
+    1.1.0 - Fix timing: polling CLERK_TOKEN en vez de clerkReady
+    1.0.0 - Implementación inicial
+-->
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+  <title>Objetivos — EduCoins</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Nunito:wght@400;700;800;900&display=swap"
+    rel="stylesheet" />
+  <link rel="stylesheet" href="../shared/shared.css" />
+  <style>
+    .page-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: 1.5rem;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .page-tag {
+      font-family: 'Press Start 2P', monospace;
+      font-size: .4rem;
+      color: var(--green);
+      display: block;
+      margin-bottom: .5rem;
+    }
+
+    .page-title {
+      font-family: 'Press Start 2P', monospace;
+      font-size: clamp(.75rem, 2vw, 1rem);
+      color: white;
+      line-height: 1.5;
+      margin-bottom: .4rem;
+    }
+
+    .page-subtitle {
+      font-size: .875rem;
+      color: var(--text-dim);
+      font-weight: 700;
+    }
+
+    /* PERIODO ACTUAL */
+    .periodo-banner {
+      background: linear-gradient(135deg, rgba(34, 197, 94, .1), rgba(6, 182, 212, .06));
+      border: 1px solid rgba(34, 197, 94, .3);
+      border-radius: var(--radius);
+      padding: 1.25rem 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1.75rem;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .periodo-titulo {
+      font-family: 'Press Start 2P', monospace;
+      font-size: .65rem;
+      color: white;
+      margin-bottom: .35rem;
+    }
+
+    .periodo-sub {
+      font-size: .85rem;
+      color: var(--text-dim);
+      font-weight: 700;
+    }
+
+    .periodo-dias {
+      text-align: right;
+    }
+
+    .periodo-dias-num {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 1.5rem;
+      color: var(--cyan);
+    }
+
+    .periodo-dias-label {
+      font-family: 'Press Start 2P', monospace;
+      font-size: .35rem;
+      color: var(--text-muted);
+    }
+
+    /* PROGRESO GLOBAL DEL MES */
+    .progreso-mes {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.5rem;
+      margin-bottom: 1.75rem;
+    }
+
+    .pm-titulo {
+      font-family: 'Press Start 2P', monospace;
+      font-size: .55rem;
+      color: white;
+      margin-bottom: 1.25rem;
+    }
+
+    .pm-stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1rem;
+      margin-bottom: 1.25rem;
+    }
+
+    .pm-stat {
+      text-align: center;
+    }
+
+    .pm-stat-num {
+      font-family: 'Press Start 2P', monospace;
+      font-size: .9rem;
+      color: var(--green);
+    }
+
+    .pm-stat-label {
+      font-size: .72rem;
+      color: var(--text-dim);
+      font-weight: 700;
+      margin-top: .25rem;
+    }
+
+
+
+    .pm-barra-labels {
+      display: flex;
+      justify-content: space-between;
+      font-family: 'Press Start 2P', monospace;
+      font-size: .35rem;
+      color: var(--text-muted);
+      margin-bottom: .4rem;
+    }
+
+    .pm-barra-track {
+      height: 12px;
+      background: rgba(255, 255, 255, .06);
+      border-radius: 6px;
+      overflow: hidden;
+    }
+
+    .pm-barra-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--green), var(--cyan));
+      border-radius: 6px;
+      transition: width 1.2s ease;
+    }
+
+    /* OBJETIVOS GRID */
+    .obj-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1.25rem;
+      margin-bottom: 1.75rem;
+    }
+
+    .obj-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.5rem;
+      transition: all .2s;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .obj-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, var(--o-color, var(--green)), transparent);
+    }
+
+    .obj-card:hover {
+      border-color: var(--o-color, var(--green));
+      transform: translateY(-2px);
+    }
+
+    .obj-card.completado {
+      opacity: .8;
+    }
+
+    .obj-card.completado::after {
+      content: '✅';
+      position: absolute;
+      top: .75rem;
+      right: .75rem;
+      font-size: 1.5rem;
+    }
+
+    .obj-header {
+      display: flex;
+      align-items: center;
+      gap: .875rem;
+      margin-bottom: 1rem;
+    }
+
+    .obj-emoji {
+      font-size: 2rem;
+    }
+
+    .obj-titulo {
+      font-family: 'Press Start 2P', monospace;
+      font-size: .5rem;
+      color: white;
+      line-height: 1.6;
+    }
+
+    .obj-cat {
+      font-size: .72rem;
+      color: var(--text-dim);
+      font-weight: 700;
+      margin-top: .2rem;
+    }
+
+    .obj-progreso-txt {
+      display: flex;
+      justify-content: space-between;
+      font-family: 'Press Start 2P', monospace;
+      font-size: .38rem;
+      color: var(--text-muted);
+      margin-bottom: .4rem;
+    }
+
+    .obj-barra-track {
+      height: 8px;
+      background: rgba(255, 255, 255, .06);
+      border-radius: 4px;
+      overflow: hidden;
+      margin-bottom: 1rem;
+    }
+
+    .obj-barra-fill {
+      height: 100%;
+      border-radius: 4px;
+      transition: width 1.2s ease;
+      background: var(--o-color, var(--green));
+    }
+
+    .obj-reward {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .obj-reward-coins {
+      font-family: 'Press Start 2P', monospace;
+      font-size: .42rem;
+      color: var(--yellow);
+      background: rgba(250, 204, 21, .1);
+      border: 1px solid rgba(250, 204, 21, .25);
+      border-radius: 20px;
+      padding: .25rem .625rem;
+    }
+
+    .obj-pct {
+      font-family: 'Press Start 2P', monospace;
+      font-size: .55rem;
+      color: var(--o-color, var(--green));
+    }
+
+    /* HISTORIAL */
+    .historial-lista {
+      display: flex;
+      flex-direction: column;
+      gap: .625rem;
+    }
+
+    .hist-item {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: .875rem 1.25rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .hist-mes {
+      font-family: 'Press Start 2P', monospace;
+      font-size: .38rem;
+      color: var(--text-muted);
+      min-width: 90px;
+    }
+
+    .hist-emoji {
+      font-size: 1.2rem;
+    }
+
+    .hist-desc {
+      flex: 1;
+      font-size: .85rem;
+      font-weight: 800;
+      color: var(--text);
+    }
+
+    .hist-reward {
+      font-family: 'Press Start 2P', monospace;
+      font-size: .42rem;
+      color: var(--yellow);
+    }
+
+    .section {
+      margin-bottom: 2rem;
+    }
+
+    .section-title {
+      font-family: 'Press Start 2P', monospace;
+      font-size: .6rem;
+      color: white;
+      margin-bottom: 1.25rem;
+    }
+
+    @media(max-width:700px) {
+      .obj-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .pm-stats {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    /* ── Botón nuevo objetivo ── */
+    .btn-nuevo-obj {
+      background: linear-gradient(135deg, var(--violet), #6d28d9);
+      border: none;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      color: #fff;
+      font-family: 'Press Start 2P', monospace;
+      font-size: .42rem;
+      padding: .65rem 1.1rem;
+      box-shadow: 0 4px 15px rgba(124, 58, 237, .4);
+      transition: all .2s;
+      white-space: nowrap;
+    }
+
+    .btn-nuevo-obj:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 25px rgba(124, 58, 237, .6);
+    }
+
+    /* ── Botones admin sobre la card ── */
+    .obj-card {
+      position: relative;
+    }
+
+    .obj-admin-btns {
+      position: absolute;
+      top: .6rem;
+      right: .6rem;
+      display: flex;
+      gap: .3rem;
+      z-index: 2;
+    }
+
+    .obj-btn-edit,
+    .obj-btn-del {
+      background: rgba(255, 255, 255, .1);
+      border: 1px solid rgba(255, 255, 255, .2);
+      border-radius: 6px;
+      cursor: pointer;
+      padding: 3px 7px;
+      font-size: .75rem;
+      transition: background .2s;
+    }
+
+    .obj-btn-edit:hover {
+      background: rgba(102, 126, 234, .4);
+    }
+
+    .obj-btn-del:hover {
+      background: rgba(239, 68, 68, .3);
+    }
+
+    /* ── Modal crear/editar objetivo ── */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, .7);
+      backdrop-filter: blur(6px);
+      z-index: 200;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal-overlay.active {
+      display: flex;
+    }
+
+    .modal-box {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 2rem;
+      width: min(520px, 95vw);
+      max-height: 90vh;
+      overflow-y: auto;
+      animation: fadeUp .3s ease;
+    }
+
+    @keyframes fadeUp {
+      from {
+        opacity: 0;
+        transform: translateY(16px)
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0)
+      }
+    }
+
+    .modal-box-title {
+      font-family: 'Press Start 2P', monospace;
+      font-size: .6rem;
+      color: #fff;
+      margin-bottom: 1.5rem;
+    }
+
+    .form-row2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: .875rem;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: .4rem;
+      margin-bottom: .875rem;
+    }
+
+    .form-label {
+      font-family: 'Press Start 2P', monospace;
+      font-size: .38rem;
+      color: var(--text-muted);
+    }
+
+    .form-input,
+    .form-select {
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text);
+      padding: .6rem .875rem;
+      font-size: .875rem;
+      font-weight: 700;
+      font-family: 'Nunito', sans-serif;
+      transition: border-color .2s;
+    }
+
+    .form-input:focus,
+    .form-select:focus {
+      outline: none;
+      border-color: var(--violet);
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: .75rem;
+      margin-top: 1rem;
+    }
+
+    .btn-guardar {
+      flex: 2;
+      padding: .75rem;
+      background: linear-gradient(135deg, var(--violet), #6d28d9);
+      border: none;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      color: #fff;
+      font-family: 'Press Start 2P', monospace;
+      font-size: .45rem;
+      box-shadow: 0 4px 15px rgba(124, 58, 237, .4);
+      transition: all .2s;
+    }
+
+    .btn-cancelar {
+      flex: 1;
+      padding: .75rem;
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      color: var(--text-dim);
+      font-weight: 800;
+      font-size: .875rem;
+      transition: all .2s;
+    }
+
+    .main {
+      padding-top: 5rem !important;
+    }
+  </style>
+
+  <!-- Clerk: carga síncrona con la clave en el data-attribute -->
+  <script data-clerk-publishable-key="pk_test_bG92aW5nLXJhcHRvci0xLmNsZXJrLmFjY291bnRzLmRldiQ"
+    src="https://cdn.jsdelivr.net/npm/@clerk/clerk-js@latest/dist/clerk.browser.js"></script>
+</head>
+
+<body>
+  <div id="sharedHeader"></div>
+  <main class="main">
+
+    <div class="page-header fade-up">
+      <div>
+        <span class="page-tag">🎁 OBJETIVOS</span>
+        <h1 class="page-title">Metas del Mes</h1>
+        <p class="page-subtitle">Cumple tus objetivos y gana grandes recompensas.</p>
+      </div>
+      <button class="btn-nuevo-obj" id="btnNuevoObjetivo" onclick="abrirNuevo()" style="display:none">
+        ＋ Nuevo Objetivo
+      </button>
+    </div>
+
+    <div class="periodo-banner fade-up delay-1">
+      <div>
+        <div class="periodo-titulo">📅 FEBRERO 2026</div>
+        <div class="periodo-sub">Mes activo · Renuevan el 1 de Marzo</div>
+      </div>
+      <div class="periodo-dias">
+        <div class="periodo-dias-num" id="diasRestantes">6</div>
+        <div class="periodo-dias-label">DÍAS RESTANTES</div>
+      </div>
+    </div>
+
+    <div class="progreso-mes fade-up delay-2">
+      <div class="pm-titulo">📊 RESUMEN DEL MES</div>
+      <div class="pm-stats">
+        <div class="pm-stat">
+          <div class="pm-stat-num" id="pmCompletados">3</div>
+          <div class="pm-stat-label">Objetivos completados</div>
+        </div>
+        <div class="pm-stat">
+          <div class="pm-stat-num" id="pmMonedas">1,850</div>
+          <div class="pm-stat-label">EduCoins ganados</div>
+        </div>
+        <div class="pm-stat">
+          <div class="pm-stat-num" id="pmPct">60%</div>
+          <div class="pm-stat-label">Progreso general</div>
+        </div>
+      </div>
+      <div class="pm-barra-wrap">
+        <div class="pm-barra-labels"><span>Progreso mes</span><span>60%</span></div>
+        <div class="pm-barra-track">
+          <div class="pm-barra-fill" id="pmBarraFill" style="width:0%"></div>
+        </div>
+      </div>
+    </div>
+
+    <section class="section fade-up delay-3">
+      <div class="section-title">🎯 OBJETIVOS ACTIVOS</div>
+      <div class="obj-grid" id="objGrid"></div>
+    </section>
+
+    <section class="section fade-up delay-4">
+      <div class="section-title">📜 HISTORIAL</div>
+      <div class="historial-lista" id="historialObjetivos"></div>
+    </section>
+
+  </main>
+  <!-- MODAL CREAR / EDITAR OBJETIVO (solo admin) -->
+  <div class="modal-overlay" id="modalObj" onclick="if(event.target===this)cerrarModal('modalObj')">
+    <div class="modal-box">
+      <div class="modal-box-title" id="modalObjTitulo">Nuevo Objetivo</div>
+      <form id="formObj" onsubmit="guardarObjetivo(event)">
+        <input type="hidden" id="fObjId" />
+        <div class="form-row2">
+          <div class="form-group">
+            <label class="form-label">EMOJI</label>
+            <input class="form-input" id="fObjEmoji" placeholder="🎯" maxlength="4" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">COLOR</label>
+            <input type="color" class="form-input" id="fObjColor" value="#22c55e"
+              style="height:42px;padding:.2rem;cursor:pointer;" />
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">TÍTULO *</label>
+          <input class="form-input" id="fObjTitulo" required placeholder="Ej: GAMER DEL MES" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">DESCRIPCIÓN</label>
+          <input class="form-input" id="fObjDesc" placeholder="Ej: Completa 15 juegos este mes" />
+        </div>
+        <div class="form-row2">
+          <div class="form-group">
+            <label class="form-label">TIPO DE MÉTRICA *</label>
+            <select class="form-select" id="fObjTipo" required>
+              <option value="">Selecciona...</option>
+              <option value="juegos_completados">🎮 Juegos completados</option>
+              <option value="misiones_completadas">🎯 Misiones completadas</option>
+              <option value="tareas_entregadas">📚 Tareas entregadas</option>
+              <option value="racha_dias">🔥 Días de racha</option>
+              <option value="xp_acumulado">⭐ XP acumulado</option>
+              <option value="evaluaciones_aprobadas">✅ Evaluaciones aprobadas (≥4.0)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">META *</label>
+            <input type="number" class="form-input" id="fObjMeta" required min="1" placeholder="20" />
+          </div>
+        </div>
+        <div class="form-row2">
+          <div class="form-group">
+            <label class="form-label">RECOMPENSA 🪙</label>
+            <input type="number" class="form-input" id="fObjMonedas" value="200" min="0" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">RECOMPENSA XP</label>
+            <input type="number" class="form-input" id="fObjXP" value="50" min="0" />
+          </div>
+        </div>
+        <div class="form-row2">
+          <div class="form-group">
+            <label class="form-label">DESDE (opcional)</label>
+            <input type="date" class="form-input" id="fObjDesde" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">HASTA (opcional)</label>
+            <input type="date" class="form-input" id="fObjHasta" />
+          </div>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn-cancelar" onclick="cerrarModal('modalObj')">Cancelar</button>
+          <button type="submit" class="btn-guardar">💾 Guardar Objetivo</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- Auth: config → guard → shared → módulo (orden obligatorio) -->
+  <script src="../auth/clerk-config.js"></script>
+  <script src="../shared/clerk-guard.js"></script>
+  <script src="../shared/shared.js"></script>
+  <script>
+    var MESES = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+      'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+
+    var METRICA_LABELS = {
+      juegos_completados: { icono: '🎮', verbo: 'juegos completados' },
+      misiones_completadas: { icono: '🎯', verbo: 'misiones completadas' },
+      tareas_entregadas: { icono: '📚', verbo: 'tareas entregadas' },
+      racha_dias: { icono: '🔥', verbo: 'días de racha' },
+      xp_acumulado: { icono: '⭐', verbo: 'XP acumulado' },
+      evaluaciones_aprobadas: { icono: '✅', verbo: 'evaluaciones aprobadas (≥4.0)' },
+    };
+
+    // ── Estado ──
+    var STATE = { colegioId: null, grado: null, esAdmin: false };
+
+    document.addEventListener('DOMContentLoaded', function () {
+      initShared('objetivos');
+
+      var hoy = new Date();
+      var finMes = new Date(hoy.getFullYear(), hoy.getMonth() + 1, 0);
+      document.getElementById('diasRestantes').textContent = finMes.getDate() - hoy.getDate();
+
+      var elPeriodo = document.querySelector('.periodo-titulo');
+      if (elPeriodo) elPeriodo.textContent = '📅 ' + MESES[hoy.getMonth()].toUpperCase() + ' ' + hoy.getFullYear();
+
+      var hoyMes1 = new Date(hoy.getFullYear(), hoy.getMonth() + 1, 1);
+      var elSub = document.querySelector('.periodo-sub');
+      if (elSub) elSub.textContent = 'Mes activo · Renuevan el 1 de ' + MESES[hoyMes1.getMonth()];
+
+      ['pmCompletados', 'pmMonedas', 'pmPct'].forEach(function (id) {
+        var el = document.getElementById(id);
+        if (el) el.textContent = '—';
+      });
+    });
+
+    // ── Auth ──
+    // Polling: clerkReady puede haber ocurrido antes de que este script cargara
+    (function _waitToken(tries) {
+      if (window.CLERK_TOKEN) {
+        fetch(BASE_URL + '/api/perfil', {
+          credentials: 'include',
+          headers: { 'Authorization': 'Bearer ' + window.CLERK_TOKEN }
+        })
+          .then(function (r) { return r.ok ? r.json() : null; })
+          .then(function (data) {
+            if (!data) return;
+            var p = data.clerk_id ? data : (data.perfil || data);
+            STATE.colegioId = p.colegio_id || null;
+            STATE.grado = p.grado_actual || p.grado_ingreso || null;
+            STATE.esAdmin = p.rol === 'admin';
+            if (STATE.esAdmin) document.getElementById('btnNuevoObjetivo').style.display = 'inline-flex';
+            cargarObjetivos();
+          })
+          .catch(function () { cargarObjetivos(); });
+      } else if (tries > 0) {
+        setTimeout(function () { _waitToken(tries - 1); }, 300);
+      }
+    })(20);
+
+    // ── Cargar ──
+    function cargarObjetivos() {
+      var url = BASE_URL + '/api/objetivos';
+      var params = [];
+      if (STATE.colegioId) params.push('colegio_id=' + STATE.colegioId);
+      if (STATE.grado) params.push('grado=' + STATE.grado);
+      if (params.length) url += '?' + params.join('&');
+
+      document.getElementById('objGrid').innerHTML =
+        '<div style="grid-column:span 2;text-align:center;padding:3rem;color:var(--text-muted);font-family:\'Press Start 2P\',monospace;font-size:.5rem;">⏳ Cargando...</div>';
+
+      fetch(url, {
+        credentials: 'include',
+        headers: { ...(window.CLERK_TOKEN ? { 'Authorization': 'Bearer ' + window.CLERK_TOKEN } : {}) }
+      })
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (data) {
+          if (!data) { mostrarErrorCarga(); return; }
+          renderObjetivos(data.objetivos || []);
+          actualizarResumen(data.stats || {});
+          renderHistorial(data.historial || []);
+        })
+        .catch(function () { mostrarErrorCarga(); });
+    }
+
+    function mostrarErrorCarga() {
+      document.getElementById('objGrid').innerHTML =
+        '<div style="grid-column:span 2;text-align:center;padding:2rem;color:var(--red);">❌ No se pudieron cargar los objetivos</div>';
+    }
+
+    // ── Render objetivos ──
+    function renderObjetivos(objetivos) {
+      var grid = document.getElementById('objGrid');
+
+      if (!objetivos.length) {
+        grid.innerHTML =
+          '<div style="grid-column:span 2;text-align:center;padding:3rem;">' +
+          '<div style="font-size:3rem;margin-bottom:1rem;">🏁</div>' +
+          '<div style="font-family:\'Press Start 2P\',monospace;font-size:.55rem;color:var(--text-muted);">No hay objetivos activos este mes</div>' +
+          (STATE.esAdmin ? '<div style="margin-top:1rem;font-size:.78rem;color:var(--text-dim);">Crea el primero con el botón de arriba</div>' : '') +
+          '</div>';
+        return;
+      }
+
+      grid.innerHTML = objetivos.map(function (o) {
+        var ml = METRICA_LABELS[o.tipo] || { icono: '📊', verbo: o.tipo };
+        var progTxt = ml.icono + ' ' + o.actual + ' / ' + o.meta + ' ' + ml.verbo;
+        var adminBtns = STATE.esAdmin
+          ? '<div class="obj-admin-btns">' +
+          '<button class="obj-btn-edit" onclick="abrirEditar(\'' + o.id + '\')">✏️</button>' +
+          '<button class="obj-btn-del"  onclick="eliminarObjetivo(\'' + o.id + '\')">🗑️</button>' +
+          '</div>'
+          : '';
+
+        return '<div class="obj-card' + (o.completado ? ' completado' : '') + '" style="--o-color:' + o.color + '">' +
+          adminBtns +
+          '<div class="obj-header">' +
+          '<span class="obj-emoji">' + o.emoji + '</span>' +
+          '<div>' +
+          '<div class="obj-titulo">' + o.titulo + '</div>' +
+          (o.descripcion ? '<div class="obj-cat">' + o.descripcion + '</div>' : '') +
+          '</div>' +
+          '</div>' +
+          '<div class="obj-progreso-txt"><span>' + progTxt + '</span><span>' + o.pct + '%</span></div>' +
+          '<div class="obj-barra-track"><div class="obj-barra-fill" style="width:' + o.pct + '%"></div></div>' +
+          '<div class="obj-reward">' +
+          '<span class="obj-reward-coins">+' + o.monedas.toLocaleString('es-CL') + ' 🪙 · +' + o.xp + ' XP</span>' +
+          '<span class="obj-pct">' + o.pct + '%</span>' +
+          '</div>' +
+          (o.fecha_fin ? '<div style="font-size:.65rem;color:var(--text-muted);margin-top:.5rem;">⏰ Hasta ' + formatFecha(o.fecha_fin) + '</div>' : '') +
+          '</div>';
+      }).join('');
+    }
+
+    // ── Resumen ──
+    function actualizarResumen(stats) {
+      var pct = stats.pct || 0;
+      var elComp = document.getElementById('pmCompletados');
+      var elMon = document.getElementById('pmMonedas');
+      var elPct = document.getElementById('pmPct');
+      if (elComp) elComp.textContent = (stats.completados || 0) + '/' + (stats.total || 0);
+      if (elMon) elMon.textContent = (stats.monedas_ganados || 0).toLocaleString('es-CL');
+      if (elPct) elPct.textContent = pct + '%';
+      var label = document.querySelector('.pm-barra-labels span:last-child');
+      if (label) label.textContent = pct + '%';
+      setTimeout(function () {
+        var fill = document.getElementById('pmBarraFill');
+        if (fill) fill.style.width = pct + '%';
+      }, 300);
+    }
+
+    // ── Historial ──
+    function renderHistorial(historial) {
+      var el = document.getElementById('historialObjetivos');
+      if (!historial.length) {
+        el.innerHTML = '<p style="color:var(--text-dim);text-align:center;padding:1rem;font-size:.85rem;">Aún no has completado ningún objetivo. ¡A por ellos!</p>';
+        return;
+      }
+      el.innerHTML = historial.map(function (h) {
+        var fecha = new Date(h.created_at);
+        var mesAnio = MESES[fecha.getMonth()] + ' ' + fecha.getFullYear();
+        return '<div class="hist-item">' +
+          '<span class="hist-mes">' + mesAnio + '</span>' +
+          '<span class="hist-emoji">🏆</span>' +
+          '<span class="hist-desc">' + h.concepto.replace('Objetivo: ', '') + '</span>' +
+          '<span class="hist-reward">+' + Number(h.monto).toLocaleString('es-CL') + ' 🪙</span>' +
+          '</div>';
+      }).join('');
+    }
+
+    // ── Admin: Modal crear/editar ──
+    var _editandoId = null;
+
+    function abrirNuevo() {
+      _editandoId = null;
+      document.getElementById('modalObjTitulo').textContent = 'Nuevo Objetivo';
+      document.getElementById('formObj').reset();
+      document.getElementById('fObjId').value = '';
+      abrirModal('modalObj');
+    }
+
+    function abrirEditar(id) {
+      // Obtener datos del card actual desde el DOM (simplificado)
+      // En prod se podría hacer un GET /api/objetivos?id=X
+      _editandoId = id;
+      document.getElementById('modalObjTitulo').textContent = 'Editar Objetivo';
+      document.getElementById('fObjId').value = id;
+      abrirModal('modalObj');
+    }
+
+    function guardarObjetivo(e) {
+      e.preventDefault();
+      var id = document.getElementById('fObjId').value;
+      var payload = {
+        colegio_id: STATE.colegioId,
+        grado: STATE.grado,
+        emoji: document.getElementById('fObjEmoji').value || '🎯',
+        titulo: document.getElementById('fObjTitulo').value,
+        descripcion: document.getElementById('fObjDesc').value || null,
+        color: document.getElementById('fObjColor').value || '#22c55e',
+        tipo_metrica: document.getElementById('fObjTipo').value,
+        meta: parseInt(document.getElementById('fObjMeta').value),
+        monedas: parseInt(document.getElementById('fObjMonedas').value) || 200,
+        xp: parseInt(document.getElementById('fObjXP').value) || 50,
+        fecha_inicio: document.getElementById('fObjDesde').value || null,
+        fecha_fin: document.getElementById('fObjHasta').value || null,
+      };
+      if (id) payload.id = id;
+
+      var method = id ? 'PUT' : 'POST';
+      fetch(BASE_URL + '/api/objetivos', {
+        method: method,
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(window.CLERK_TOKEN ? { 'Authorization': 'Bearer ' + window.CLERK_TOKEN } : {})
+        },
+        body: JSON.stringify(payload)
+      })
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+          if (data.error) { toast('⚠️ ' + data.mensaje, 'warning'); return; }
+          cerrarModal('modalObj');
+          toast(id ? '✏️ Objetivo actualizado' : '✅ Objetivo creado', 'success');
+          cargarObjetivos();
+        })
+        .catch(function () { toast('❌ Error de conexión', 'error'); });
+    }
+
+    function eliminarObjetivo(id) {
+      if (!confirm('¿Eliminar este objetivo? Se borrará el progreso de todos los alumnos.')) return;
+      fetch(BASE_URL + '/api/objetivos', {
+        method: 'DELETE',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(window.CLERK_TOKEN ? { 'Authorization': 'Bearer ' + window.CLERK_TOKEN } : {})
+        },
+        body: JSON.stringify({ id: id })
+      })
+        .then(function (r) { return r.json(); })
+        .then(function () { toast('🗑️ Objetivo eliminado', 'info'); cargarObjetivos(); })
+        .catch(function () { toast('❌ Error', 'error'); });
+    }
+
+    // ── Helpers modales ──
+    function abrirModal(id) { document.getElementById(id).classList.add('active'); document.body.style.overflow = 'hidden'; }
+    function cerrarModal(id) { document.getElementById(id).classList.remove('active'); document.body.style.overflow = ''; }
+
+    function formatFecha(str) {
+      if (!str) return '';
+      return new Date(str + 'T00:00:00').toLocaleDateString('es-CL', { day: 'numeric', month: 'short', year: 'numeric' });
+    }
+
+    // ── Toasts ──
+    function toast(msg, tipo) {
+      tipo = tipo || 'info';
+      var container = document.getElementById('toastContainer');
+      var colores = { success: 'rgba(34,197,94,.4)', warning: 'rgba(250,204,21,.4)', error: 'rgba(239,68,68,.4)', info: 'rgba(6,182,212,.4)' };
+      var iconos = { success: '✅', warning: '⚠️', error: '❌', info: 'ℹ️' };
+      var el = document.createElement('div');
+      el.className = 'toast';
+      el.style.borderColor = colores[tipo] || colores.info;
+      el.innerHTML = '<span style="font-size:1.1rem;flex-shrink:0">' + (iconos[tipo] || 'ℹ️') + '</span><span>' + msg + '</span>';
+      container.appendChild(el);
+      setTimeout(function () {
+        el.style.animation = 'toastOut .3s ease forwards';
+        setTimeout(function () { el.remove(); }, 300);
+      }, 4000);
+    }
+  </script>
+
+</body>
+
+</html>

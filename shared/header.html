@@ -1,0 +1,563 @@
+<!--
+============================================
+ARCHIVO: /shared/header.html
+Los links usan data-href con rutas relativas
+a la raíz del proyecto (sin BASE_URL).
+shared.js las convierte a href reales tras
+inyectar este fragmento en el DOM.
+============================================
+-->
+
+<style>
+  .header-coin-icon {
+    font-size: 1.1rem;
+    line-height: 1;
+    flex-shrink: 0;
+  }
+
+  /* ── Botón logout inline (dentro del dropdown) ── */
+  .header-logout-btn {
+    background: rgba(239, 68, 68, 0.12);
+    border: 1px solid rgba(239, 68, 68, 0.4);
+    border-radius: 8px;
+    color: #ef4444;
+    cursor: pointer;
+    line-height: 1;
+    padding: .45rem .55rem;
+    transition: all .2s;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 34px;
+    min-height: 34px;
+  }
+
+  .header-logout-btn:hover {
+    background: rgba(239, 68, 68, 0.28);
+    border-color: #ef4444;
+    transform: scale(1.07);
+    box-shadow: 0 0 12px rgba(239, 68, 68, 0.35);
+  }
+
+  .header-logout-btn svg {
+    display: block;
+    pointer-events: none;
+  }
+
+  /* ── Avatar con dropdown ── */
+  .header-avatar-wrap {
+    position: relative;
+    flex-shrink: 0;
+  }
+
+  .header-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: var(--bg3, #12122e);
+    border: 2px solid var(--violet, #7c3aed);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    cursor: pointer;
+    transition: border-color .2s;
+    flex-shrink: 0;
+    user-select: none;
+  }
+
+  .header-avatar:hover {
+    border-color: var(--cyan, #06b6d4);
+  }
+
+  .header-avatar.open {
+    border-color: var(--cyan, #06b6d4);
+    box-shadow: 0 0 14px rgba(6, 182, 212, .4);
+  }
+
+  /* Dropdown */
+  .avatar-dropdown {
+    position: absolute;
+    top: calc(100% + 10px);
+    right: 0;
+    min-width: 200px;
+    background: var(--bg2, #0d0d2b);
+    border: 1px solid rgba(124, 58, 237, .4);
+    border-radius: 14px;
+    padding: .5rem;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, .5), 0 0 0 1px rgba(124, 58, 237, .1);
+    z-index: 2000;
+    /* Sin animación CSS — opacity y display manejados por JS */
+    display: none;
+    opacity: 1;
+  }
+
+  .avatar-dropdown.open {
+    display: block;
+    opacity: 1;
+  }
+
+  /* Cabecera del dropdown (nombre + rango) */
+  .dropdown-head {
+    padding: .625rem .75rem .5rem;
+    border-bottom: 1px solid rgba(124, 58, 237, .15);
+    margin-bottom: .35rem;
+  }
+
+  .dropdown-nombre {
+    font-weight: 800;
+    font-size: .875rem;
+    color: #e2e8f0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .dropdown-rango {
+    font-size: .7rem;
+    color: #64748b;
+    font-weight: 700;
+    margin-top: 2px;
+  }
+
+  /* Items del dropdown */
+  .dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: .625rem;
+    padding: .55rem .75rem;
+    border-radius: 8px;
+    text-decoration: none;
+    color: #94a3b8;
+    font-size: .875rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all .15s;
+    border: none;
+    background: none;
+    width: 100%;
+    text-align: left;
+  }
+
+  .dropdown-item:hover {
+    background: rgba(124, 58, 237, .12);
+    color: #e2e8f0;
+  }
+
+  .dropdown-item-icon {
+    font-size: 1rem;
+    width: 20px;
+    text-align: center;
+    flex-shrink: 0;
+  }
+
+  /* Separador */
+  .dropdown-sep {
+    height: 1px;
+    background: rgba(124, 58, 237, .15);
+    margin: .35rem .5rem;
+  }
+
+  /* Item cerrar sesión */
+  .dropdown-item.logout {
+    color: #ef4444;
+  }
+
+  .dropdown-item.logout:hover {
+    background: rgba(239, 68, 68, .12);
+    color: #fca5a5;
+  }
+
+  /* Modal de confirmación logout */
+  .logout-confirm-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, .75);
+    backdrop-filter: blur(4px);
+    z-index: 9000;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+  }
+
+  .logout-confirm-overlay.active {
+    display: flex;
+  }
+
+  .logout-confirm-card {
+    background: #0f0f2e;
+    border: 1px solid rgba(124, 58, 237, .4);
+    border-radius: 18px;
+    padding: 1.75rem;
+    max-width: 340px;
+    width: 100%;
+    box-shadow: 0 0 50px rgba(124, 58, 237, .2);
+    animation: popIn .2s ease;
+    text-align: center;
+  }
+
+  @keyframes popIn {
+    from {
+      opacity: 0;
+      transform: scale(.92);
+    }
+
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  .logout-confirm-emoji {
+    font-size: 2.5rem;
+    margin-bottom: .75rem;
+    display: block;
+  }
+
+  .logout-confirm-titulo {
+    font-family: 'Press Start 2P', monospace;
+    font-size: .55rem;
+    color: white;
+    margin-bottom: .625rem;
+    line-height: 1.6;
+  }
+
+  .logout-confirm-sub {
+    font-size: .85rem;
+    color: #64748b;
+    font-weight: 700;
+    margin-bottom: 1.25rem;
+  }
+
+  .logout-confirm-btns {
+    display: flex;
+    gap: .625rem;
+  }
+
+  .logout-btn-cancel {
+    flex: 1;
+    padding: .625rem;
+    background: rgba(124, 58, 237, .12);
+    border: 1px solid rgba(124, 58, 237, .3);
+    border-radius: 10px;
+    color: #a78bfa;
+    font-family: 'Press Start 2P', monospace;
+    font-size: .38rem;
+    cursor: pointer;
+    transition: all .15s;
+  }
+
+  .logout-btn-cancel:hover {
+    background: rgba(124, 58, 237, .22);
+  }
+
+  .logout-btn-confirmar {
+    flex: 1;
+    padding: .625rem;
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    border: none;
+    border-radius: 10px;
+    color: white;
+    font-family: 'Press Start 2P', monospace;
+    font-size: .38rem;
+    cursor: pointer;
+    transition: all .15s;
+    box-shadow: 0 4px 14px rgba(239, 68, 68, .3);
+  }
+
+  .logout-btn-confirmar:hover {
+    transform: translateY(-1px);
+  }
+</style>
+
+<header class="header">
+  <a data-href="/index.html" class="header-logo">
+    <div class="logo-box">
+      <img src="../shared/logo.png" alt="EduCoins" style="height:32px;width:auto;object-fit:contain;"
+        onerror="this.style.display='none';this.nextElementSibling.style.display='block'" />
+      <span style="display:none">🎓</span>
+    </div>
+    <div class="logo-text-wrap">
+      <span class="logo-name">EduCoins</span>
+      <span class="logo-sub">Aprende &amp; Gana</span>
+    </div>
+  </a>
+
+  <button id="sidebarToggle" class="sidebar-toggle-btn" aria-label="Abrir menú">☰</button>
+  <div class="header-spacer"></div>
+
+  <!-- Energía: responsive en 3 niveles via CSS -->
+  <div class="header-energy" id="headerEnergyPill">
+    <span class="energy-icon">⚡</span>
+    <div class="energy-bar-mini">
+      <div class="energy-fill-mini" id="headerEnergyBar"></div>
+    </div>
+    <span class="energy-text" id="headerEnergyText">—</span>
+  </div>
+
+  <!-- Monedas -->
+  <div class="header-coins">
+    <img src="../shared/coin.png" alt="coin"
+      style="width:14px;height:14px;object-fit:contain;display:inline-block;vertical-align:middle;image-rendering:pixelated;">
+    <span id="headerCoins">—</span>
+  </div>
+
+  <!-- Avatar con dropdown -->
+  <div class="header-avatar-wrap">
+    <div class="header-avatar" id="headerAvatar" role="button" aria-haspopup="true" aria-expanded="false"
+      title="Mi cuenta">🐰</div>
+
+    <div class="avatar-dropdown" id="avatarDropdown" role="menu">
+      <div class="dropdown-head">
+        <div class="dropdown-nombre" id="dropdownNombre">Cargando...</div>
+        <div class="dropdown-rango" id="dropdownRango">—</div>
+      </div>
+
+      <a data-href="/perfil/perfil.html" class="dropdown-item" role="menuitem">
+        <span class="dropdown-item-icon">👤</span>
+        Mi Perfil
+      </a>
+      <a data-href="/horario/horario.html" class="dropdown-item" role="menuitem">
+        <span class="dropdown-item-icon">📅</span>
+        Ver Horario
+      </a>
+
+      <div class="dropdown-sep"></div>
+
+      <button class="dropdown-item logout" id="dropdownLogoutBtn" role="menuitem">
+        <span class="dropdown-item-icon">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+            stroke-linecap="round" stroke-linejoin="round">
+            <path d="M18.36 6.64a9 9 0 1 1-12.73 0" />
+            <line x1="12" y1="2" x2="12" y2="12" />
+          </svg>
+        </span>
+        Cerrar Sesión
+      </button>
+    </div>
+  </div>
+</header>
+
+<!-- Modal confirmación logout -->
+<div class="logout-confirm-overlay" id="logoutConfirmOverlay">
+  <div class="logout-confirm-card">
+    <span class="logout-confirm-emoji">👋</span>
+    <div class="logout-confirm-titulo">¿CERRAR SESIÓN?</div>
+    <div class="logout-confirm-sub">¿Seguro que quieres salir de EduCoins?</div>
+    <div class="logout-confirm-btns">
+      <button class="logout-btn-cancel" id="logoutCancelBtn">CANCELAR</button>
+      <button class="logout-btn-confirmar" data-action="logout">SALIR</button>
+    </div>
+  </div>
+</div>
+
+<aside class="sidebar" id="sidebar">
+
+  <div class="sidebar-section">
+    <span class="sidebar-label">PRINCIPAL</span>
+    <a data-href="/dashboard/dashboard.html" class="nav-item" data-page="dashboard">
+      <span class="nav-icon">🏠</span> Dashboard
+    </a>
+    <a data-href="/misiones/misiones.html" class="nav-item" data-page="misiones">
+      <span class="nav-icon">🎯</span> Misiones
+      <span class="nav-badge" id="badgeMisiones">—</span>
+    </a>
+    <a data-href="/calendario/calendario.html" class="nav-item" data-page="calendario">
+      <span class="nav-icon">📅</span> Calendario
+      <span class="nav-badge yellow" id="badgeCalendario">—</span>
+    </a>
+    <a data-href="/horario/horario.html" class="nav-item" data-page="horario">
+      <span class="nav-icon">🗓️</span> Horario
+    </a>
+    <a data-href="/tareas/tareas.html" class="nav-item" data-page="tareas">
+      <span class="nav-icon">📝</span> Tareas
+    </a>
+  </div>
+
+  <div class="sidebar-divider"></div>
+
+  <div class="sidebar-section">
+    <span class="sidebar-label">COMPETIR</span>
+    <a data-href="/duelos/duelos.html" class="nav-item" data-page="duelos">
+      <span class="nav-icon">⚔️</span> Duelos
+      <span class="nav-badge green" id="badgeDuelos">—</span>
+    </a>
+    <a data-href="/podio/podio.html" class="nav-item" data-page="podio">
+      <span class="nav-icon">🏆</span> Ranking
+    </a>
+    <a data-href="/juegos/juegos.html" class="nav-item" data-page="juegos">
+      <span class="nav-icon">🎮</span> Juegos
+    </a>
+  </div>
+
+  <div class="sidebar-divider"></div>
+
+  <div class="sidebar-section">
+    <span class="sidebar-label">MI CUENTA</span>
+    <a data-href="/perfil/perfil.html" class="nav-item" data-page="perfil">
+      <span class="nav-icon">👤</span> Mi Perfil
+    </a>
+    <a data-href="/tienda/tienda.html" class="nav-item" data-page="tienda">
+      <span class="nav-icon">🛒</span> Tienda
+    </a>
+    <a data-href="/objetivos/objetivos.html" class="nav-item" data-page="objetivos">
+      <span class="nav-icon">🎁</span> Objetivos
+    </a>
+    <a data-href="/estadisticas/estadisticas.html" class="nav-item" data-page="estadisticas">
+      <span class="nav-icon">📊</span> Estadísticas
+    </a>
+    <a data-href="/ayudas/ayudas.html" class="nav-item" data-page="ayudas">
+      <span class="nav-icon">📚</span> Material de Apoyo
+    </a>
+  </div>
+
+  <div class="sidebar-profile">
+    <a data-href="/perfil/perfil.html" class="profile-mini">
+      <span class="profile-avatar-big" id="sidebarAvatar">🐰</span>
+      <div class="profile-info">
+        <div class="profile-name" id="sidebarNombre">Cargando...</div>
+        <div class="profile-rank" id="sidebarRango">—</div>
+        <div class="xp-mini-wrap">
+          <div class="xp-mini-labels">
+            <span>XP</span>
+            <span id="sidebarXP">—</span>
+          </div>
+          <div class="xp-mini-track">
+            <div class="xp-mini-fill" id="sidebarXPBar"></div>
+          </div>
+        </div>
+      </div>
+    </a>
+  </div>
+
+</aside>
+
+<!-- NOTA: El script del dropdown está en shared.js
+     porque los <script> dentro de innerHTML NO se ejecutan.
+     shared.js llama a initDropdownHeader() después de inyectar. -->
+<script data-dropdown-init="true">
+  (function () {
+
+    // ── Toggle dropdown: UN SOLO listener en document ──
+    // Maneja apertura, cierre al hacer click fuera, y
+    // evita que el mismo evento abra Y cierre en el mismo ciclo.
+    document.addEventListener('click', function (e) {
+      var avatar = document.getElementById('headerAvatar');
+      var dropdown = document.getElementById('avatarDropdown');
+      if (!avatar || !dropdown) return;
+
+      var clickEnAvatar = avatar.contains(e.target);
+      var clickEnDropdown = dropdown.contains(e.target);
+
+      if (clickEnAvatar) {
+        // Toggle: si está abierto, cerrar; si está cerrado, abrir.
+        // stopPropagation evita que este mismo evento
+        // llegue al bloque "click fuera → cerrar" de abajo.
+        e.stopPropagation();
+        var isOpen = dropdown.classList.contains('open');
+        dropdown.classList.toggle('open', !isOpen);
+        avatar.classList.toggle('open', !isOpen);
+        avatar.setAttribute('aria-expanded', String(!isOpen));
+        return;
+      }
+
+      if (clickEnDropdown) {
+        // Click dentro del dropdown (pero no en el avatar)
+        // Dejamos que el evento siga para que funcionen los links
+        // NO cerramos el dropdown aquí
+        return;
+      }
+
+      // Click fuera de avatar Y dropdown → cerrar
+      if (dropdown.classList.contains('open')) {
+        dropdown.classList.remove('open');
+        avatar.classList.remove('open');
+        avatar.setAttribute('aria-expanded', 'false');
+      }
+    });
+
+    // ── Botón "Cerrar Sesión" dentro del dropdown ──
+    // Abre el modal de confirmación en lugar de hacer logout directo
+    document.addEventListener('click', function (e) {
+      // Subir desde el target para encontrar el botón aunque
+      // el click caiga sobre el SVG interno
+      var el = e.target;
+      while (el && el !== document.body) {
+        if (el.id === 'dropdownLogoutBtn') {
+          e.stopPropagation();
+          // Cerrar dropdown
+          var dropdown = document.getElementById('avatarDropdown');
+          var avatar = document.getElementById('headerAvatar');
+          if (dropdown) dropdown.classList.remove('open');
+          if (avatar) { avatar.classList.remove('open'); avatar.setAttribute('aria-expanded', 'false'); }
+          // Abrir modal de confirmación
+          var overlay = document.getElementById('logoutConfirmOverlay');
+          if (overlay) overlay.classList.add('active');
+          return;
+        }
+        el = el.parentElement;
+      }
+    });
+
+    // ── Botón "CANCELAR" en el modal ──
+    document.addEventListener('click', function (e) {
+      var el = e.target;
+      while (el && el !== document.body) {
+        if (el.id === 'logoutCancelBtn') {
+          var overlay = document.getElementById('logoutConfirmOverlay');
+          if (overlay) overlay.classList.remove('active');
+          return;
+        }
+        el = el.parentElement;
+      }
+    });
+
+    // ── Cerrar con Escape ──
+    document.addEventListener('keydown', function (e) {
+      if (e.key !== 'Escape') return;
+      var overlay = document.getElementById('logoutConfirmOverlay');
+      var dropdown = document.getElementById('avatarDropdown');
+      var avatar = document.getElementById('headerAvatar');
+      if (overlay && overlay.classList.contains('active')) {
+        overlay.classList.remove('active');
+      } else {
+        if (dropdown) dropdown.classList.remove('open');
+        if (avatar) { avatar.classList.remove('open'); avatar.setAttribute('aria-expanded', 'false'); }
+      }
+    });
+
+    // ── Sincronizar nombre/rango del dropdown con el sidebar ──
+    // MutationObserver sobre el sidebar — cuando shared.js
+    // llena sidebarNombre y sidebarRango, los replicamos al dropdown.
+    // Se registra con un pequeño delay para asegurar que el DOM
+    // del header ya fue inyectado.
+    function initDropdownSync() {
+      var sidebarNombre = document.getElementById('sidebarNombre');
+      var sidebarRango = document.getElementById('sidebarRango');
+      if (!sidebarNombre || !sidebarRango) {
+        // Aún no inyectado — reintentar
+        setTimeout(initDropdownSync, 100);
+        return;
+      }
+
+      function sync() {
+        var dn = document.getElementById('dropdownNombre');
+        var dr = document.getElementById('dropdownRango');
+        if (dn) dn.textContent = sidebarNombre.textContent;
+        if (dr) dr.textContent = sidebarRango.textContent;
+      }
+
+      // Sincronizar inmediatamente y observar cambios futuros
+      sync();
+      var obs = new MutationObserver(sync);
+      obs.observe(sidebarNombre, { childList: true, characterData: true, subtree: true });
+      obs.observe(sidebarRango, { childList: true, characterData: true, subtree: true });
+    }
+    setTimeout(initDropdownSync, 50);
+
+    // NOTA: el botón "SALIR" del modal tiene data-action="logout"
+    // y es capturado por el listener global de shared.js.
+  })();
+</script>
