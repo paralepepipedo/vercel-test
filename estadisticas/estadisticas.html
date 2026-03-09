@@ -1,0 +1,961 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <!--
+============================================
+ARCHIVO: /estadisticas/estadisticas.html
+VERSIÓN: 1.1.0 — 2026-03-08
+Changelog:
+  1.1.0 - Fix timing: polling CLERK_TOKEN en vez de clerkReady
+          Agregar credentials:include a todos los fetches
+Usa los endpoints reales:
+  GET /api/perfil
+  GET /api/juegos              (partidas de hoy + niveles)
+  GET /api/evaluaciones        (notas por asignatura)
+  GET /api/misiones            (diarias + semanales del día)
+  GET /api/ranking?mi_posicion=1
+============================================
+-->
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+  <title>Estadísticas — EduCoins</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Nunito:wght@400;700;800;900&display=swap"
+    rel="stylesheet" />
+  <link rel="stylesheet" href="../shared/shared.css" />
+  <script data-clerk-publishable-key="pk_test_bG92aW5nLXJhcHRvci0xLmNsZXJrLmFjY291bnRzLmRldiQ"
+    src="https://cdn.jsdelivr.net/npm/@clerk/clerk-js@latest/dist/clerk.browser.js"></script>
+
+  <style>
+    .page-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: 1.5rem;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .page-tag {
+      font-family: 'Press Start 2P', monospace;
+      font-size: .4rem;
+      color: var(--cyan);
+      display: block;
+      margin-bottom: .5rem;
+    }
+
+    .page-title {
+      font-family: 'Press Start 2P', monospace;
+      font-size: clamp(.75rem, 2vw, 1rem);
+      color: white;
+      line-height: 1.5;
+      margin-bottom: .4rem;
+    }
+
+    .page-subtitle {
+      font-size: .875rem;
+      color: var(--text-dim);
+      font-weight: 700;
+    }
+
+    /* KPIs */
+    .kpis-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1rem;
+      margin-bottom: 1.75rem;
+    }
+
+    .kpi-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.25rem;
+      position: relative;
+      overflow: hidden;
+      transition: all .2s;
+    }
+
+    .kpi-card:hover {
+      transform: translateY(-2px);
+      border-color: var(--violet);
+    }
+
+    .kpi-card::before {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, var(--k-color, var(--violet)), transparent);
+    }
+
+    .kpi-label {
+      font-family: 'Press Start 2P', monospace;
+      font-size: .35rem;
+      color: var(--text-muted);
+      margin-bottom: .5rem;
+    }
+
+    .kpi-num {
+      font-family: 'Press Start 2P', monospace;
+      font-size: .9rem;
+      color: white;
+      margin-bottom: .25rem;
+      min-height: 1.2em;
+    }
+
+    .kpi-delta {
+      font-size: .75rem;
+      font-weight: 800;
+    }
+
+    .kpi-delta.up {
+      color: var(--green);
+    }
+
+    .kpi-delta.down {
+      color: var(--red);
+    }
+
+    .kpi-delta.neutral {
+      color: var(--text-muted);
+    }
+
+    .kpi-icon {
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+      font-size: 1.5rem;
+      opacity: .4;
+    }
+
+    /* Barra XP nivel */
+    .xp-wrap {
+      margin-top: .5rem;
+    }
+
+    .xp-track {
+      height: 5px;
+      background: rgba(255, 255, 255, .08);
+      border-radius: 3px;
+      overflow: hidden;
+      margin-top: .25rem;
+    }
+
+    .xp-fill {
+      height: 100%;
+      background: var(--cyan);
+      border-radius: 3px;
+      transition: width 1s ease;
+      width: 0%;
+    }
+
+    .xp-sub {
+      display: flex;
+      justify-content: space-between;
+      font-size: .6rem;
+      color: var(--text-muted);
+      font-weight: 700;
+    }
+
+    /* Skeleton */
+    .skel {
+      display: inline-block;
+      background: linear-gradient(90deg, rgba(255, 255, 255, .05) 25%, rgba(255, 255, 255, .1) 50%, rgba(255, 255, 255, .05) 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.5s infinite;
+      border-radius: 4px;
+    }
+
+    @keyframes shimmer {
+      0% {
+        background-position: 200% 0
+      }
+
+      100% {
+        background-position: -200% 0
+      }
+    }
+
+    /* Gráficos */
+    .charts-grid {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 1.25rem;
+      margin-bottom: 1.75rem;
+    }
+
+    .chart-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.5rem;
+    }
+
+    .chart-titulo {
+      font-family: 'Press Start 2P', monospace;
+      font-size: .5rem;
+      color: white;
+      margin-bottom: 1.25rem;
+    }
+
+    canvas {
+      display: block;
+    }
+
+    /* Empty state */
+    .empty-state {
+      text-align: center;
+      padding: 2rem 1rem;
+      color: var(--text-muted);
+    }
+
+    .empty-state .empty-icon {
+      font-size: 2rem;
+      margin-bottom: .5rem;
+      display: block;
+    }
+
+    .empty-state p {
+      font-size: .8rem;
+      font-weight: 700;
+      margin: 0;
+    }
+
+    /* Asignaturas */
+    .asig-lista {
+      display: flex;
+      flex-direction: column;
+      gap: .875rem;
+    }
+
+    .asig-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: .35rem;
+    }
+
+    .asig-nombre {
+      font-weight: 800;
+      font-size: .85rem;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: .5rem;
+    }
+
+    .asig-track {
+      height: 8px;
+      background: rgba(255, 255, 255, .06);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+
+    .asig-fill {
+      height: 100%;
+      border-radius: 4px;
+      transition: width 1.2s ease;
+    }
+
+    .asig-nota {
+      font-size: .7rem;
+      font-weight: 800;
+      padding: .15rem .45rem;
+      border-radius: .25rem;
+    }
+
+    .asig-meta {
+      font-size: .7rem;
+      color: var(--text-muted);
+      font-weight: 700;
+    }
+
+    /* Logros */
+    .logros-lista {
+      display: flex;
+      flex-direction: column;
+      gap: .5rem;
+    }
+
+    .logro-row {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: .75rem 1.25rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      transition: .2s;
+    }
+
+    .logro-row:hover {
+      border-color: var(--violet);
+    }
+
+    .logro-emoji {
+      font-size: 1.5rem;
+    }
+
+    .logro-info {
+      flex: 1;
+    }
+
+    .logro-nombre {
+      font-weight: 800;
+      font-size: .85rem;
+      color: var(--text);
+    }
+
+    .logro-fecha {
+      font-size: .72rem;
+      color: var(--text-dim);
+      font-weight: 700;
+    }
+
+    .logro-xp {
+      font-family: 'Press Start 2P', monospace;
+      font-size: .42rem;
+      color: var(--cyan);
+      white-space: nowrap;
+    }
+
+    /* Stats grid */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1rem;
+    }
+
+    .stat-box {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 1rem;
+      text-align: center;
+    }
+
+    .stat-num {
+      font-family: 'Press Start 2P', monospace;
+      font-size: .75rem;
+      display: block;
+      margin-bottom: .3rem;
+    }
+
+    .stat-label {
+      font-size: .7rem;
+      color: var(--text-dim);
+      font-weight: 700;
+    }
+
+    /* Ranking card */
+    .ranking-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.5rem;
+      display: flex;
+      gap: 1.5rem;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .ranking-item {
+      text-align: center;
+      flex: 1;
+      min-width: 100px;
+    }
+
+    .ranking-pos {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 1.4rem;
+      display: block;
+      margin-bottom: .25rem;
+    }
+
+    .ranking-label {
+      font-size: .72rem;
+      color: var(--text-dim);
+      font-weight: 700;
+    }
+
+    .ranking-sub {
+      font-size: .65rem;
+      color: var(--text-muted);
+      font-weight: 700;
+      margin-top: .15rem;
+    }
+
+    .section {
+      margin-bottom: 2rem;
+    }
+
+    .section-title {
+      font-family: 'Press Start 2P', monospace;
+      font-size: .6rem;
+      color: white;
+      margin-bottom: 1.25rem;
+    }
+
+    .fade-up {
+      opacity: 0;
+      transform: translateY(18px);
+      animation: fadeUp .5s ease forwards;
+    }
+
+    .delay-1 {
+      animation-delay: .08s;
+    }
+
+    .delay-2 {
+      animation-delay: .16s;
+    }
+
+    .delay-3 {
+      animation-delay: .24s;
+    }
+
+    .delay-4 {
+      animation-delay: .32s;
+    }
+
+    .delay-5 {
+      animation-delay: .40s;
+    }
+
+    @keyframes fadeUp {
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @media(max-width:900px) {
+      .charts-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .kpis-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .stats-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div id="sharedHeader"></div>
+  <div class="layout">
+    <main class="main">
+
+      <!-- HEADER -->
+      <div class="page-header fade-up">
+        <div>
+          <span class="page-tag">📊 ESTADÍSTICAS</span>
+          <h1 class="page-title">Mi Progreso</h1>
+          <p class="page-subtitle">Visualiza tu rendimiento en EduCoins.</p>
+        </div>
+        <div id="lastUpdated" style="font-size:.7rem;color:var(--text-muted);font-weight:700;align-self:center;"></div>
+      </div>
+
+      <!-- KPIs -->
+      <div class="kpis-grid fade-up delay-1">
+        <div class="kpi-card" style="--k-color:var(--yellow)">
+          <div class="kpi-label">EDUCOINS TOTALES</div>
+          <div class="kpi-num" id="kpiMonedas"><span class="skel" style="width:70px;height:18px;"></span></div>
+          <div class="kpi-delta neutral" id="kpiMonedasDelta"><span class="skel"
+              style="width:120px;height:12px;"></span></div>
+          <span class="kpi-icon">🪙</span>
+        </div>
+        <div class="kpi-card" style="--k-color:var(--cyan)">
+          <div class="kpi-label">XP TOTAL</div>
+          <div class="kpi-num" id="kpiXp"><span class="skel" style="width:70px;height:18px;"></span></div>
+          <div class="xp-wrap" id="xpWrap" style="display:none">
+            <div class="xp-sub"><span id="xpNivelLabel"></span><span id="xpNextLabel"></span></div>
+            <div class="xp-track">
+              <div class="xp-fill" id="xpFill"></div>
+            </div>
+          </div>
+          <span class="kpi-icon">⭐</span>
+        </div>
+        <div class="kpi-card" style="--k-color:var(--orange)">
+          <div class="kpi-label">RACHA ACTUAL</div>
+          <div class="kpi-num" id="kpiRacha"><span class="skel" style="width:70px;height:18px;"></span></div>
+          <div class="kpi-delta neutral" id="kpiRachaDelta"><span class="skel" style="width:120px;height:12px;"></span>
+          </div>
+          <span class="kpi-icon">🔥</span>
+        </div>
+        <div class="kpi-card" style="--k-color:var(--green)">
+          <div class="kpi-label">MISIONES HOY</div>
+          <div class="kpi-num" id="kpiMisiones"><span class="skel" style="width:70px;height:18px;"></span></div>
+          <div class="kpi-delta neutral" id="kpiMisionesDelta"><span class="skel"
+              style="width:120px;height:12px;"></span></div>
+          <span class="kpi-icon">🎯</span>
+        </div>
+      </div>
+
+      <!-- GRÁFICOS -->
+      <div class="charts-grid fade-up delay-2">
+        <div class="chart-card">
+          <div class="chart-titulo">📈 MONEDAS GANADAS HOY POR JUEGO</div>
+          <canvas id="chartMonedas" height="160"></canvas>
+          <div id="chartMonedasEmpty" class="empty-state" style="display:none">
+            <span class="empty-icon">📊</span>
+            <p>Sin partidas jugadas hoy</p>
+          </div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-titulo">🎮 PARTIDAS DE HOY</div>
+          <canvas id="chartJuegos" height="160"></canvas>
+          <div id="chartJuegosEmpty" class="empty-state" style="display:none">
+            <span class="empty-icon">🎮</span>
+            <p>Sin partidas hoy</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- RANKING -->
+      <section class="section fade-up delay-2">
+        <div class="section-title">🏆 MI POSICIÓN</div>
+        <div class="ranking-card" id="rankingCard">
+          <div class="ranking-item">
+            <span class="ranking-pos" id="rankGlobal" style="color:var(--yellow)"><span class="skel"
+                style="width:50px;height:28px;display:block;margin:0 auto"></span></span>
+            <div class="ranking-label">Ranking Global</div>
+            <div class="ranking-sub">Entre todos los alumnos</div>
+          </div>
+          <div style="width:1px;height:60px;background:var(--border)"></div>
+          <div class="ranking-item">
+            <span class="ranking-pos" id="rankGrado" style="color:var(--cyan)"><span class="skel"
+                style="width:50px;height:28px;display:block;margin:0 auto"></span></span>
+            <div class="ranking-label">Ranking de Mi Grado</div>
+            <div class="ranking-sub" id="rankGradoSub">Cargando...</div>
+          </div>
+          <div style="width:1px;height:60px;background:var(--border)"></div>
+          <div class="ranking-item">
+            <span class="ranking-pos" id="rankRango" style="color:var(--violet)"><span class="skel"
+                style="width:80px;height:28px;display:block;margin:0 auto"></span></span>
+            <div class="ranking-label">Rango</div>
+            <div class="ranking-sub" id="rankRangoSub">Cargando...</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- RENDIMIENTO POR ASIGNATURA -->
+      <section class="section fade-up delay-3">
+        <div class="section-title">📚 RENDIMIENTO POR ASIGNATURA</div>
+        <div class="chart-card">
+          <div class="asig-lista" id="asigLista">
+            <div class="empty-state"><span class="empty-icon">📚</span>
+              <p>Cargando...</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- MISIONES HOY + PERFIL DE JUEGO -->
+      <div class="charts-grid fade-up delay-4">
+        <section class="section" style="margin-bottom:0">
+          <div class="section-title">📅 MISIONES DE HOY</div>
+          <div class="stats-grid" id="misionesStats">
+            <div class="stat-box"><span class="skel"
+                style="width:40px;height:14px;display:block;margin:0 auto .4rem"></span><span
+                class="stat-label">Cargando...</span></div>
+            <div class="stat-box"><span class="skel"
+                style="width:40px;height:14px;display:block;margin:0 auto .4rem"></span><span
+                class="stat-label">Cargando...</span></div>
+            <div class="stat-box"><span class="skel"
+                style="width:40px;height:14px;display:block;margin:0 auto .4rem"></span><span
+                class="stat-label">Cargando...</span></div>
+            <div class="stat-box"><span class="skel"
+                style="width:40px;height:14px;display:block;margin:0 auto .4rem"></span><span
+                class="stat-label">Cargando...</span></div>
+          </div>
+        </section>
+        <section class="section" style="margin-bottom:0">
+          <div class="section-title">🎮 ACTIVIDAD DE HOY</div>
+          <div class="stats-grid" id="juegoStats">
+            <div class="stat-box"><span class="skel"
+                style="width:40px;height:14px;display:block;margin:0 auto .4rem"></span><span
+                class="stat-label">Cargando...</span></div>
+            <div class="stat-box"><span class="skel"
+                style="width:40px;height:14px;display:block;margin:0 auto .4rem"></span><span
+                class="stat-label">Cargando...</span></div>
+            <div class="stat-box"><span class="skel"
+                style="width:40px;height:14px;display:block;margin:0 auto .4rem"></span><span
+                class="stat-label">Cargando...</span></div>
+            <div class="stat-box"><span class="skel"
+                style="width:40px;height:14px;display:block;margin:0 auto .4rem"></span><span
+                class="stat-label">Cargando...</span></div>
+          </div>
+        </section>
+      </div>
+
+    </main>
+  </div>
+  <div class="toast-container" id="toastContainer"></div>
+
+  <script src="../auth/clerk-config.js"></script>
+  <script src="../shared/clerk-guard.js"></script>
+  <script src="../shared/shared.js"></script>
+  <script>
+    // ============================================
+    // estadisticas.html — lógica inline
+    // Usa exactamente los mismos endpoints que
+    // el resto de páginas de EduCoins
+    // ============================================
+
+    var ASIG_META = {
+      'Matematicas': { emoji: '➗', color: '#3b82f6' },
+      'Lenguaje': { emoji: '📖', color: '#ef4444' },
+      'Historia': { emoji: '🏛️', color: '#f97316' },
+      'Ciencias': { emoji: '🔬', color: '#22c55e' },
+      'Ingles': { emoji: '🌎', color: '#06b6d4' },
+      'Ed. Fisica': { emoji: '⚽', color: '#84cc16' },
+      'Musica': { emoji: '🎵', color: '#ec4899' },
+      'Artes': { emoji: '🎨', color: '#a855f7' },
+      'Tecnologia': { emoji: '💻', color: '#64748b' },
+    };
+
+    // XP para subir de nivel (misma fórmula que backend: nivel * 1000)
+    function xpSiguienteNivel(nivel) { return nivel * 1000; }
+
+    var STATE = {
+      perfil: null,
+      juegos: null,   // respuesta completa de GET /api/juegos
+      evals: null,   // respuesta completa de GET /api/evaluaciones
+      misiones: null,   // respuesta completa de GET /api/misiones
+      ranking: null,   // respuesta de GET /api/ranking?mi_posicion=1
+    };
+
+    // ── DOMContentLoaded ─────────────────────────────────────
+    document.addEventListener('DOMContentLoaded', function () {
+      initShared('estadisticas');
+    });
+
+    // Polling: clerkReady puede haber ocurrido antes de que este script cargara
+    (function _waitToken(tries) {
+      if (window.CLERK_TOKEN) {
+        cargarTodo();
+      } else if (tries > 0) {
+        setTimeout(function () { _waitToken(tries - 1); }, 300);
+      }
+    })(20);
+
+    // ── Carga paralela de los 4 endpoints que ya existen ─────
+    function cargarTodo() {
+      var h = { 'Authorization': 'Bearer ' + window.CLERK_TOKEN };
+
+      Promise.all([
+        // 1. Perfil: monedas, xp, nivel, racha_dias, rango_completo, sub_rango
+        fetch(BASE_URL + '/api/perfil', { credentials: 'include', headers: h })
+          .then(function (r) { return r.ok ? r.json() : null; }),
+
+        // 2. Juegos: partidas de hoy + niveles actuales por juego
+        fetch(BASE_URL + '/api/juegos', { credentials: 'include', headers: h })
+          .then(function (r) { return r.ok ? r.json() : null; }),
+
+        // 3. Evaluaciones: todas las del usuario (sin filtro de mes)
+        fetch(BASE_URL + '/api/evaluaciones', { credentials: 'include', headers: h })
+          .then(function (r) { return r.ok ? r.json() : null; }),
+
+        // 4. Misiones: diarias + semanales de hoy
+        fetch(BASE_URL + '/api/misiones', { credentials: 'include', headers: h })
+          .then(function (r) { return r.ok ? r.json() : null; }),
+
+        // 5. Ranking: posición global y por grado del alumno
+        fetch(BASE_URL + '/api/ranking?mi_posicion=1', { credentials: 'include', headers: h })
+          .then(function (r) { return r.ok ? r.json() : null; }),
+      ])
+        .then(function (res) {
+          STATE.perfil = res[0] || {};
+          STATE.juegos = res[1] || {};
+          STATE.evals = res[2] || {};
+          STATE.misiones = res[3] || {};
+          STATE.ranking = res[4] || {};
+
+          renderKPIs();
+          renderGraficoMonedas();
+          renderGraficoJuegos();
+          renderRanking();
+          renderAsignaturas();
+          renderMisiones();
+          renderJuegoStats();
+
+          document.getElementById('lastUpdated').textContent =
+            'Actualizado: ' + new Date().toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' });
+        })
+        .catch(function (err) {
+          console.error('[estadisticas]', err);
+          toast('Error al cargar estadísticas', 'error');
+        });
+    }
+
+    // ════════════════════════════════════════════════
+    // KPIs — datos de /api/perfil y /api/misiones
+    // ════════════════════════════════════════════════
+    function renderKPIs() {
+      var p = STATE.perfil;
+
+      // Monedas
+      document.getElementById('kpiMonedas').textContent = Number(p.monedas || 0).toLocaleString('es-CL');
+      var monDelta = document.getElementById('kpiMonedasDelta');
+      // Monedas ganadas hoy: sumar partidas de hoy
+      var partidasHoy = STATE.juegos.partidas_hoy || [];
+      var monHoy = partidasHoy.reduce(function (acc, p) { return acc + (Number(p.monedas_ganadas) || 0); }, 0);
+      monDelta.className = 'kpi-delta ' + (monHoy > 0 ? 'up' : 'neutral');
+      monDelta.textContent = monHoy > 0 ? '↑ +' + monHoy + ' hoy' : 'Sin partidas hoy';
+
+      // XP + barra de nivel
+      var xp = Number(p.xp) || 0;
+      var nivel = Number(p.nivel) || 1;
+      document.getElementById('kpiXp').textContent = xp.toLocaleString('es-CL');
+      var xpSig = xpSiguienteNivel(nivel);
+      var xpEnNivel = xp % xpSig;
+      var pct = Math.min(100, Math.round((xpEnNivel / xpSig) * 100));
+      document.getElementById('xpWrap').style.display = 'block';
+      document.getElementById('xpNivelLabel').textContent = 'Nv. ' + nivel;
+      document.getElementById('xpNextLabel').textContent = xpEnNivel.toLocaleString('es-CL') + ' / ' + xpSig.toLocaleString('es-CL') + ' XP';
+      setTimeout(function () { document.getElementById('xpFill').style.width = pct + '%'; }, 200);
+
+      // Racha
+      var racha = Number(p.racha_dias) || 0;
+      document.getElementById('kpiRacha').textContent = racha + ' días';
+      var rd = document.getElementById('kpiRachaDelta');
+      if (racha >= 30) { rd.className = 'kpi-delta up'; rd.textContent = '↑ Récord histórico 🔥'; }
+      else if (racha >= 7) { rd.className = 'kpi-delta up'; rd.textContent = '↑ ¡Sigue así!'; }
+      else if (racha > 0) { rd.className = 'kpi-delta neutral'; rd.textContent = 'Lleva ' + racha + ' días'; }
+      else { rd.className = 'kpi-delta down'; rd.textContent = 'Sin racha activa'; }
+
+      // Misiones de hoy
+      var misiones = STATE.misiones.misiones || [];
+      var completadas = misiones.filter(function (m) { return m.completada; }).length;
+      var total = misiones.length;
+      document.getElementById('kpiMisiones').textContent = completadas + '/' + total;
+      var md = document.getElementById('kpiMisionesDelta');
+      if (total > 0 && completadas === total) {
+        md.className = 'kpi-delta up'; md.textContent = '🏆 ¡Todas completadas!';
+      } else if (completadas > 0) {
+        md.className = 'kpi-delta up'; md.textContent = '↑ ' + completadas + ' completada' + (completadas !== 1 ? 's' : '') + ' hoy';
+      } else {
+        md.className = 'kpi-delta neutral'; md.textContent = 'Sin misiones completadas hoy';
+      }
+    }
+
+    // ════════════════════════════════════════════════
+    // GRÁFICO BARRAS — monedas ganadas por juego hoy
+    // Datos: STATE.juegos.partidas_hoy
+    // ════════════════════════════════════════════════
+    function renderGraficoMonedas() {
+      var partidas = STATE.juegos.partidas_hoy || [];
+      var canvas = document.getElementById('chartMonedas');
+
+      // Agrupar monedas por juego_id
+      var mapa = {};
+      partidas.forEach(function (p) {
+        if (!p.juego_id) return;
+        mapa[p.juego_id] = (mapa[p.juego_id] || 0) + (Number(p.monedas_ganadas) || 0);
+      });
+
+      var colores = ['#facc15', '#22c55e', '#3b82f6', '#ef4444', '#a855f7', '#f97316'];
+      var datos = Object.entries(mapa)
+        .sort(function (a, b) { return b[1] - a[1]; }).slice(0, 6)
+        .map(function (e, i) { return { label: e[0], v: e[1], color: colores[i % colores.length] }; });
+
+      if (datos.length === 0 || !datos.some(function (d) { return d.v > 0; })) {
+        canvas.style.display = 'none';
+        document.getElementById('chartMonedasEmpty').style.display = 'block';
+        return;
+      }
+
+      dibujarBarras(canvas, datos);
+    }
+
+    // ════════════════════════════════════════════════
+    // GRÁFICO BARRAS — partidas por juego hoy
+    // ════════════════════════════════════════════════
+    function renderGraficoJuegos() {
+      var partidas = STATE.juegos.partidas_hoy || [];
+      var canvas = document.getElementById('chartJuegos');
+
+      var conteo = {};
+      partidas.forEach(function (p) {
+        if (!p.juego_id) return;
+        conteo[p.juego_id] = (conteo[p.juego_id] || 0) + 1;
+      });
+
+      var colores = ['#3b82f6', '#22c55e', '#ef4444', '#a855f7', '#f97316', '#06b6d4'];
+      var datos = Object.entries(conteo)
+        .sort(function (a, b) { return b[1] - a[1]; }).slice(0, 6)
+        .map(function (e, i) { return { label: e[0], v: e[1], color: colores[i % colores.length] }; });
+
+      if (datos.length === 0) {
+        canvas.style.display = 'none';
+        document.getElementById('chartJuegosEmpty').style.display = 'block';
+        return;
+      }
+
+      dibujarBarras(canvas, datos);
+    }
+
+    // Helper compartido para dibujar barras
+    function dibujarBarras(canvas, datos) {
+      canvas.width = canvas.parentElement.clientWidth - 48;
+      var ctx = canvas.getContext('2d');
+      var W = canvas.width, H = canvas.height;
+      var padL = 10, padR = 10, padT = 20, padB = 40;
+      var maxV = Math.max.apply(null, datos.map(function (d) { return d.v; })) || 1;
+      var gap = (W - padL - padR) / datos.length;
+      var barW = gap * 0.6;
+
+      ctx.clearRect(0, 0, W, H);
+      datos.forEach(function (d, i) {
+        var x = padL + i * gap + (gap - barW) / 2;
+        var barH = (d.v / maxV) * (H - padT - padB);
+        var y = H - padB - barH;
+        ctx.fillStyle = d.color + '33'; ctx.fillRect(x, padT, barW, H - padT - padB);
+        ctx.fillStyle = d.color; ctx.fillRect(x, y, barW, barH);
+        ctx.fillStyle = 'white'; ctx.font = 'bold 11px Nunito'; ctx.textAlign = 'center';
+        ctx.fillText(d.v, x + barW / 2, y - 6);
+        var label = d.label.length > 9 ? d.label.slice(0, 8) + '.' : d.label;
+        ctx.fillStyle = 'rgba(148,163,184,.8)'; ctx.font = '9px Nunito';
+        ctx.fillText(label, x + barW / 2, H - 8);
+      });
+    }
+
+    // ════════════════════════════════════════════════
+    // RANKING — datos de /api/ranking?mi_posicion=1
+    // ════════════════════════════════════════════════
+    function renderRanking() {
+      var r = STATE.ranking;
+      var p = STATE.perfil;
+
+      document.getElementById('rankGlobal').textContent = '#' + (r.posicion_global || '—');
+      document.getElementById('rankGrado').textContent = '#' + (r.posicion_grado || '—');
+      document.getElementById('rankGradoSub').textContent = 'Grado ' + (r.grado_actual || '—');
+      document.getElementById('rankRango').textContent = p.sub_rango || '—';
+      document.getElementById('rankRangoSub').textContent = p.rango_completo || '';
+    }
+
+    // ════════════════════════════════════════════════
+    // ASIGNATURAS — promedio de notas desde /api/evaluaciones
+    // Respuesta: { evaluaciones: [...], estadisticas: {...} }
+    // ════════════════════════════════════════════════
+    function renderAsignaturas() {
+      var lista = document.getElementById('asigLista');
+      var evals = STATE.evals.evaluaciones || [];
+
+      // Solo las que tienen nota ingresada
+      var conNota = evals.filter(function (e) { return e.nota_obtenida != null; });
+
+      if (conNota.length === 0) {
+        lista.innerHTML = '<div class="empty-state"><span class="empty-icon">📚</span><p>Aún no tienes evaluaciones con nota ingresada.</p></div>';
+        return;
+      }
+
+      // Promediar por asignatura
+      var mapa = {};
+      conNota.forEach(function (e) {
+        if (!mapa[e.asignatura]) mapa[e.asignatura] = { suma: 0, count: 0 };
+        mapa[e.asignatura].suma += parseFloat(e.nota_obtenida);
+        mapa[e.asignatura].count += 1;
+      });
+
+      var asigs = Object.entries(mapa).map(function (entry) {
+        var meta = ASIG_META[entry[0]] || { emoji: '📘', color: '#7c3aed' };
+        var prom = entry[1].suma / entry[1].count;
+        return { nombre: entry[0], emoji: meta.emoji, color: meta.color, prom: prom, count: entry[1].count };
+      }).sort(function (a, b) { return b.prom - a.prom; });
+
+      lista.innerHTML = asigs.map(function (a) {
+        var pct = Math.round((a.prom / 7) * 100);
+        var notaStr = a.prom.toFixed(1);
+        var notaColor = a.prom >= 5.5 ? '#22c55e' : a.prom >= 4.0 ? '#f97316' : '#ef4444';
+        return '<div class="asig-item">' +
+          '<div class="asig-header">' +
+          '<span class="asig-nombre">' + a.emoji + ' ' + a.nombre + '</span>' +
+          '<div style="display:flex;align-items:center;gap:.5rem">' +
+          '<span class="asig-meta">' + a.count + ' eval.</span>' +
+          '<span class="asig-nota" style="background:' + notaColor + '22;color:' + notaColor + '">' + notaStr + '</span>' +
+          '</div>' +
+          '</div>' +
+          '<div class="asig-track"><div class="asig-fill" style="width:0%;background:' + a.color + '" data-w="' + pct + '%"></div></div>' +
+          '</div>';
+      }).join('');
+
+      setTimeout(function () {
+        document.querySelectorAll('.asig-fill').forEach(function (el) {
+          el.style.width = el.getAttribute('data-w');
+        });
+      }, 200);
+    }
+
+    // ════════════════════════════════════════════════
+    // MISIONES — datos de /api/misiones
+    // Respuesta: { misiones: [...], semanales: [...], ... }
+    // ════════════════════════════════════════════════
+    function renderMisiones() {
+      var misiones = STATE.misiones.misiones || [];
+      var semanales = STATE.misiones.semanales || [];
+      var completadas = misiones.filter(function (m) { return m.completada; }).length;
+      var total = misiones.length;
+      var semComp = semanales.filter(function (m) { return m.completada; }).length;
+      var semTotal = semanales.length;
+
+      // Monedas y XP ganadas en misiones completadas hoy
+      var monMisiones = misiones
+        .filter(function (m) { return m.completada; })
+        .reduce(function (acc, m) { return acc + (Number(m.recompensa_monedas) || 0); }, 0);
+      var xpMisiones = misiones
+        .filter(function (m) { return m.completada; })
+        .reduce(function (acc, m) { return acc + (Number(m.recompensa_xp) || 0); }, 0);
+
+      document.getElementById('misionesStats').innerHTML =
+        statBox(completadas + '/' + total, 'Diarias hoy', 'var(--yellow)') +
+        statBox(semComp + '/' + semTotal, 'Semanales', 'var(--cyan)') +
+        statBox('+' + monMisiones + ' 🪙', 'Monedas por misiones', 'var(--green)') +
+        statBox('+' + xpMisiones + ' XP', 'XP por misiones', 'var(--violet)');
+    }
+
+    // ════════════════════════════════════════════════
+    // ACTIVIDAD DE JUEGOS HOY — datos de /api/juegos
+    // ════════════════════════════════════════════════
+    function renderJuegoStats() {
+      var partidas = STATE.juegos.partidas_hoy || [];
+      var niveles = STATE.juegos.niveles_por_juego || {};
+
+      var totalPartidas = partidas.length;
+      var totalMonedas = partidas.reduce(function (a, p) { return a + (Number(p.monedas_ganadas) || 0); }, 0);
+      var totalXP = partidas.reduce(function (a, p) { return a + (Number(p.xp_ganado) || 0); }, 0);
+      var juegosDist = Object.keys(
+        partidas.reduce(function (acc, p) { if (p.juego_id) acc[p.juego_id] = 1; return acc; }, {})
+      ).length;
+
+      document.getElementById('juegoStats').innerHTML =
+        statBox(totalPartidas, 'Partidas jugadas', 'var(--cyan)') +
+        statBox(juegosDist, 'Juegos distintos', 'var(--green)') +
+        statBox('+' + totalMonedas + ' 🪙', 'Monedas ganadas', 'var(--yellow)') +
+        statBox('+' + totalXP + ' XP', 'XP ganado', 'var(--violet)');
+    }
+
+    // Helper: caja de stat
+    function statBox(num, label, color) {
+      return '<div class="stat-box">' +
+        '<span class="stat-num" style="color:' + color + '">' + num + '</span>' +
+        '<span class="stat-label">' + label + '</span>' +
+        '</div>';
+    }
+
+    window.addEventListener('resize', function () {
+      if (STATE.juegos) { renderGraficoMonedas(); renderGraficoJuegos(); }
+    });
+  </script>
+</body>
+
+</html>

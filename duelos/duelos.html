@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Duelos — EduCoins</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="../shared/shared.css" />
+<link rel="stylesheet" href="duelos.css" />
+
+  <!-- Clerk: carga síncrona con la clave en el data-attribute -->
+  <script
+    data-clerk-publishable-key="pk_test_bG92aW5nLXJhcHRvci0xLmNsZXJrLmFjY291bnRzLmRldiQ"
+    src="https://cdn.jsdelivr.net/npm/@clerk/clerk-js@latest/dist/clerk.browser.js"
+  ></script>
+</head>
+<body>
+
+<div id="sharedHeader"></div>
+
+<div class="layout">
+  <main class="main">
+
+    <div class="page-header fade-up">
+      <div>
+        <span class="page-tag">⚔️ DUELOS</span>
+        <h1 class="page-title">Desafíos</h1>
+        <p class="page-subtitle">Desafía a tus compañeros y demuestra quién sabe más.</p>
+      </div>
+      <button class="btn-nuevo-duelo" id="btnNuevoDuelo">⚔️ Nuevo Duelo</button>
+    </div>
+
+    <!-- STATS PERSONALES -->
+    <div class="duelos-stats fade-up delay-1">
+      <div class="ds-card ds-win">
+        <span class="ds-icon">🏆</span>
+        <div class="ds-num" id="statGanados">21</div>
+        <div class="ds-label">Ganados</div>
+      </div>
+      <div class="ds-card ds-loss">
+        <span class="ds-icon">💀</span>
+        <div class="ds-num" id="statPerdidos">11</div>
+        <div class="ds-label">Perdidos</div>
+      </div>
+      <div class="ds-card">
+        <span class="ds-icon">📊</span>
+        <div class="ds-num" id="statWinrate">65%</div>
+        <div class="ds-label">Win rate</div>
+      </div>
+      <div class="ds-card">
+        <span class="ds-icon">🪙</span>
+        <div class="ds-num" id="statMonedasDuelos">3,200</div>
+        <div class="ds-label">EduCoins ganados</div>
+      </div>
+    </div>
+
+    <!-- DESAFÍOS PENDIENTES -->
+    <section class="section fade-up delay-2">
+      <div class="section-header">
+        <div class="section-title-wrap">
+          <span class="section-title">🔔 PENDIENTES DE RESPUESTA</span>
+          <span class="section-chip" id="pendientesChip">1</span>
+        </div>
+      </div>
+      <div class="duelos-lista" id="duelosPendientes"></div>
+    </section>
+
+    <!-- DUELOS ACTIVOS -->
+    <section class="section fade-up delay-3">
+      <div class="section-header">
+        <div class="section-title-wrap">
+          <span class="section-title">⚡ EN CURSO</span>
+        </div>
+      </div>
+      <div class="duelos-lista" id="duelosActivos"></div>
+    </section>
+
+    <!-- HISTORIAL -->
+    <section class="section fade-up delay-4">
+      <div class="section-header">
+        <div class="section-title-wrap">
+          <span class="section-title">📜 HISTORIAL</span>
+        </div>
+      </div>
+      <div class="duelos-lista" id="duelosHistorial"></div>
+    </section>
+
+  </main>
+</div>
+
+<!-- MODAL NUEVO DUELO -->
+<div class="modal-overlay" id="modalNuevoDuelo">
+  <div class="modal">
+    <button class="modal-close" id="btnCerrarNuevoDuelo">✕</button>
+    <div class="modal-header">
+      <div class="modal-icon">⚔️</div>
+      <div>
+        <div class="modal-title">Nuevo Duelo</div>
+        <div class="modal-subtitle">Elige asignatura y busca un rival</div>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Asignatura del duelo *</label>
+      <select class="form-select" id="dueloAsig">
+        <option value="">Seleccionar...</option>
+        <option value="Matemáticas">➗ Matemáticas</option>
+        <option value="Lenguaje">📖 Lenguaje</option>
+        <option value="Historia">🏛️ Historia</option>
+        <option value="Ciencias">🔬 Ciencias</option>
+        <option value="Inglés">🌎 Inglés</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Rival (buscar por nombre)</label>
+      <input type="text" class="form-input" id="dueloRival" placeholder="Ej: ProMath7..." />
+    </div>
+    <div class="rivales-sugeridos" id="rivalesSugeridos"></div>
+    <div class="form-group">
+      <label class="form-label">Apuesta (EduCoins)</label>
+      <div class="apuesta-btns" id="apuestaBtns">
+        <button class="apuesta-btn" data-val="50">50</button>
+        <button class="apuesta-btn" data-val="100">100</button>
+        <button class="apuesta-btn active" data-val="200">200</button>
+        <button class="apuesta-btn" data-val="500">500</button>
+      </div>
+    </div>
+    <button class="btn-submit" id="btnEnviarDuelo">⚔️ Enviar Desafío</button>
+  </div>
+</div>
+
+<!-- MODAL DUELO EN CURSO (trivia rápida) -->
+<div class="modal-overlay" id="modalDuelo">
+  <div class="modal modal-wide">
+    <button class="modal-close" id="btnCerrarDuelo">✕</button>
+    <div class="duelo-header">
+      <div class="duelo-player duelo-yo">
+        <span class="dp-avatar" id="dueloMiAvatar">🐰</span>
+        <span class="dp-nombre" id="dueloMiNombre">Tú</span>
+        <span class="dp-pts" id="dueloMiPts">0 pts</span>
+      </div>
+      <div class="duelo-vs">VS</div>
+      <div class="duelo-player duelo-rival">
+        <span class="dp-avatar" id="dueloRivalAvatar">🦊</span>
+        <span class="dp-nombre" id="dueloRivalNombre">Rival</span>
+        <span class="dp-pts" id="dueloRivalPts">0 pts</span>
+      </div>
+    </div>
+    <div class="duelo-progress" id="dueloPregNum">Pregunta 1/5</div>
+    <div class="duelo-pregunta" id="dueloPregunta">—</div>
+    <div class="duelo-timer-bar"><div class="duelo-timer-fill" id="dueloTimerFill"></div></div>
+    <div class="duelo-opciones" id="dueloOpciones"></div>
+  </div>
+</div>
+
+<div class="toast-container" id="toastContainer"></div>
+
+  <!-- Auth: config → guard → shared → módulo (orden obligatorio) -->
+  <script src="../auth/clerk-config.js"></script>
+  <script src="../shared/clerk-guard.js"></script>
+  <script src="../shared/shared.js"></script>
+<script src="duelos.js"></script>
+</body>
+</html>

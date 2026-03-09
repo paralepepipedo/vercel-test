@@ -1,0 +1,131 @@
+/* ============================================
+   ARCHIVO: /duelos/duelos.css
+   ============================================ */
+
+.page-header { display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:1.5rem; flex-wrap:wrap; gap:1rem; }
+.page-tag    { font-family:'Press Start 2P',monospace; font-size:.4rem; color:var(--red); display:block; margin-bottom:.5rem; }
+.page-title  { font-family:'Press Start 2P',monospace; font-size:clamp(.75rem,2vw,1rem); color:white; line-height:1.5; margin-bottom:.4rem; }
+.page-subtitle { font-size:.875rem; color:var(--text-dim); font-weight:700; }
+
+.btn-nuevo-duelo { padding:.75rem 1.5rem; background:linear-gradient(135deg,var(--red),#b91c1c); color:white; border:none; border-radius:var(--radius-sm); cursor:pointer; font-family:'Press Start 2P',monospace; font-size:.48rem; box-shadow:0 4px 15px rgba(239,68,68,.4); transition:all .2s; }
+.btn-nuevo-duelo:hover { transform:translateY(-2px); box-shadow:0 6px 25px rgba(239,68,68,.6); }
+
+/* STATS */
+.duelos-stats { display:grid; grid-template-columns:repeat(4,1fr); gap:1rem; margin-bottom:1.75rem; }
+.ds-card { background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:1.25rem; text-align:center; transition:all .2s; }
+.ds-card:hover { transform:translateY(-2px); }
+.ds-win  { border-color:rgba(34,197,94,.3); background:rgba(34,197,94,.04); }
+.ds-loss { border-color:rgba(239,68,68,.3); background:rgba(239,68,68,.04); }
+.ds-icon  { font-size:1.75rem; display:block; margin-bottom:.5rem; }
+.ds-num   { font-family:'Press Start 2P',monospace; font-size:.85rem; color:white; margin-bottom:.25rem; }
+.ds-label { font-size:.72rem; color:var(--text-dim); font-weight:700; }
+
+/* SECCIONES */
+.section { margin-bottom:2rem; }
+.section-header { display:flex; align-items:center; gap:.75rem; margin-bottom:1.25rem; flex-wrap:wrap; }
+.section-title-wrap { display:flex; align-items:center; gap:.75rem; }
+.section-title { font-family:'Press Start 2P',monospace; font-size:.55rem; color:white; }
+.section-chip { font-family:'Press Start 2P',monospace; font-size:.35rem; padding:.3rem .625rem; border-radius:20px; background:rgba(239,68,68,.15); color:var(--red); border:1px solid rgba(239,68,68,.3); }
+
+/* LISTA DUELOS */
+.duelos-lista { display:flex; flex-direction:column; gap:.875rem; }
+
+.duelo-card {
+  background:var(--card); border:1px solid var(--border);
+  border-radius:var(--radius); padding:1.25rem 1.5rem;
+  display:flex; align-items:center; gap:1.25rem;
+  transition:all .2s; position:relative; overflow:hidden;
+}
+.duelo-card.pendiente { border-left:4px solid var(--yellow); }
+.duelo-card.activo    { border-left:4px solid var(--cyan); }
+.duelo-card.ganado    { border-left:4px solid var(--green); opacity:.8; }
+.duelo-card.perdido   { border-left:4px solid var(--red);   opacity:.8; }
+
+.duelo-avatares { display:flex; align-items:center; gap:.5rem; flex-shrink:0; }
+.duelo-av       { font-size:2rem; }
+.duelo-vs-mini  { font-family:'Press Start 2P',monospace; font-size:.38rem; color:var(--text-muted); }
+
+.duelo-info { flex:1; min-width:0; }
+.duelo-asig { font-family:'Press Start 2P',monospace; font-size:.4rem; color:var(--cyan); margin-bottom:.3rem; }
+.duelo-rival-nombre { font-size:.9rem; font-weight:800; color:var(--text); margin-bottom:.2rem; }
+.duelo-meta { font-size:.75rem; color:var(--text-dim); font-weight:700; }
+
+.duelo-right { flex-shrink:0; display:flex; flex-direction:column; align-items:flex-end; gap:.5rem; }
+.duelo-estado-badge { font-family:'Press Start 2P',monospace; font-size:.35rem; padding:.25rem .625rem; border-radius:20px; }
+.badge-pendiente { background:rgba(250,204,21,.12); color:var(--yellow); border:1px solid rgba(250,204,21,.3); }
+.badge-activo    { background:rgba(6,182,212,.12); color:var(--cyan); border:1px solid rgba(6,182,212,.3); animation:badgePulse 1.5s ease-in-out infinite; }
+@keyframes badgePulse { 0%,100%{opacity:1} 50%{opacity:.6} }
+.badge-ganado    { background:rgba(34,197,94,.12); color:var(--green); border:1px solid rgba(34,197,94,.3); }
+.badge-perdido   { background:rgba(239,68,68,.12); color:var(--red);   border:1px solid rgba(239,68,68,.3); }
+.duelo-apuesta   { font-family:'Press Start 2P',monospace; font-size:.38rem; color:var(--yellow); }
+.duelo-score     { font-family:'Press Start 2P',monospace; font-size:.45rem; color:var(--text-dim); }
+
+.duelo-action-btn {
+  padding:.5rem 1rem; border-radius:var(--radius-sm);
+  font-family:'Press Start 2P',monospace; font-size:.38rem;
+  cursor:pointer; border:none; transition:all .2s;
+}
+.btn-aceptar  { background:linear-gradient(135deg,var(--green),#15803d); color:white; }
+.btn-jugar    { background:linear-gradient(135deg,var(--cyan),#0e7490); color:white; }
+.btn-rechazar { background:var(--bg3); border:1px solid var(--border); color:var(--text-dim); }
+
+/* MODAL NUEVO DUELO */
+.modal-overlay { position:fixed; inset:0; z-index:10000; background:rgba(7,7,26,.85); backdrop-filter:blur(8px); display:flex; align-items:center; justify-content:center; padding:1rem; opacity:0; pointer-events:none; transition:opacity .3s; }
+.modal-overlay.active { opacity:1; pointer-events:all; }
+.modal { background:var(--bg2); border:1px solid var(--border); border-radius:20px; padding:2rem; width:100%; max-width:500px; position:relative; max-height:90vh; overflow-y:auto; transform:translateY(20px) scale(.98); transition:all .3s; }
+.modal-overlay.active .modal { transform:translateY(0) scale(1); }
+.modal-wide { max-width:620px; }
+.modal-close { position:absolute; top:1rem; right:1rem; background:rgba(255,255,255,.08); border:none; border-radius:50%; width:30px; height:30px; cursor:pointer; color:var(--text); display:flex; align-items:center; justify-content:center; }
+.modal-close:hover { background:rgba(255,255,255,.15); }
+.modal-header { display:flex; align-items:center; gap:1rem; margin-bottom:1.5rem; }
+.modal-icon   { font-size:2rem; }
+.modal-title  { font-family:'Press Start 2P',monospace; font-size:.65rem; color:white; line-height:1.5; }
+.modal-subtitle { font-size:.8rem; color:var(--text-dim); font-weight:700; margin-top:.2rem; }
+
+.form-group { margin-bottom:1.25rem; }
+.form-label { font-family:'Press Start 2P',monospace; font-size:.38rem; color:var(--text-dim); display:block; margin-bottom:.5rem; }
+.form-input, .form-select { width:100%; background:var(--bg3); border:1px solid var(--border); border-radius:var(--radius-sm); padding:.75rem 1rem; color:var(--text); font-family:'Nunito',sans-serif; font-size:.9rem; font-weight:700; outline:none; transition:border-color .2s; }
+.form-input:focus, .form-select:focus { border-color:var(--violet); }
+
+.rivales-sugeridos { display:flex; flex-direction:column; gap:.5rem; margin-top:.5rem; margin-bottom:1rem; }
+.rival-sugerido { display:flex; align-items:center; gap:.75rem; padding:.625rem .875rem; background:var(--bg3); border:1px solid var(--border); border-radius:var(--radius-sm); cursor:pointer; transition:border-color .2s; }
+.rival-sugerido:hover { border-color:var(--violet); }
+.rival-sugerido.seleccionado { border-color:var(--cyan); background:rgba(6,182,212,.08); }
+.rival-av   { font-size:1.5rem; }
+.rival-info { flex:1; }
+.rival-nombre { font-weight:800; font-size:.875rem; color:var(--text); }
+.rival-nivel  { font-size:.72rem; color:var(--text-dim); font-weight:700; }
+.rival-winrate { font-family:'Press Start 2P',monospace; font-size:.38rem; color:var(--yellow); }
+
+.apuesta-btns { display:flex; gap:.625rem; flex-wrap:wrap; }
+.apuesta-btn { padding:.625rem 1.125rem; background:var(--bg3); border:1px solid var(--border); border-radius:var(--radius-sm); color:var(--text); font-family:'Press Start 2P',monospace; font-size:.5rem; cursor:pointer; transition:all .2s; }
+.apuesta-btn:hover  { border-color:var(--yellow); }
+.apuesta-btn.active { background:rgba(250,204,21,.12); border-color:var(--yellow); color:var(--yellow); }
+
+.btn-submit { width:100%; padding:.875rem; background:linear-gradient(135deg,var(--red),#b91c1c); color:white; border:none; border-radius:var(--radius-sm); cursor:pointer; font-family:'Press Start 2P',monospace; font-size:.5rem; transition:all .2s; margin-top:.5rem; }
+.btn-submit:hover { transform:translateY(-2px); }
+
+/* MODAL DUELO EN CURSO */
+.duelo-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:1.25rem; }
+.duelo-player { display:flex; flex-direction:column; align-items:center; gap:.35rem; }
+.dp-avatar { font-size:2.5rem; }
+.dp-nombre { font-family:'Press Start 2P',monospace; font-size:.4rem; color:var(--text-dim); }
+.dp-pts    { font-family:'Press Start 2P',monospace; font-size:.65rem; color:white; }
+.duelo-vs  { font-family:'Press Start 2P',monospace; font-size:1.5rem; color:var(--red); text-shadow:0 0 20px rgba(239,68,68,.7); }
+
+.duelo-progress { font-family:'Press Start 2P',monospace; font-size:.38rem; color:var(--text-muted); text-align:center; margin-bottom:1rem; }
+.duelo-pregunta { font-size:1rem; font-weight:800; color:var(--text); text-align:center; line-height:1.6; margin-bottom:1rem; }
+
+.duelo-timer-bar { height:6px; background:rgba(255,255,255,.08); border-radius:3px; overflow:hidden; margin-bottom:1.25rem; }
+.duelo-timer-fill { height:100%; background:linear-gradient(90deg,var(--red),var(--orange)); border-radius:3px; transition:width .1s linear; }
+
+.duelo-opciones { display:grid; grid-template-columns:1fr 1fr; gap:.875rem; }
+.duelo-opcion { padding:1rem; background:var(--bg3); border:2px solid var(--border); border-radius:var(--radius-sm); color:var(--text); font-size:.875rem; font-weight:800; cursor:pointer; text-align:center; transition:all .2s; }
+.duelo-opcion:hover:not(:disabled) { border-color:var(--red); transform:translateY(-2px); }
+.duelo-opcion.correcta   { border-color:var(--green)!important; background:rgba(34,197,94,.12)!important; }
+.duelo-opcion.incorrecta { border-color:var(--red)!important;   background:rgba(239,68,68,.08)!important; }
+
+/* RESPONSIVE */
+@media (max-width:900px) {
+  .duelos-stats { grid-template-columns:repeat(2,1fr); }
+}
