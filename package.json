@@ -1,0 +1,23 @@
+{
+  "name": "educoins",
+  "version": "1.0.0",
+  "description": "Plataforma educativa gamificada para Chile - 1° a 8° básico",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": "20.x"
+  },
+  "scripts": {
+    "dev":        "node --env-file=.env.local server.js",
+    "dev:vercel": "vercel dev",
+    "build":      "echo 'Static site - no build step'",
+    "start":      "node --env-file=.env.local server.js"
+  },
+  "dependencies": {
+    "@clerk/backend": "^1.13.0",
+    "@neondatabase/serverless": "^0.10.4"
+  },
+  "devDependencies": {
+    "vercel": "^37.0.0"
+  }
+}
