@@ -1,0 +1,712 @@
+# Guía de Integración de Juegos en EduCoins
+
+## 1. Base de Datos
+
+### 1.1 Registrar el juego en `juegos_catalogo`
+
+```sql
+INSERT INTO juegos_catalogo (
+  juego_id,           -- Identificador único (ej: 'MiJuego')
+  nombre,             -- Nombre visible (ej: 'MI JUEGO')
+  emoji,              -- Emoji del juego (ej: '🎮')
+  descripcion,        -- Descripción corta
+  url,                -- Ruta relativa (ej: 'juegos/mijuego/mijuego.html')
+  color,              -- Color principal hex (ej: '#7c3aed')
+  rgb,                -- Color en RGB (ej: '124,58,237')
+  bg,                 -- Gradiente de fondo (ej: 'linear-gradient(135deg,#1e1b4b,#312e81)')
+  recompensa,         -- Texto de recompensa (ej: 'hasta +300')
+  energia,            -- Energía que consume (ej: 10)
+  dificultad,         -- Dificultad visual 1-5 (ej: 2)
+  multiplicador,      -- Multiplicador de recompensas (ej: 1.1)
+  badge,              -- Badge opcional (ej: '🔥 POPULAR' o null)
+  orden,              -- Orden en el grid (ej: 5)
+  activo,             -- true/false
+  tiene_niveles,      -- true si usa sistema de niveles
+  config              -- JSON con configuración específica del juego (ej: unidades activas)
+) VALUES (
+  'MiJuego', 'MI JUEGO', '🎮', 'Descripción del juego',
+  'juegos/mijuego/mijuego.html', '#7c3aed', '124,58,237',
+  'linear-gradient(135deg,#1e1b4b,#312e81)', 'hasta +300',
+  10, 2, 1.1, null, 5, true, true, '{}'
+);
+```
+
+### 1.2 Registrar niveles en `juego_niveles` (si `tiene_niveles = true`)
+
+```sql
+-- Repetir para cada nivel (1-10)
+INSERT INTO juego_niveles (
+  juego_id,
+  nivel,
+  nombre,
+  descripcion,
+  config,                 -- JSON con configuración específica del nivel
+  intentos_requeridos,    -- Etapas para completar el nivel (normalmente 3)
+  recompensa_monedas,     -- (legacy, ya no se usa - usar config_recompensas)
+  recompensa_xp           -- (legacy, ya no se usa - usar config_recompensas)
+) VALUES
+('MiJuego', 1, '🌱 Principiante', 'Nivel inicial fácil', '{"tiempo": 60, "dificultad": 1}', 3, 0, 0),
+('MiJuego', 2, '🐣 Aprendiz', 'Un poco más difícil', '{"tiempo": 55, "dificultad": 2}', 3, 0, 0),
+('MiJuego', 3, '🌿 Intermedio', 'Desafío moderado', '{"tiempo": 50, "dificultad": 3}', 3, 0, 0),
+('MiJuego', 4, '🌳 Avanzado', 'Mayor dificultad', '{"tiempo": 48, "dificultad": 4}', 3, 0, 0),
+('MiJuego', 5, '⭐ Experto', 'Para jugadores hábiles', '{"tiempo": 45, "dificultad": 5}', 3, 0, 0),
+('MiJuego', 6, '🔥 Veterano', 'Desafío intenso', '{"tiempo": 42, "dificultad": 6}', 3, 0, 0),
+('MiJuego', 7, '💎 Élite', 'Solo para los mejores', '{"tiempo": 40, "dificultad": 7}', 3, 0, 0),
+('MiJuego', 8, '🎖️ Campeón', 'Nivel de campeones', '{"tiempo": 38, "dificultad": 8}', 3, 0, 0),
+('MiJuego', 9, '👑 Leyenda', 'Casi imposible', '{"tiempo": 36, "dificultad": 9}', 3, 0, 0),
+('MiJuego', 10, '🏆 Gran Maestro', 'El desafío máximo', '{"tiempo": 35, "dificultad": 10}', 3, 0, 0);
+```
+
+### 1.3 Recompensas (tabla global `config_recompensas`)
+
+Las recompensas ya están configuradas globalmente por nivel y etapa. No necesitas agregar nada aquí. El sistema usa automáticamente:
+
+| nivel | etapa | monedas | xp | bonus_nivel_monedas | bonus_nivel_xp |
+|-------|-------|---------|-----|---------------------|----------------|
+| 1 | 1 | 2 | 1 | 0 | 0 |
+| 1 | 2 | 3 | 2 | 0 | 0 |
+| 1 | 3 | 4 | 2 | 5 | 3 |
+| 2 | 1 | 3 | 2 | 0 | 0 |
+| 2 | 2 | 4 | 2 | 0 | 0 |
+| 2 | 3 | 6 | 3 | 10 | 5 |
+| ... | ... | ... | ... | ... | ... |
+| 10 | 3 | 35 | 18 | 100 | 50 |
+
+Las recompensas finales se multiplican por el `multiplicador` del juego en `juegos_catalogo`.
+
+---
+
+## 2. Archivos del Juego
+
+### 2.1 Estructura de carpetas
+
+```
+/juegos/mijuego/
+  ├── mijuego.html      -- Archivo principal del juego
+  └── (otros assets)    -- Imágenes, sonidos, etc.
+```
+
+### 2.2 Dependencias requeridas en el HTML
+
+```html
+<head>
+  <!-- Clerk SDK (autenticación) -->
+  <script data-clerk-publishable-key="pk_test_..."
+    src="https://cdn.jsdelivr.net/npm/@clerk/clerk-js@latest/dist/clerk.browser.js">
+  </script>
+  
+  <!-- Estilos compartidos -->
+  <link rel="stylesheet" href="../../shared/shared.css">
+</head>
+
+<body>
+  <!-- ... contenido del juego ... -->
+  
+  <!-- Scripts al final del body -->
+  <script src="../../auth/clerk-config.js"></script>
+  <script src="../../shared/clerk-guard.js"></script>
+  <script src="../../shared/shared.js"></script>
+  <script>
+    // Código del juego aquí
+  </script>
+</body>
+```
+
+---
+
+## 3. Integración con el API
+
+### 3.1 Obtener token de autenticación
+
+⚠️ **IMPORTANTE:** Usar siempre `getTokenLuego()` (asíncrona) para enviar resultados. La función síncrona `getToken()` puede devolver `null` si Clerk aún no ha cargado completamente.
+
+```javascript
+// ══════════════════════════════════════════════════════════════
+// getToken() - Solo para verificaciones rápidas (puede ser null)
+// ══════════════════════════════════════════════════════════════
+function getToken() {
+  return window.CLERK_TOKEN || sessionStorage.getItem('juego_token') || null;
+}
+
+// ══════════════════════════════════════════════════════════════
+// getTokenLuego() - USAR SIEMPRE PARA ENVIAR RESULTADOS
+// Espera hasta que el token esté disponible (máx 5 segundos)
+// ══════════════════════════════════════════════════════════════
+function getTokenLuego(callback) {
+  // Si ya está disponible, devolver inmediatamente
+  if (window.CLERK_TOKEN) { 
+    callback(window.CLERK_TOKEN); 
+    return; 
+  }
+  
+  // Verificar sessionStorage
+  var tok = sessionStorage.getItem('juego_token');
+  if (tok) { 
+    callback(tok); 
+    return; 
+  }
+  
+  // Esperar hasta 5 segundos (25 intentos × 200ms)
+  var intentos = 0;
+  var iv = setInterval(function() {
+    intentos++;
+    
+    if (window.CLERK_TOKEN) { 
+      clearInterval(iv); 
+      callback(window.CLERK_TOKEN); 
+      return; 
+    }
+    
+    var tok2 = sessionStorage.getItem('juego_token');
+    if (tok2) { 
+      clearInterval(iv); 
+      callback(tok2); 
+      return; 
+    }
+    
+    // Timeout después de 5 segundos
+    if (intentos >= 25) { 
+      clearInterval(iv); 
+      callback(null); 
+    }
+  }, 200);
+}
+```
+
+### 3.2 Cargar configuración del nivel al iniciar
+
+```javascript
+function cargarConfigNivel(callback) {
+  var tok = getToken();
+  if (!tok) { if (callback) callback(); return; }
+  
+  fetch('/api/juegos?action=nivel&juego_id=MiJuego', {
+    headers: { 'Authorization': 'Bearer ' + tok }
+  })
+    .then(function(r) { return r.ok ? r.json() : null; })
+    .then(function(data) {
+      if (data && !data.error) {
+        // ══════════════════════════════════════════════════════
+        // DATOS DISPONIBLES EN LA RESPUESTA:
+        // ══════════════════════════════════════════════════════
+        // data.nivel_actual          → número del nivel actual (1-10)
+        // data.intentos_hoy          → etapas completadas hoy en este nivel (0-2)
+        // data.intentos_requeridos   → etapas necesarias para subir (normalmente 3)
+        // data.config                → JSON con configuración del nivel desde juego_niveles
+        // data.config_juego          → JSON con configuración del juego desde juegos_catalogo
+        // data.nombre_nivel          → nombre del nivel actual
+        // data.nivel_maximo          → máximo nivel disponible
+        // data.es_maestro            → true si ya completó todos los niveles
+        // data.etapas_completadas_hoy → total de etapas completadas hoy
+        
+        CONFIG_NIVEL = data;
+        
+        // Ejemplo: ajustar dificultad según nivel
+        if (data.config && data.config.tiempo) {
+          TIEMPO_LIMITE = data.config.tiempo;
+        }
+      }
+      if (callback) callback();
+    })
+    .catch(function() { if (callback) callback(); });
+}
+```
+
+### 3.3 Enviar resultado al completar una etapa
+
+⚠️ **CRÍTICO:** Siempre usar `getTokenLuego()` para asegurar que el token esté disponible.
+
+```javascript
+function enviarResultado() {
+  // ══════════════════════════════════════════════════════════════
+  // IMPORTANTE: Usar getTokenLuego() - NO getToken()
+  // getToken() puede devolver null si Clerk no está listo
+  // ══════════════════════════════════════════════════════════════
+  getTokenLuego(function(tok) {
+    if (!tok) {
+      // Sin token - mostrar valores por defecto
+      document.getElementById('resCoins').textContent = '—';
+      document.getElementById('resXP').textContent = '—';
+      return;
+    }
+    
+    fetch('/api/juegos', {
+      method: 'POST',
+      headers: {
+        'Authorization': 'Bearer ' + tok,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        action: 'completar',
+        juego_id: 'MiJuego',           // REQUERIDO: debe coincidir con juegos_catalogo
+        puntos: STATE.score,            // REQUERIDO: puntos obtenidos en la partida
+        duracion_seg: duracionPartida,  // OPCIONAL: duración en segundos
+        
+        // ══════════════════════════════════════════════════════
+        // IMPORTANTE: etapa_completada debe ser 1, 2 o 3
+        // La API usa este valor para buscar recompensas en config_recompensas
+        // Si no se envía, la API calcula desde intentos_hoy (puede fallar)
+        // ══════════════════════════════════════════════════════
+        etapa_completada: STATE.etapaActual  // 1, 2 o 3
+      })
+    })
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        if (!data || !data.ok) {
+          document.getElementById('resCoins').textContent = '—';
+          document.getElementById('resXP').textContent = '—';
+          return;
+        }
+        
+        // ══════════════════════════════════════════════════════
+        // DATOS DISPONIBLES EN LA RESPUESTA:
+        // ══════════════════════════════════════════════════════
+        // data.monedas_ganadas    → monedas de la etapa
+        // data.xp_ganado          → XP de la etapa
+        // data.bonus_monedas      → bonus por completar nivel (0 si no aplica)
+        // data.bonus_xp           → bonus XP por completar nivel (0 si no aplica)
+        // data.nivel_juego        → nivel actual del juego
+        // data.intentos_hoy       → etapas completadas en el nivel actual
+        // data.intentos_req       → etapas requeridas para subir
+        // data.subi_nivel_juego   → true si subió de nivel en el juego
+        // data.subio_nivel        → true si subió de nivel en EduCoins (global)
+        // data.nuevo_nivel        → nuevo nivel global si subió
+        // data.es_maestro         → true si alcanzó el nivel máximo
+        // data.misiones_completadas → array de misiones completadas
+        
+        // Calcular total de recompensas
+        var totalMonedas = (data.monedas_ganadas || 0) + (data.bonus_monedas || 0);
+        var totalXP = (data.xp_ganado || 0) + (data.bonus_xp || 0);
+        
+        // Actualizar UI con las recompensas
+        document.getElementById('resCoins').textContent = totalMonedas;
+        document.getElementById('resXP').textContent = totalXP;
+        
+        // Mostrar toast de recompensas
+        if (typeof toast === 'function') {
+          toast('+' + totalMonedas + ' EduCoins 🎉', 'coins');
+        }
+        
+        // Notificar si subió de nivel en el juego
+        if (data.subi_nivel_juego) {
+          if (typeof toast === 'function') {
+            toast('🎮 ¡Subiste al nivel ' + data.nivel_juego + '!', 'success');
+          }
+        }
+        
+        // Notificar misiones completadas
+        if (data.misiones_completadas && data.misiones_completadas.length) {
+          data.misiones_completadas.forEach(function(m) {
+            if (typeof toast === 'function') {
+              toast('🎯 Misión: ' + m.descripcion + ' +' + m.monedas + ' 🪙', 'success');
+            }
+          });
+        }
+      })
+      .catch(function(err) {
+        console.error('Error al enviar resultado:', err);
+        document.getElementById('resCoins').textContent = '—';
+        document.getElementById('resXP').textContent = '—';
+      });
+      
+  }); // ← Cierre del callback de getTokenLuego
+}
+```
+
+---
+
+## 4. Flujo del Juego
+
+### 4.1 Al cargar el juego
+
+```javascript
+document.addEventListener('clerkReady', function() {
+  // Token disponible, cargar configuración del nivel
+  cargarConfigNivel(function() {
+    // Configuración cargada, mostrar popup de modo o iniciar
+    mostrarPopupModo();
+  });
+});
+
+// Fallback si clerkReady tarda mucho
+window.addEventListener('load', function() {
+  setTimeout(function() {
+    if (!STATE.juegoIniciado) {
+      iniciarJuego();
+    }
+  }, 1500);
+});
+```
+
+### 4.2 Al completar una etapa (SOLO si ganó)
+
+```javascript
+function completarEtapa() {
+  // ══════════════════════════════════════════════════════════════
+  // IMPORTANTE: Solo enviar si el jugador GANÓ/COMPLETÓ la etapa
+  // NO enviar si perdió (tiempo agotado, respuestas incorrectas, etc.)
+  // ══════════════════════════════════════════════════════════════
+  if (STATE.gano) {
+    enviarResultado();
+  }
+}
+```
+
+### 4.3 Ejemplo completo de terminar juego
+
+```javascript
+function terminarJuego(gano) {
+  // Detener timer si existe
+  if (STATE.timer) {
+    clearInterval(STATE.timer);
+    STATE.timer = null;
+  }
+  
+  // Mostrar modal de resultado
+  document.getElementById('resultadoOverlay').classList.add('active');
+  
+  if (gano) {
+    // Victoria - mostrar "..." mientras carga
+    document.getElementById('resCoins').textContent = '...';
+    document.getElementById('resXP').textContent = '...';
+    document.getElementById('modalIcon').textContent = '🎉';
+    document.getElementById('modalTitle').textContent = '¡Etapa completada!';
+    
+    // Enviar resultado al servidor
+    enviarResultado();
+  } else {
+    // Derrota - NO enviar nada al servidor
+    document.getElementById('resCoins').textContent = '0';
+    document.getElementById('resXP').textContent = '0';
+    document.getElementById('modalIcon').textContent = '😢';
+    document.getElementById('modalTitle').textContent = '¡Tiempo agotado!';
+  }
+}
+```
+
+---
+
+## 5. Sistema de Niveles
+
+### 5.1 Lógica de progresión
+
+- Cada nivel tiene **3 etapas** (configurable en `intentos_requeridos`)
+- Completar las 3 etapas → sube al siguiente nivel
+- Al subir de nivel → recibe bonus de monedas y XP
+- A las **20:00** se resetea el progreso diario (vuelve a nivel 1, etapa 0)
+- Máximo 10 niveles por juego
+
+### 5.2 Recompensas por etapa
+
+Las recompensas vienen de `config_recompensas` y se multiplican por el `multiplicador` del juego:
+
+```
+monedas_finales = config_recompensas.monedas × juegos_catalogo.multiplicador
+xp_final = config_recompensas.xp × juegos_catalogo.multiplicador
+```
+
+Ejemplo para juego con multiplicador 1.1 en nivel 3, etapa 2:
+- Base: 6 monedas, 3 XP
+- Final: floor(6 × 1.1) = 6 monedas, floor(3 × 1.1) = 3 XP
+
+### 5.3 Bonus por completar nivel
+
+Solo se otorga al completar la última etapa del nivel (etapa 3):
+
+```
+bonus_monedas = config_recompensas.bonus_nivel_monedas × multiplicador
+bonus_xp = config_recompensas.bonus_nivel_xp × multiplicador
+```
+
+---
+
+## 6. Errores Comunes y Soluciones
+
+### 6.1 No se registran las partidas en la BD
+
+**Causa:** Usar `getToken()` en vez de `getTokenLuego()` para enviar resultados.
+
+**Solución:** Siempre usar `getTokenLuego()` con callback:
+```javascript
+// ❌ INCORRECTO
+function enviarResultado() {
+  var tok = getToken();  // Puede ser null
+  if (!tok) return;      // Sale sin enviar nada
+  fetch(...)
+}
+
+// ✅ CORRECTO
+function enviarResultado() {
+  getTokenLuego(function(tok) {  // Espera el token
+    if (!tok) return;
+    fetch(...)
+  });
+}
+```
+
+### 6.2 Las recompensas siempre son 0
+
+**Causa:** El campo `etapa_completada` no se envía o es mayor a 3.
+
+**Solución:** Siempre enviar `etapa_completada` con valor 1, 2 o 3:
+```javascript
+body: JSON.stringify({
+  action: 'completar',
+  juego_id: 'MiJuego',
+  puntos: STATE.score,
+  etapa_completada: STATE.etapaActual  // DEBE ser 1, 2 o 3
+})
+```
+
+### 6.3 El juego no carga la configuración del nivel
+
+**Causa:** El evento `clerkReady` no se dispara o el token no está listo.
+
+**Solución:** Agregar fallback con timeout:
+```javascript
+document.addEventListener('clerkReady', function() {
+  cargarConfigNivel(iniciarJuego);
+});
+
+// Fallback
+window.addEventListener('load', function() {
+  setTimeout(function() {
+    if (!STATE.juegoIniciado) iniciarJuego();
+  }, 1500);
+});
+```
+
+### 6.4 El juego_id no coincide
+
+**Causa:** El `juego_id` enviado al API no coincide con el registrado en `juegos_catalogo`.
+
+**Solución:** Verificar que el ID sea exactamente igual (case-sensitive):
+```javascript
+// Si en BD es 'cuestionario', debe ser exactamente así
+juego_id: 'cuestionario'  // ✅
+juego_id: 'Cuestionario'  // ❌
+juego_id: 'CUESTIONARIO'  // ❌
+```
+
+---
+
+## 7. Checklist de Integración
+
+### Base de Datos
+- [ ] Registrar juego en `juegos_catalogo` con `juego_id` único
+- [ ] Registrar 10 niveles en `juego_niveles` (si `tiene_niveles = true`)
+- [ ] Verificar que `multiplicador` esté configurado (default: 1.0)
+
+### Código del Juego
+- [ ] Incluir dependencias: Clerk SDK, shared.css, clerk-config.js, clerk-guard.js, shared.js
+- [ ] Implementar `getToken()` para verificaciones rápidas
+- [ ] Implementar `getTokenLuego()` para envío de resultados (OBLIGATORIO)
+- [ ] Implementar `cargarConfigNivel()` para cargar config al inicio
+- [ ] Implementar `enviarResultado()` usando `getTokenLuego()`
+- [ ] Enviar `etapa_completada` con valor 1, 2 o 3
+
+### Lógica del Juego
+- [ ] Solo enviar resultado si el jugador GANÓ (no si perdió)
+- [ ] Mostrar "..." en modal mientras espera respuesta del API
+- [ ] Actualizar modal con monedas/XP reales del API
+- [ ] Mostrar toasts de recompensas, nivel, misiones
+
+### Pruebas
+- [ ] Probar flujo completo: jugar → ganar → ver recompensas
+- [ ] Verificar que se registre en `juegos_partidas`
+- [ ] Verificar que se sumen monedas/XP al perfil
+- [ ] Verificar que suba de nivel después de 3 etapas
+- [ ] Probar que NO registre si pierde
+
+---
+
+## 8. Plantilla Mínima de Juego
+
+```html
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mi Juego</title>
+  <script data-clerk-publishable-key="pk_test_..."
+    src="https://cdn.jsdelivr.net/npm/@clerk/clerk-js@latest/dist/clerk.browser.js"></script>
+  <link rel="stylesheet" href="../../shared/shared.css">
+</head>
+<body>
+  
+  <!-- Botón volver -->
+  <a href="/juegos/juegos.html" class="btn-volver">← Volver</a>
+  
+  <!-- Área del juego -->
+  <div id="gameArea">
+    <!-- Contenido del juego -->
+  </div>
+  
+  <!-- Modal de resultado -->
+  <div class="modal-overlay" id="resultadoOverlay">
+    <div class="modal">
+      <div id="modalIcon">🎉</div>
+      <div id="modalTitle">¡Etapa completada!</div>
+      <div class="recompensas">
+        <span>🪙 <span id="resCoins">...</span></span>
+        <span>⚡ <span id="resXP">...</span></span>
+      </div>
+      <button id="btnSiguiente">Siguiente etapa →</button>
+      <button id="btnVolver" onclick="location.href='/juegos/juegos.html'">← Volver al lobby</button>
+    </div>
+  </div>
+  
+  <script src="../../auth/clerk-config.js"></script>
+  <script src="../../shared/clerk-guard.js"></script>
+  <script src="../../shared/shared.js"></script>
+  <script>
+    var JUEGO_ID = 'MiJuego';  // Debe coincidir con juegos_catalogo
+    
+    var STATE = {
+      score: 0,
+      etapaActual: 1,  // 1, 2 o 3
+      gano: false,
+      juegoIniciado: false
+    };
+    
+    // ══════════════════════════════════════════════════════════════
+    // AUTENTICACIÓN
+    // ══════════════════════════════════════════════════════════════
+    function getToken() {
+      return window.CLERK_TOKEN || sessionStorage.getItem('juego_token') || null;
+    }
+    
+    function getTokenLuego(callback) {
+      if (window.CLERK_TOKEN) { callback(window.CLERK_TOKEN); return; }
+      var tok = sessionStorage.getItem('juego_token');
+      if (tok) { callback(tok); return; }
+      var intentos = 0;
+      var iv = setInterval(function() {
+        intentos++;
+        if (window.CLERK_TOKEN) { clearInterval(iv); callback(window.CLERK_TOKEN); return; }
+        var tok2 = sessionStorage.getItem('juego_token');
+        if (tok2) { clearInterval(iv); callback(tok2); return; }
+        if (intentos >= 25) { clearInterval(iv); callback(null); }
+      }, 200);
+    }
+    
+    // ══════════════════════════════════════════════════════════════
+    // CARGAR CONFIGURACIÓN
+    // ══════════════════════════════════════════════════════════════
+    function cargarConfigNivel(callback) {
+      var tok = getToken();
+      if (!tok) { if (callback) callback(); return; }
+      fetch('/api/juegos?action=nivel&juego_id=' + JUEGO_ID, {
+        headers: { 'Authorization': 'Bearer ' + tok }
+      })
+        .then(function(r) { return r.ok ? r.json() : null; })
+        .then(function(data) {
+          if (data && !data.error) {
+            STATE.etapaActual = (data.intentos_hoy || 0) + 1;
+            if (STATE.etapaActual > 3) STATE.etapaActual = 1;
+            // Usar data.config para ajustar dificultad si aplica
+          }
+          if (callback) callback();
+        })
+        .catch(function() { if (callback) callback(); });
+    }
+    
+    // ══════════════════════════════════════════════════════════════
+    // ENVIAR RESULTADO
+    // ══════════════════════════════════════════════════════════════
+    function enviarResultado() {
+      getTokenLuego(function(tok) {
+        if (!tok) {
+          document.getElementById('resCoins').textContent = '—';
+          document.getElementById('resXP').textContent = '—';
+          return;
+        }
+        fetch('/api/juegos', {
+          method: 'POST',
+          headers: { 'Authorization': 'Bearer ' + tok, 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'completar',
+            juego_id: JUEGO_ID,
+            puntos: STATE.score,
+            etapa_completada: STATE.etapaActual
+          })
+        })
+          .then(function(r) { return r.json(); })
+          .then(function(data) {
+            if (!data || !data.ok) {
+              document.getElementById('resCoins').textContent = '—';
+              document.getElementById('resXP').textContent = '—';
+              return;
+            }
+            var coins = (data.monedas_ganadas || 0) + (data.bonus_monedas || 0);
+            var xp = (data.xp_ganado || 0) + (data.bonus_xp || 0);
+            document.getElementById('resCoins').textContent = coins;
+            document.getElementById('resXP').textContent = xp;
+            if (typeof toast === 'function') toast('+' + coins + ' EduCoins 🎉', 'coins');
+            if (data.subi_nivel_juego && typeof toast === 'function') {
+              toast('🎮 ¡Subiste al nivel ' + data.nivel_juego + '!', 'success');
+            }
+          })
+          .catch(function() {
+            document.getElementById('resCoins').textContent = '—';
+            document.getElementById('resXP').textContent = '—';
+          });
+      });
+    }
+    
+    // ══════════════════════════════════════════════════════════════
+    // TERMINAR JUEGO
+    // ══════════════════════════════════════════════════════════════
+    function terminarJuego(gano) {
+      STATE.gano = gano;
+      document.getElementById('resultadoOverlay').classList.add('active');
+      
+      if (gano) {
+        document.getElementById('resCoins').textContent = '...';
+        document.getElementById('resXP').textContent = '...';
+        enviarResultado();
+      } else {
+        document.getElementById('resCoins').textContent = '0';
+        document.getElementById('resXP').textContent = '0';
+      }
+    }
+    
+    // ══════════════════════════════════════════════════════════════
+    // INICIAR
+    // ══════════════════════════════════════════════════════════════
+    function iniciarJuego() {
+      if (STATE.juegoIniciado) return;
+      STATE.juegoIniciado = true;
+      // Tu lógica de juego aquí
+    }
+    
+    document.addEventListener('clerkReady', function() {
+      cargarConfigNivel(iniciarJuego);
+    });
+    
+    window.addEventListener('load', function() {
+      setTimeout(function() {
+        if (!STATE.juegoIniciado) iniciarJuego();
+      }, 1500);
+    });
+  </script>
+</body>
+</html>
+```
+
+---
+
+## 9. Endpoints del API
+
+### GET `/api/juegos?action=nivel&juego_id=X`
+Obtiene la configuración del nivel actual del alumno.
+
+### POST `/api/juegos` con `action: 'completar'`
+Registra una partida completada y devuelve las recompensas.
+
+### GET `/api/juegos?action=catalogo`
+Lista de juegos activos (para el lobby).
+
+### GET `/api/juegos?action=mapa&juego_id=X`
+Mapa completo de niveles con estado del alumno.

@@ -1,0 +1,1068 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Memory Histórico</title>
+
+  <script data-clerk-publishable-key="pk_test_..."
+    src="https://cdn.jsdelivr.net/npm/@clerk/clerk-js@latest/dist/clerk.browser.js">
+    </script>
+  <link rel="stylesheet" href="../../shared/shared.css">
+
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      --color: #667eea;
+      --color2: #764ba2;
+      --match: #11998e;
+      --match2: #38ef7d;
+    }
+
+    body {
+      background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      font-family: 'Poppins', sans-serif;
+      padding: 1rem;
+      overflow-x: hidden;
+    }
+
+    .game-header {
+      width: 100%;
+      max-width: 900px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+    }
+
+    .unidad-badge {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: rgba(255, 255, 255, 0.6);
+      font-size: 0.7rem;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      padding: 4px 16px;
+      border-radius: 20px;
+      backdrop-filter: blur(8px);
+    }
+
+    .game-title {
+      color: #fff;
+      font-size: 1.1rem;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-align: center;
+      opacity: 0.9;
+    }
+
+    .nivel-info {
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+      color: rgba(255, 255, 255, 0.7);
+      font-size: 0.75rem;
+    }
+
+    .nivel-nombre {
+      background: linear-gradient(135deg, var(--color), var(--color2));
+      color: #fff;
+      padding: 3px 14px;
+      border-radius: 20px;
+      font-weight: 600;
+    }
+
+    .stats-bar {
+      display: flex;
+      gap: 0.8rem;
+      margin-bottom: 1rem;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .stat {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      padding: 5px 16px;
+      border-radius: 20px;
+      color: #fff;
+      font-size: 0.78rem;
+      backdrop-filter: blur(8px);
+      white-space: nowrap;
+    }
+
+    .etapas-bar {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 1rem;
+    }
+
+    .etapa-dot {
+      width: 28px;
+      height: 6px;
+      border-radius: 3px;
+      background: rgba(255, 255, 255, 0.15);
+      transition: background 0.4s;
+    }
+
+    .etapa-dot.completada {
+      background: var(--match2);
+      box-shadow: 0 0 8px var(--match2);
+    }
+
+    .etapa-dot.activa {
+      background: var(--color);
+      box-shadow: 0 0 8px var(--color);
+    }
+
+    .grid-wrapper {
+      width: 100%;
+      max-width: 900px;
+      display: flex;
+      justify-content: center;
+    }
+
+    .grid {
+      display: grid;
+      gap: 12px;
+      justify-content: center;
+    }
+
+    /* ── CARTA ── */
+    .card {
+      border-radius: 16px;
+      cursor: pointer;
+      perspective: 600px;
+      opacity: 0;
+      transform: translateY(-80px);
+      animation: caer 0.5s ease forwards;
+      transition: filter 0.2s;
+    }
+
+    /* Hover: solo brillo, SIN transform para no interferir con el flip */
+    .card:hover:not(.flipped):not(.matched) {
+      filter: brightness(1.3);
+    }
+
+    /* Al terminar la animación de caída se agrega .listo via JS
+     para liberar el transform y no bloquear el flip */
+    .card.listo {
+      opacity: 1;
+      transform: none;
+      animation: none;
+    }
+
+    @keyframes caer {
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .card-inner {
+      width: 100%;
+      height: 100%;
+      position: relative;
+      transform-style: preserve-3d;
+      transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    /* El flip lo maneja card-inner, no .card */
+    .card.flipped .card-inner,
+    .card.matched .card-inner {
+      transform: rotateY(180deg);
+    }
+
+    .card-front,
+    .card-back {
+      position: absolute;
+      inset: 0;
+      border-radius: 16px;
+      backface-visibility: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* Cara oculta */
+    .card-front {
+      background: rgba(255, 255, 255, 0.07);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      backdrop-filter: blur(10px);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+      color: rgba(255, 255, 255, 0.2);
+      font-size: 1.5rem;
+    }
+
+    /* Cara con imagen — cubre toda la carta sin deformar */
+    .card-back.tipo-imagen {
+      background: linear-gradient(135deg, var(--color), var(--color2));
+      box-shadow: 0 0 20px rgba(102, 126, 234, 0.5);
+      transform: rotateY(180deg);
+      overflow: hidden;
+      padding: 0;
+    }
+
+    .card-back.tipo-imagen img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      /* recorta sin deformar */
+      object-position: center;
+      border-radius: 16px;
+      display: block;
+    }
+
+    /* Cara con nombre del concepto */
+    .card-back.tipo-nombre {
+      background: linear-gradient(135deg, #f093fb, #f5576c);
+      box-shadow: 0 0 20px rgba(240, 147, 251, 0.5);
+      transform: rotateY(180deg);
+      padding: 8px;
+      text-align: center;
+      flex-direction: column;
+      gap: 3px;
+    }
+
+    .nombre-texto {
+      color: #fff;
+      font-size: 0.68rem;
+      font-weight: 700;
+      line-height: 1.3;
+      text-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+    }
+
+    .tema-texto {
+      color: rgba(255, 255, 255, 0.65);
+      font-size: 0.55rem;
+      letter-spacing: 0.5px;
+    }
+
+    /* Match correcto → verde */
+    .card.matched .card-back {
+      background: linear-gradient(135deg, var(--match), var(--match2)) !important;
+      box-shadow: 0 0 25px rgba(56, 239, 125, 0.7) !important;
+      animation: pulse 0.4s ease;
+    }
+
+    @keyframes pulse {
+      0% {
+        transform: rotateY(180deg) scale(1);
+      }
+
+      50% {
+        transform: rotateY(180deg) scale(1.1);
+      }
+
+      100% {
+        transform: rotateY(180deg) scale(1);
+      }
+    }
+
+    /* Error → shake y se voltean de vuelta */
+    .card.error {
+      animation: shake 0.4s ease;
+    }
+
+    @keyframes shake {
+
+      0%,
+      100% {
+        transform: translateX(0);
+      }
+
+      25% {
+        transform: translateX(-6px);
+      }
+
+      75% {
+        transform: translateX(6px);
+      }
+    }
+
+    /* ── MODALES ── */
+    .overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(6px);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .overlay.active {
+      display: flex;
+    }
+
+    .modal {
+      background: linear-gradient(135deg, #1a1740, #2d2b69);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 24px;
+      padding: 2rem;
+      width: 320px;
+      text-align: center;
+      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.5);
+      animation: slideUp 0.4s ease;
+    }
+
+    @keyframes slideUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .modal-icon {
+      font-size: 3rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .modal-title {
+      color: #fff;
+      font-size: 1.3rem;
+      font-weight: 700;
+      margin-bottom: 0.3rem;
+    }
+
+    .modal-sub {
+      color: rgba(255, 255, 255, 0.5);
+      font-size: 0.8rem;
+      margin-bottom: 1.2rem;
+    }
+
+    .modal-rewards {
+      display: flex;
+      justify-content: center;
+      gap: 1rem;
+      margin-bottom: 1.2rem;
+    }
+
+    .reward-box {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 14px;
+      padding: 10px 20px;
+    }
+
+    .reward-box .valor {
+      font-size: 1.4rem;
+      font-weight: 800;
+      color: #ffd700;
+    }
+
+    .reward-box .label {
+      font-size: 0.6rem;
+      color: rgba(255, 255, 255, 0.5);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .nivel-up-badge {
+      display: none;
+      background: linear-gradient(135deg, #38ef7d, #11998e);
+      color: #fff;
+      border-radius: 12px;
+      padding: 8px 16px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      margin-bottom: 1rem;
+    }
+
+    .modal-stats {
+      display: flex;
+      justify-content: center;
+      gap: 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .modal-stat {
+      color: rgba(255, 255, 255, 0.6);
+      font-size: 0.75rem;
+    }
+
+    .modal-stat span {
+      color: #fff;
+      font-weight: 700;
+    }
+
+    .btn-siguiente {
+      background: linear-gradient(135deg, var(--color), var(--color2));
+      color: #fff;
+      border: none;
+      border-radius: 14px;
+      padding: 12px 32px;
+      font-size: 0.9rem;
+      font-weight: 700;
+      cursor: pointer;
+      width: 100%;
+      font-family: 'Poppins', sans-serif;
+      transition: opacity 0.2s;
+    }
+
+    .btn-siguiente:hover {
+      opacity: 0.85;
+    }
+
+    .modal.derrota {
+      border-color: rgba(245, 87, 108, 0.3);
+    }
+
+    .btn-reintentar {
+      background: linear-gradient(135deg, #f093fb, #f5576c);
+      color: #fff;
+      border: none;
+      border-radius: 14px;
+      padding: 12px 32px;
+      font-size: 0.9rem;
+      font-weight: 700;
+      cursor: pointer;
+      width: 100%;
+      font-family: 'Poppins', sans-serif;
+      transition: opacity 0.2s;
+    }
+
+    .btn-reintentar:hover {
+      opacity: 0.85;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="game-header">
+    <div class="unidad-badge" id="unidadBadge">📘 Unidad 1</div>
+    <div class="game-title" id="unidadTitulo"></div>
+    <div class="nivel-info">
+      <span id="nivelNombre" class="nivel-nombre">🌱 Principiante</span>
+      <span id="nivelNum">Nivel 1</span>
+      <span>·</span>
+      <span id="etapaNum">Etapa 1 de 3</span>
+    </div>
+  </div>
+
+  <div class="etapas-bar">
+    <div class="etapa-dot activa" id="dot0"></div>
+    <div class="etapa-dot" id="dot1"></div>
+    <div class="etapa-dot" id="dot2"></div>
+  </div>
+
+  <div class="stats-bar">
+    <div class="stat" id="statTiempo">⏱ 00:00</div>
+    <div class="stat" id="statPares">✅ Pares: 0/5</div>
+    <div class="stat" id="statIntentos">🎯 Intentos: 0</div>
+  </div>
+
+  <div class="grid-wrapper">
+    <div class="grid" id="grid"></div>
+  </div>
+
+  <!-- MODAL VICTORIA -->
+  <div class="overlay" id="modalVictoria">
+    <div class="modal">
+      <div class="modal-icon" id="modalIcon">🎉</div>
+      <div class="modal-title" id="modalTitle">¡Etapa completada!</div>
+      <div class="modal-sub" id="modalSub">Obtuviste tus recompensas</div>
+      <div class="nivel-up-badge" id="nivelUpBadge"></div>
+      <div class="modal-rewards">
+        <div class="reward-box">
+          <div class="valor" id="resCoins">...</div>
+          <div class="label">🪙 EduCoins</div>
+        </div>
+        <div class="reward-box">
+          <div class="valor" id="resXP">...</div>
+          <div class="label">⭐ XP</div>
+        </div>
+      </div>
+      <div class="modal-stats">
+        <div class="modal-stat">Tiempo: <span id="resTiempo">-</span></div>
+        <div class="modal-stat">Intentos: <span id="resIntentos">-</span></div>
+      </div>
+      <button class="btn-siguiente" id="btnSiguiente">Siguiente etapa →</button>
+    </div>
+  </div>
+
+  <!-- MODAL DERROTA -->
+  <div class="overlay" id="modalDerrota">
+    <div class="modal derrota">
+      <div class="modal-icon">😔</div>
+      <div class="modal-title">Se acabó el tiempo</div>
+      <div class="modal-sub">¡Inténtalo de nuevo!</div>
+      <button class="btn-reintentar" onclick="reiniciarEtapa()">🔄 Reintentar</button>
+    </div>
+  </div>
+
+  <script src="../../auth/clerk-config.js"></script>
+  <script src="../../shared/clerk-guard.js"></script>
+  <script src="../../shared/shared.js"></script>
+
+  <script>
+    // ══════════════════════════════════════════════════════════════
+    // ⚙️  CONFIGURACIÓN DE UNIDADES ACTIVAS
+    //
+    // Cambia este array según el período del año:
+    //
+    //   Solo Unidad 1 (inicio de año):
+    //     var UNIDADES_ACTIVAS = [1];
+    //
+    //   Repaso Unidades 1 y 2 (mitad de año):
+    //     var UNIDADES_ACTIVAS = [1, 2];
+    //
+    //   Repaso de todo el año (fin de año):
+    //     var UNIDADES_ACTIVAS = [1, 2, 3, 4];
+    //
+    // El juego combinará automáticamente los pares de todas las
+    // unidades seleccionadas y las mezclará de forma aleatoria.
+    // ══════════════════════════════════════════════════════════════
+    var UNIDADES_ACTIVAS = [1]; // ← ÚNICA LÍNEA QUE CAMBIAS
+
+
+    // ══════════════════════════════════════════════════════════════
+    // 🔑 ID DEL JUEGO — debe coincidir con juegos_catalogo en Supabase
+    // ══════════════════════════════════════════════════════════════
+    var JUEGO_ID = '16cc9254-abde-4908-ae41-e497fe50bb43';
+
+
+    // ══════════════════════════════════════════════════════════════
+    // 📚 CONTENIDO POR UNIDAD
+    //
+    // Cada unidad tiene:
+    //   - nombre:  título que se muestra en el header
+    //   - badge:   etiqueta superior (ej: "📘 Unidad 1")
+    //   - pares:   array de objetos con imagen, nombre y tema
+    //
+    // Rutas de imágenes: images/u{numero}/{grupo}/{archivo}.jpg
+    // ══════════════════════════════════════════════════════════════
+    var CONTENIDO = {
+
+      // ─────────────────────────────────────────────────────────
+      // UNIDAD 1 — Chile geográfico
+      // Imágenes extraídas directamente del libro (pág. indicada)
+      // Organizadas en 4 grupos temáticos dentro de images/u1/
+      // ─────────────────────────────────────────────────────────
+      1: {
+        nombre: '¿Por qué Chile posee una gran diversidad geográfica?',
+        badge: '📘 Unidad 1',
+        pares: [
+          // ── Grupo 1: Paisajes y Zonas (images/u1/grupo1/) ──
+          { id: 101, imagen: 'images/u1/grupo1/volcan_calbuco.jpg', nombre: 'Erupción volcánica', tema: 'Paisajes' },
+          { id: 102, imagen: 'images/u1/grupo1/desierto.jpg', nombre: 'Desierto de Atacama', tema: 'Paisajes' },
+          { id: 103, imagen: 'images/u1/grupo1/viñedos.jpg', nombre: 'Zona Norte Chico', tema: 'Paisajes' },
+          { id: 104, imagen: 'images/u1/grupo1/pisco_elqui.jpg', nombre: 'Valle del Elqui', tema: 'Paisajes' },
+          { id: 105, imagen: 'images/u1/grupo1/volcan_nevado.jpg', nombre: 'Zona Sur', tema: 'Paisajes' },
+          { id: 106, imagen: 'images/u1/grupo1/glaciar.jpg', nombre: 'Zona Austral', tema: 'Paisajes' },
+          { id: 107, imagen: 'images/u1/grupo1/iquique.jpg', nombre: 'Zona Norte Grande', tema: 'Paisajes' },
+          { id: 108, imagen: 'images/u1/grupo1/palmas.jpg', nombre: 'Flora zona central', tema: 'Paisajes' },
+          { id: 109, imagen: 'images/u1/grupo1/villa_estrellas.jpg', nombre: 'Clima polar', tema: 'Paisajes' },
+
+          // ── Grupo 2: Flora y Fauna (images/u1/grupo2/) ──
+          { id: 201, imagen: 'images/u1/grupo2/vicuña.jpg', nombre: 'Vicuña', tema: 'Fauna' },
+          { id: 202, imagen: 'images/u1/grupo2/llama.jpg', nombre: 'Llama', tema: 'Fauna' },
+          { id: 203, imagen: 'images/u1/grupo2/pinguino.jpg', nombre: 'Pingüino de Humboldt', tema: 'Fauna' },
+          { id: 204, imagen: 'images/u1/grupo2/flamenco.jpg', nombre: 'Flamenco / Parina', tema: 'Fauna' },
+          { id: 205, imagen: 'images/u1/grupo2/araucaria.jpg', nombre: 'Araucaria', tema: 'Flora' },
+          { id: 206, imagen: 'images/u1/grupo2/huemul.jpg', nombre: 'Huemul', tema: 'Fauna' },
+
+          // ── Grupo 3: Recursos Naturales (images/u1/grupo3/) ──
+          { id: 301, imagen: 'images/u1/grupo3/cobre.jpg', nombre: 'Minería del cobre', tema: 'Recursos' },
+          { id: 302, imagen: 'images/u1/grupo3/camion_minero.jpg', nombre: 'Recurso no renovable', tema: 'Recursos' },
+          { id: 303, imagen: 'images/u1/grupo3/panel_solar.jpg', nombre: 'Energía renovable', tema: 'Recursos' },
+          { id: 304, imagen: 'images/u1/grupo3/bote_pesca.jpg', nombre: 'Pesca artesanal', tema: 'Recursos' },
+          { id: 305, imagen: 'images/u1/grupo3/trigo.jpg', nombre: 'Recurso agrícola', tema: 'Recursos' },
+          { id: 306, imagen: 'images/u1/grupo3/ovejas.jpg', nombre: 'Ganadería', tema: 'Recursos' },
+          { id: 307, imagen: 'images/u1/grupo3/naranjas.jpg', nombre: 'Recurso renovable', tema: 'Recursos' },
+          { id: 308, imagen: 'images/u1/grupo3/carbon.jpg', nombre: 'Carbón mineral', tema: 'Recursos' },
+
+          // ── Grupo 4: Riesgos Naturales (images/u1/grupo4/) ──
+          { id: 401, imagen: 'images/u1/grupo4/aluvion.jpg', nombre: 'Aluvión', tema: 'Riesgos' },
+          { id: 402, imagen: 'images/u1/grupo4/casas_destruidas.jpg', nombre: 'Terremoto / Tsunami', tema: 'Riesgos' },
+          { id: 403, imagen: 'images/u1/grupo4/sequia.jpg', nombre: 'Sequía', tema: 'Riesgos' },
+          { id: 404, imagen: 'images/u1/grupo4/mochila_emergencia.jpg', nombre: 'Kit de emergencia', tema: 'Riesgos' },
+          { id: 405, imagen: 'images/u1/grupo4/señal_tsunami.jpg', nombre: 'Zona de evacuación', tema: 'Riesgos' }
+        ]
+      },
+
+      // ─────────────────────────────────────────────────────────
+      // UNIDAD 2 — Conquista de América
+      // (pendiente: agregar imágenes en images/u2/ cuando esté listo)
+      // ─────────────────────────────────────────────────────────
+      2: {
+        nombre: 'El encuentro de dos mundos y la conquista de América',
+        badge: '📗 Unidad 2',
+        pares: [
+          { id: 501, imagen: 'images/u2/colon.jpg', nombre: 'Cristóbal Colón', tema: 'Exploradores' },
+          { id: 502, imagen: 'images/u2/magallanes.jpg', nombre: 'Hernando de Magallanes', tema: 'Exploradores' },
+          { id: 503, imagen: 'images/u2/vasco_gama.jpg', nombre: 'Vasco da Gama', tema: 'Exploradores' },
+          { id: 504, imagen: 'images/u2/carabela.jpg', nombre: 'Carabela española', tema: 'Navegación' },
+          { id: 505, imagen: 'images/u2/mapa_rutas.jpg', nombre: 'Rutas de exploración', tema: 'Navegación' },
+          { id: 506, imagen: 'images/u2/europa_siglo_xv.jpg', nombre: 'Europa siglo XV', tema: 'Contexto' },
+          { id: 507, imagen: 'images/u2/conquista_azteca.jpg', nombre: 'Civilización Azteca', tema: 'Conquista' },
+          { id: 508, imagen: 'images/u2/conquista_inca.jpg', nombre: 'Civilización Inca', tema: 'Conquista' },
+          { id: 509, imagen: 'images/u2/almagro.jpg', nombre: 'Diego de Almagro', tema: 'Conquista Chile' },
+          { id: 510, imagen: 'images/u2/valdivia.jpg', nombre: 'Pedro de Valdivia', tema: 'Conquista Chile' },
+          { id: 511, imagen: 'images/u2/fundacion_santiago.jpg', nombre: 'Fundación de Santiago', tema: 'Conquista Chile' },
+          { id: 512, imagen: 'images/u2/mestizaje.jpg', nombre: 'Mestizaje', tema: 'Post conquista' },
+          { id: 513, imagen: 'images/u2/encomienda.jpg', nombre: 'Sistema de encomienda', tema: 'Post conquista' },
+          { id: 514, imagen: 'images/u2/efectos_conquista.jpg', nombre: 'Efectos de la conquista', tema: 'Post conquista' }
+        ]
+      },
+
+      // ─────────────────────────────────────────────────────────
+      // UNIDAD 3 — La Colonia
+      // (pendiente: agregar imágenes en images/u3/)
+      // ─────────────────────────────────────────────────────────
+      3: {
+        nombre: 'La Colonia en América y en Chile',
+        badge: '📙 Unidad 3',
+        pares: [
+          { id: 601, imagen: 'images/u3/virreinato.jpg', nombre: 'Sistema de virreinatos', tema: 'Organización' },
+          { id: 602, imagen: 'images/u3/iglesia_colonial.jpg', nombre: 'Rol de la Iglesia Católica', tema: 'Organización' },
+          { id: 603, imagen: 'images/u3/castas_coloniales.jpg', nombre: 'Sociedad de castas', tema: 'Sociedad' },
+          { id: 604, imagen: 'images/u3/ciudad_colonial.jpg', nombre: 'Ciudad colonial', tema: 'Vida colonial' },
+          { id: 605, imagen: 'images/u3/festividades_coloniales.jpg', nombre: 'Festividades coloniales', tema: 'Cultura' },
+          { id: 606, imagen: 'images/u3/arte_colonial.jpg', nombre: 'Arte colonial', tema: 'Cultura' },
+          { id: 607, imagen: 'images/u3/guerra_arauco.jpg', nombre: 'Guerra de Arauco', tema: 'Mapuche' },
+          { id: 608, imagen: 'images/u3/mapuche_resistencia.jpg', nombre: 'Resistencia Mapuche', tema: 'Mapuche' },
+          { id: 609, imagen: 'images/u3/parlamento_indigena.jpg', nombre: 'Parlamento indígena', tema: 'Mapuche' }
+        ]
+      },
+
+      // ─────────────────────────────────────────────────────────
+      // UNIDAD 4 — Sociedad y derechos
+      // (pendiente: agregar imágenes en images/u4/)
+      // ─────────────────────────────────────────────────────────
+      4: {
+        nombre: '¿Cómo aportamos a una sociedad mejor?',
+        badge: '📕 Unidad 4',
+        pares: [
+          { id: 701, imagen: 'images/u4/derechos_humanos.jpg', nombre: 'Derechos Humanos', tema: 'Derechos' },
+          { id: 702, imagen: 'images/u4/declaracion_ddhh.jpg', nombre: 'Declaración Universal DDHH', tema: 'Derechos' },
+          { id: 703, imagen: 'images/u4/deberes_ciudadanos.jpg', nombre: 'Deberes ciudadanos', tema: 'Deberes' },
+          { id: 704, imagen: 'images/u4/actitudes_civicas.jpg', nombre: 'Actitudes cívicas', tema: 'Ciudadanía' },
+          { id: 705, imagen: 'images/u4/participacion_ciudadana.jpg', nombre: 'Participación ciudadana', tema: 'Participación' },
+          { id: 706, imagen: 'images/u4/comunidad_escolar.jpg', nombre: 'Comunidad escolar', tema: 'Participación' },
+          { id: 707, imagen: 'images/u4/medioambiente.jpg', nombre: 'Cuidado del medioambiente', tema: 'Bienestar' },
+          { id: 708, imagen: 'images/u4/patrimonio.jpg', nombre: 'Patrimonio cultural', tema: 'Bienestar' }
+        ]
+      }
+    };
+
+
+    // ══════════════════════════════════════════════════════════════
+    // 📊 NIVELES — nombre visible + cantidad de pares por etapa
+    //
+    // Cada nivel tiene 3 etapas con distinta cantidad de pares.
+    // Los pares aumentan progresivamente de nivel a nivel.
+    // ══════════════════════════════════════════════════════════════
+    var NIVELES = [
+      { nivel: 1, nombre: '🌱 Principiante', etapas: [5, 6, 7] },
+      { nivel: 2, nombre: '🐣 Aprendiz', etapas: [5, 6, 7] },
+      { nivel: 3, nombre: '📖 Estudiante', etapas: [6, 7, 8] },
+      { nivel: 4, nombre: '🔍 Explorador', etapas: [6, 7, 8] },
+      { nivel: 5, nombre: '⚡ Ágil', etapas: [7, 8, 9] },
+      { nivel: 6, nombre: '🧩 Analítico', etapas: [7, 8, 9] },
+      { nivel: 7, nombre: '🎯 Preciso', etapas: [8, 9, 10] },
+      { nivel: 8, nombre: '🏅 Avanzado', etapas: [8, 9, 10] },
+      { nivel: 9, nombre: '🔥 Experto', etapas: [9, 10, 11] },
+      { nivel: 10, nombre: '🏆 Gran Maestro', etapas: [9, 10, 12] }
+    ];
+
+    // Tiempo límite en segundos por nivel (baja a medida que sube el nivel)
+    var TIEMPO_POR_NIVEL = [90, 85, 80, 75, 70, 65, 60, 55, 50, 45];
+
+
+    // ══════════════════════════════════════════════════════════════
+    // 🎮 ESTADO INTERNO DEL JUEGO
+    // No modificar — se gestiona automáticamente durante el juego
+    // ══════════════════════════════════════════════════════════════
+    var STATE = {
+      nivelIdx: 0,   // índice del nivel actual (0 = nivel 1)
+      etapaIdx: 0,   // índice de la etapa actual (0, 1, 2)
+      pares: 0,   // pares encontrados en esta etapa
+      paresTotal: 0,   // total de pares en esta etapa
+      intentos: 0,   // cantidad de intentos realizados
+      segundos: 0,   // tiempo transcurrido
+      timer: null,
+      bloqueado: false,
+      seleccionadas: [],
+      gano: false,
+      score: 0,
+      poolActual: []   // pool combinado de pares según UNIDADES_ACTIVAS
+    };
+
+
+    // ══════════════════════════════════════════════════════════════
+    // 🔀 CONSTRUIR POOL DE PARES COMBINADO
+    //
+    // Junta los pares de todas las unidades en UNIDADES_ACTIVAS
+    // en un único array que se usará para sortear las cartas.
+    // Si hay varias unidades, el alumno verá pares mezclados de todas.
+    // ══════════════════════════════════════════════════════════════
+    function construirPool() {
+      var pool = [];
+      UNIDADES_ACTIVAS.forEach(function (u) {
+        if (CONTENIDO[u]) {
+          pool = pool.concat(CONTENIDO[u].pares);
+        }
+      });
+      return pool;
+    }
+
+    // Genera el texto del badge y título cuando hay varias unidades activas
+    function getBadgeTexto() {
+      if (UNIDADES_ACTIVAS.length === 1) {
+        return CONTENIDO[UNIDADES_ACTIVAS[0]].badge;
+      }
+      if (UNIDADES_ACTIVAS.length === 4) {
+        return '📚 Repaso anual — Unidades 1 a 4';
+      }
+      return '📚 Repaso — Unidades ' + UNIDADES_ACTIVAS.join(', ');
+    }
+
+    function getTituloTexto() {
+      if (UNIDADES_ACTIVAS.length === 1) {
+        return CONTENIDO[UNIDADES_ACTIVAS[0]].nombre;
+      }
+      return 'Repaso de ' + UNIDADES_ACTIVAS.length + ' unidades';
+    }
+
+
+    // ══════════════════════════════════════════════════════════════
+    // 🔌 INTEGRACIÓN EDUCOINS
+    // ══════════════════════════════════════════════════════════════
+    function getToken() {
+      return window.CLERK_TOKEN || sessionStorage.getItem('juego_token') || null;
+    }
+
+    function getTokenLuego(callback) {
+      if (window.CLERK_TOKEN) { callback(window.CLERK_TOKEN); return; }
+      var tok = sessionStorage.getItem('juego_token');
+      if (tok) { callback(tok); return; }
+      var intentos = 0;
+      var iv = setInterval(function () {
+        intentos++;
+        if (window.CLERK_TOKEN) { clearInterval(iv); callback(window.CLERK_TOKEN); return; }
+        var tok2 = sessionStorage.getItem('juego_token');
+        if (tok2) { clearInterval(iv); callback(tok2); return; }
+        if (intentos >= 25) { clearInterval(iv); callback(null); }
+      }, 200);
+    }
+
+    function cargarConfigNivel(callback) {
+      var tok = getToken();
+      if (!tok) { if (callback) callback(); return; }
+      fetch('/api/juegos?action=nivel&juego_id=' + JUEGO_ID, {
+        headers: { 'Authorization': 'Bearer ' + tok }
+      })
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (data) {
+          if (data && !data.error) {
+            // Restaurar nivel y etapa del alumno desde el servidor
+            STATE.nivelIdx = Math.min((data.nivel_actual || 1) - 1, 9);
+            STATE.etapaIdx = Math.min(data.intentos_hoy || 0, 2);
+          }
+          if (callback) callback();
+        })
+        .catch(function () { if (callback) callback(); });
+    }
+
+    function enviarResultado() {
+      getTokenLuego(function (tok) {
+        // Sin token: mostrar guión (modo sin sesión / desarrollo local)
+        if (!tok) {
+          document.getElementById('resCoins').textContent = '—';
+          document.getElementById('resXP').textContent = '—';
+          return;
+        }
+        fetch('/api/juegos', {
+          method: 'POST',
+          headers: { 'Authorization': 'Bearer ' + tok, 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'completar',
+            juego_id: JUEGO_ID,
+            puntos: STATE.score,
+            duracion_seg: STATE.segundos,
+            etapa_completada: STATE.etapaIdx + 1
+          })
+        })
+          .then(function (r) { return r.json(); })
+          .then(function (data) {
+            if (!data || !data.ok) {
+              document.getElementById('resCoins').textContent = '—';
+              document.getElementById('resXP').textContent = '—';
+              return;
+            }
+            var totalMonedas = (data.monedas_ganadas || 0) + (data.bonus_monedas || 0);
+            var totalXP = (data.xp_ganado || 0) + (data.bonus_xp || 0);
+            document.getElementById('resCoins').textContent = totalMonedas;
+            document.getElementById('resXP').textContent = totalXP;
+
+            if (data.subi_nivel_juego) {
+              var badge = document.getElementById('nivelUpBadge');
+              badge.textContent = '🎮 ¡Subiste al nivel ' + data.nivel_juego + '!';
+              badge.style.display = 'block';
+              if (typeof toast === 'function')
+                toast('🎮 ¡Subiste al nivel ' + data.nivel_juego + '!', 'success');
+            }
+            if (typeof toast === 'function')
+              toast('+' + totalMonedas + ' EduCoins 🎉', 'coins');
+            if (data.misiones_completadas && data.misiones_completadas.length) {
+              data.misiones_completadas.forEach(function (m) {
+                if (typeof toast === 'function')
+                  toast('🎯 Misión: ' + m.descripcion + ' +' + m.monedas + ' 🪙', 'success');
+              });
+            }
+          })
+          .catch(function () {
+            document.getElementById('resCoins').textContent = '—';
+            document.getElementById('resXP').textContent = '—';
+          });
+      });
+    }
+
+
+    // ══════════════════════════════════════════════════════════════
+    // 🎲 LÓGICA PRINCIPAL DEL JUEGO
+    // ══════════════════════════════════════════════════════════════
+    function iniciarJuego() {
+      var nivelCfg = NIVELES[STATE.nivelIdx];
+      var numPares = nivelCfg.etapas[STATE.etapaIdx];
+
+      // Construir pool combinado de todas las unidades activas
+      STATE.poolActual = construirPool();
+
+      // Limitar pares al total disponible en el pool
+      numPares = Math.min(numPares, STATE.poolActual.length);
+
+      // Resetear estado
+      STATE.pares = 0; STATE.paresTotal = numPares;
+      STATE.intentos = 0; STATE.segundos = 0;
+      STATE.bloqueado = false; STATE.seleccionadas = [];
+      STATE.gano = false; STATE.score = 0;
+      clearInterval(STATE.timer);
+
+      // Actualizar header
+      document.getElementById('unidadBadge').textContent = getBadgeTexto();
+      document.getElementById('unidadTitulo').textContent = getTituloTexto();
+      document.getElementById('nivelNombre').textContent = nivelCfg.nombre;
+      document.getElementById('nivelNum').textContent = 'Nivel ' + nivelCfg.nivel;
+      document.getElementById('etapaNum').textContent = 'Etapa ' + (STATE.etapaIdx + 1) + ' de 3';
+      document.getElementById('statTiempo').textContent = '⏱ 00:00';
+      actualizarStats();
+
+      // Dots de etapas
+      for (var i = 0; i < 3; i++) {
+        var dot = document.getElementById('dot' + i);
+        dot.className = 'etapa-dot';
+        if (i < STATE.etapaIdx) dot.classList.add('completada');
+        else if (i === STATE.etapaIdx) dot.classList.add('activa');
+      }
+
+      // Seleccionar pares aleatorios del pool combinado
+      var shuffled = STATE.poolActual.slice().sort(function () { return Math.random() - 0.5; });
+      var seleccion = shuffled.slice(0, numPares);
+
+      // Generar las dos cartas por par: una imagen + un nombre
+      var cartas = [];
+      seleccion.forEach(function (p) {
+        cartas.push({ pairId: p.id, tipo: 'imagen', datos: p });
+        cartas.push({ pairId: p.id, tipo: 'nombre', datos: p });
+      });
+      cartas.sort(function () { return Math.random() - 0.5; });
+
+      // Calcular grilla según cantidad de cartas
+      var total = cartas.length;
+      var cols = total <= 10 ? 4 : total <= 16 ? 5 : 6;
+      var cardSize = total <= 10 ? 100 : total <= 16 ? 90 : 80;
+
+      var grid = document.getElementById('grid');
+      grid.innerHTML = '';
+      grid.style.gridTemplateColumns = 'repeat(' + cols + ', ' + cardSize + 'px)';
+
+      cartas.forEach(function (c, idx) {
+        var card = document.createElement('div');
+        card.className = 'card';
+        card.dataset.pairId = c.pairId;
+        card.dataset.tipo = c.tipo;
+        card.style.width = cardSize + 'px';
+        card.style.height = cardSize + 'px';
+
+        // Delay escalonado → efecto cascada al caer las cartas
+        card.style.animationDelay = (idx * 0.06) + 's';
+
+        var back = c.tipo === 'imagen'
+          ? '<div class="card-back tipo-imagen"><img src="' + c.datos.imagen + '" alt="' + c.datos.nombre + '"></div>'
+          : '<div class="card-back tipo-nombre"><div class="nombre-texto">' + c.datos.nombre + '</div><div class="tema-texto">' + c.datos.tema + '</div></div>';
+
+        card.innerHTML = '<div class="card-inner"><div class="card-front">✦</div>' + back + '</div>';
+
+        // Al terminar la animación de caída, agregar .listo
+        // Esto limpia el transform para que el flip funcione correctamente
+        card.addEventListener('animationend', function () {
+          card.classList.add('listo');
+        });
+
+        card.addEventListener('click', function () { handleClick(card); });
+        grid.appendChild(card);
+      });
+
+      // Iniciar temporizador con límite según nivel
+      var limite = TIEMPO_POR_NIVEL[STATE.nivelIdx];
+      STATE.timer = setInterval(function () {
+        STATE.segundos++;
+        var m = String(Math.floor(STATE.segundos / 60)).padStart(2, '0');
+        var s = String(STATE.segundos % 60).padStart(2, '0');
+        document.getElementById('statTiempo').textContent = '⏱ ' + m + ':' + s;
+        if (STATE.segundos >= limite && !STATE.gano) {
+          clearInterval(STATE.timer);
+          mostrarDerrota();
+        }
+      }, 1000);
+    }
+
+    function actualizarStats() {
+      document.getElementById('statPares').textContent = '✅ Pares: ' + STATE.pares + '/' + STATE.paresTotal;
+      document.getElementById('statIntentos').textContent = '🎯 Intentos: ' + STATE.intentos;
+    }
+
+    function handleClick(card) {
+      if (STATE.bloqueado) return;
+      if (card.classList.contains('flipped')) return;
+      if (card.classList.contains('matched')) return;
+
+      card.classList.add('flipped');
+      STATE.seleccionadas.push(card);
+
+      // Al tener 2 cartas seleccionadas → verificar
+      if (STATE.seleccionadas.length === 2) {
+        STATE.bloqueado = true;
+        STATE.intentos++;
+        actualizarStats();
+        verificarMatch();
+      }
+    }
+
+    function verificarMatch() {
+      var c1 = STATE.seleccionadas[0];
+      var c2 = STATE.seleccionadas[1];
+
+      // Match válido: mismo pairId Y distinto tipo (imagen ≠ nombre)
+      if (c1.dataset.pairId === c2.dataset.pairId && c1.dataset.tipo !== c2.dataset.tipo) {
+        c1.classList.add('matched');
+        c2.classList.add('matched');
+        STATE.pares++;
+        STATE.score += Math.max(10, 50 - STATE.intentos);
+        actualizarStats();
+        STATE.seleccionadas = [];
+        STATE.bloqueado = false;
+        if (STATE.pares === STATE.paresTotal) mostrarVictoria();
+      } else {
+        // No coincide → shake y voltear de vuelta después de 1.2s
+        // (1.2s da tiempo para que el alumno vea ambas cartas)
+        c1.classList.add('error');
+        c2.classList.add('error');
+        setTimeout(function () {
+          c1.classList.remove('flipped', 'error');
+          c2.classList.remove('flipped', 'error');
+          STATE.seleccionadas = [];
+          STATE.bloqueado = false;
+        }, 1200);
+      }
+    }
+
+    function mostrarVictoria() {
+      clearInterval(STATE.timer);
+      STATE.gano = true;
+
+      var esUltima = STATE.etapaIdx === 2;
+      var esFinal = STATE.nivelIdx === 9 && STATE.etapaIdx === 2;
+
+      document.getElementById('modalIcon').textContent = esFinal ? '🏆' : esUltima ? '⭐' : '🎉';
+      document.getElementById('modalTitle').textContent = esFinal ? '¡Juego completado!'
+        : esUltima ? '¡Nivel completado!'
+          : '¡Etapa completada!';
+      document.getElementById('modalSub').textContent = 'Obtuviste tus recompensas';
+      document.getElementById('nivelUpBadge').style.display = 'none';
+      document.getElementById('resCoins').textContent = '...';
+      document.getElementById('resXP').textContent = '...';
+
+      var m = String(Math.floor(STATE.segundos / 60)).padStart(2, '0');
+      var s = String(STATE.segundos % 60).padStart(2, '0');
+      document.getElementById('resTiempo').textContent = m + ':' + s;
+      document.getElementById('resIntentos').textContent = STATE.intentos;
+
+      var btn = document.getElementById('btnSiguiente');
+      if (esFinal) {
+        btn.textContent = '🏠 Volver al inicio';
+        btn.onclick = function () { window.location.href = '../../index.html'; };
+      } else {
+        btn.textContent = esUltima ? 'Siguiente nivel →' : 'Siguiente etapa →';
+        btn.onclick = siguienteEtapa;
+      }
+
+      document.getElementById('modalVictoria').classList.add('active');
+      // Solo enviar resultado si ganó (nunca enviar si perdió)
+      enviarResultado();
+    }
+
+    function mostrarDerrota() {
+      document.getElementById('modalDerrota').classList.add('active');
+      // NO se llama enviarResultado() — el alumno no recibe recompensa si perdió
+    }
+
+    function siguienteEtapa() {
+      document.getElementById('modalVictoria').classList.remove('active');
+      if (STATE.etapaIdx < 2) {
+        STATE.etapaIdx++;     // avanzar etapa dentro del mismo nivel
+      } else {
+        STATE.etapaIdx = 0;   // resetear etapa y subir nivel
+        if (STATE.nivelIdx < 9) STATE.nivelIdx++;
+      }
+      iniciarJuego();
+    }
+
+    function reiniciarEtapa() {
+      document.getElementById('modalDerrota').classList.remove('active');
+      iniciarJuego(); // repetir la misma etapa sin cambiar nivel ni etapa
+    }
+
+
+    // ══════════════════════════════════════════════════════════════
+    // 🚀 ARRANQUE
+    // ══════════════════════════════════════════════════════════════
+    document.addEventListener('clerkReady', function () {
+      // Cargar nivel del alumno desde el servidor y luego iniciar
+      cargarConfigNivel(function () { iniciarJuego(); });
+    });
+
+    // Fallback para desarrollo local (sin Clerk)
+    window.addEventListener('load', function () {
+      setTimeout(function () {
+        if (!STATE.timer) iniciarJuego();
+      }, 1500);
+    });
+  </script>
+</body>
+
+</html>

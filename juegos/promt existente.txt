@@ -1,0 +1,53 @@
+Tengo un juego educativo ya funcionando llamado [NOMBRE_JUEGO] 
+(archivo: [RUTA/archivo.html]) que necesita integrarse al sistema 
+de niveles de EduCoins.
+
+CONTEXTO DEL SISTEMA:
+- La API está en /Api/juegos.js
+- Al cargar el juego se consulta: GET /api/juegos?action=nivel&juego_id=[ID]
+  Responde: { nivel_actual, intentos_hoy, intentos_requeridos, config, 
+              nombre_nivel, es_maestro }
+- Al terminar se llama: POST /api/juegos { action:'completar', juego_id, 
+  puntos, duracion_seg }
+- Auth: usar sessionStorage.getItem('juego_token') como Bearer token
+- El juego_id es: [ID_DEL_JUEGO]
+
+CONFIG JSON DE LOS NIVELES (claves que usa este juego):
+[pegar aquí el JSON de ejemplo del nivel 1, ej:
+{"tiempo":60,"cantidad":10,"max_num":20,"ops":["+"]}]
+
+LO QUE NECESITO:
+
+1. LEER CONFIG AL CARGAR
+   - Función cargarNivelJuego() que hace GET a la API
+   - Aplica los valores del config a las variables del juego
+   - Cada variable hardcodeada que corresponda a una clave del config 
+     debe reemplazarse por config.clave || valorFallback
+   - Mostrar badge de nivel en el menú inicial (igual que HorseRace):
+     "Nivel X/10" + segmentos de color + "N juegos para nv.Y"
+
+2. REPORTAR AL TERMINAR
+   - Modificar la función terminarJuego() existente
+   - POST a /api/juegos con action:'completar'
+   - Mostrar en pantalla de resultado el widget de nivel:
+     badge Nv.X/10, estrellas (⭐⭐🏆), barra de progreso
+   - Si subi_nivel_juego === true: animación "⬆️ ¡SUBISTE AL NIVEL X!"
+   - Si subio_nivel (EduCoins): toast "⬆️ ¡SUBISTE AL NIVEL Y!"
+   - Mostrar misiones completadas como toast
+
+3. AL VOLVER AL MENÚ
+   - Llamar cargarNivelJuego() para refrescar el badge
+   - Limpiar animaciones del widget de resultado
+
+VARIABLES ACTUALES DEL JUEGO QUE MAPEAN AL CONFIG:
+[listar aquí, ej:
+- var DURACION = 60  →  config.tiempo
+- var CANTIDAD = 10  →  config.cantidad
+- var MAX_NUM  = 20  →  config.max_num]
+
+ESTILOS: usar exactamente los mismos CSS del widget de HorseRace 
+(.nivel-menu-badge, .nms, .res-nivel-wrap, .rne, .res-nivel-subio)
+para mantener consistencia visual entre todos los juegos.
+
+El archivo resultante debe ser el juego completo modificado, 
+no solo los fragmentos.

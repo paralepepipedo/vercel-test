@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <!--
+============================================
+ARCHIVO: /juegos/juegos.html
+DESCRIPCIÓN: Lobby principal de juegos
+ESTILOS:  juegos.css
+SCRIPTS:  juegos.js
+SHARED:   ../shared/shared.css
+          ../shared/shared.js → initShared('juegos')
+============================================
+-->
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Juegos — EduCoins</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Nunito:wght@400;600;700;800;900&display=swap"
+    rel="stylesheet" />
+  <link rel="stylesheet" href="../shared/shared.css" />
+  <link rel="stylesheet" href="juegos.css" />
+
+  <style>
+    /* ═══════════════════════════════════════════
+       MINI INDICADOR DE NIVEL (dentro de la card)
+       ═══════════════════════════════════════════ */
+    .juego-nivel-wrap {
+      display: flex;
+      align-items: center;
+      gap: .45rem;
+      margin-top: .5rem;
+      padding-top: .5rem;
+      border-top: 1px solid rgba(255, 255, 255, .07);
+      cursor: pointer;
+    }
+
+    .juego-nivel-wrap:hover .juego-nivel-badge {
+      border-color: rgba(var(--j-rgb), .7);
+    }
+
+    .juego-nivel-badge {
+      font-size: .6rem;
+      font-weight: 900;
+      color: rgba(var(--j-rgb), 1);
+      background: rgba(var(--j-rgb), .12);
+      border: 1px solid rgba(var(--j-rgb), .3);
+      border-radius: 6px;
+      padding: .15rem .4rem;
+      white-space: nowrap;
+      transition: border-color .2s;
+    }
+
+    .juego-nivel-segmentos {
+      display: flex;
+      gap: 3px;
+      flex: 1;
+    }
+
+    .jns {
+      height: 6px;
+      flex: 1;
+      border-radius: 3px;
+      background: rgba(255, 255, 255, .1);
+      transition: background .3s;
+    }
+
+    .jns.lleno-1 {
+      background: #facc15;
+    }
+
+    .jns.lleno-2 {
+      background: #f97316;
+    }
+
+    .jns.lleno-3 {
+      background: #22c55e;
+    }
+
+    .juego-nivel-hint {
+      font-size: .58rem;
+      color: rgba(255, 255, 255, .4);
+      white-space: nowrap;
+    }
+
+    /* ═══════════════════════════════════════════
+       POPUP DE MAPA DE NIVELES
+       ═══════════════════════════════════════════ */
+    .popup-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, .75);
+      backdrop-filter: blur(4px);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+    }
+
+    .popup-overlay.active {
+      display: flex;
+    }
+
+    .popup-box {
+      background: #0f0f2e;
+      border: 1px solid rgba(255, 255, 255, .1);
+      border-radius: 20px;
+      width: 100%;
+      max-width: 520px;
+      max-height: 90vh;
+      overflow-y: auto;
+      padding: 1.5rem;
+      position: relative;
+      animation: popupIn .2s ease;
+    }
+
+    @keyframes popupIn {
+      from {
+        transform: scale(.94);
+        opacity: 0;
+      }
+
+      to {
+        transform: scale(1);
+        opacity: 1;
+      }
+    }
+
+    .popup-close {
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+      background: rgba(255, 255, 255, .08);
+      border: none;
+      border-radius: 8px;
+      color: #fff;
+      font-size: 1rem;
+      width: 32px;
+      height: 32px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background .2s;
+    }
+
+    .popup-close:hover {
+      background: rgba(255, 255, 255, .15);
+    }
+
+    .popup-header {
+      display: flex;
+      align-items: center;
+      gap: .75rem;
+      margin-bottom: 1.25rem;
+    }
+
+    .popup-emoji {
+      font-size: 2rem;
+      line-height: 1;
+    }
+
+    .popup-title {
+      font-family: 'Press Start 2P', monospace;
+      font-size: .6rem;
+      color: #fff;
+      line-height: 1.8;
+    }
+
+    .popup-subtitle {
+      font-size: .75rem;
+      color: #64748b;
+      font-weight: 700;
+    }
+
+    /* Barra de progreso principal del popup */
+    .popup-progreso {
+      background: rgba(255, 255, 255, .04);
+      border: 1px solid rgba(255, 255, 255, .07);
+      border-radius: 12px;
+      padding: .9rem 1rem;
+      margin-bottom: 1.1rem;
+    }
+
+    .popup-progreso-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: .6rem;
+    }
+
+    .popup-nivel-badge {
+      font-family: 'Press Start 2P', monospace;
+      font-size: .5rem;
+      color: #a78bfa;
+    }
+
+    .popup-intentos-txt {
+      font-size: .72rem;
+      font-weight: 800;
+      color: #64748b;
+    }
+
+    .popup-intentos-txt.verde {
+      color: #22c55e;
+    }
+
+    .popup-intentos-txt.violeta {
+      color: #a78bfa;
+    }
+
+    /* Estrellas grandes en el popup */
+    .popup-estrellas {
+      display: flex;
+      gap: .4rem;
+      margin-bottom: .65rem;
+    }
+
+    .pop-est {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      border: 2px solid rgba(255, 255, 255, .08);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+      transition: all .3s;
+    }
+
+    .pop-est.g1 {
+      border-color: #facc15;
+      background: rgba(250, 204, 21, .12);
+    }
+
+    .pop-est.g2 {
+      border-color: #f97316;
+      background: rgba(249, 115, 22, .12);
+    }
+
+    .pop-est.g3 {
+      border-color: #22c55e;
+      background: rgba(34, 197, 94, .14);
+    }
+
+    .pop-est.g4 {
+      border-color: #06b6d4;
+      background: rgba(6, 182, 212, .14);
+    }
+
+    .pop-est.g5 {
+      border-color: #a855f7;
+      background: rgba(168, 85, 247, .14);
+    }
+
+    .pop-est.vacia {
+      opacity: .3;
+    }
+
+    .popup-barra-track {
+      background: rgba(255, 255, 255, .06);
+      border-radius: 99px;
+      height: 8px;
+      overflow: hidden;
+    }
+
+    .popup-barra-fill {
+      height: 100%;
+      border-radius: 99px;
+      background: linear-gradient(90deg, #7c3aed, #06b6d4);
+      transition: width .5s ease;
+    }
+
+    .popup-barra-fill.completa {
+      background: linear-gradient(90deg, #22c55e, #4ade80);
+    }
+
+    /* Grid de niveles */
+    .popup-niveles-titulo {
+      font-size: .68rem;
+      font-weight: 900;
+      color: #475569;
+      letter-spacing: .08em;
+      margin-bottom: .65rem;
+    }
+
+    .popup-niveles-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: .45rem;
+      margin-bottom: 1rem;
+    }
+
+    @media(max-width:400px) {
+      .popup-niveles-grid {
+        grid-template-columns: repeat(4, 1fr);
+      }
+    }
+
+    .pop-nv {
+      background: rgba(255, 255, 255, .03);
+      border: 1px solid rgba(255, 255, 255, .08);
+      border-radius: 10px;
+      padding: .45rem .3rem;
+      text-align: center;
+      cursor: default;
+      transition: border-color .2s;
+    }
+
+    .pop-nv.completado {
+      border-color: rgba(34, 197, 94, .35);
+      background: rgba(34, 197, 94, .05);
+    }
+
+    .pop-nv.actual {
+      border-color: #7c3aed;
+      background: rgba(124, 58, 237, .1);
+    }
+
+    .pop-nv.bloqueado {
+      opacity: .3;
+    }
+
+    .pop-nv-icono {
+      font-size: .95rem;
+    }
+
+    .pop-nv-num {
+      font-family: 'Press Start 2P', monospace;
+      font-size: .38rem;
+      color: #fff;
+      margin: .15rem 0;
+    }
+
+    .pop-nv-estado {
+      font-size: .55rem;
+      font-weight: 800;
+      color: #475569;
+    }
+
+    .pop-nv.completado .pop-nv-estado {
+      color: #4ade80;
+    }
+
+    .pop-nv.actual .pop-nv-estado {
+      color: #a78bfa;
+    }
+
+    /* Botón jugar dentro del popup */
+    .popup-btn-jugar {
+      width: 100%;
+      padding: .75rem;
+      background: linear-gradient(135deg, #7c3aed, #4f46e5);
+      border: none;
+      border-radius: 12px;
+      color: #fff;
+      font-family: 'Press Start 2P', monospace;
+      font-size: .5rem;
+      cursor: pointer;
+      transition: opacity .2s, transform .15s;
+    }
+
+    .popup-btn-jugar:hover {
+      opacity: .9;
+      transform: translateY(-1px);
+    }
+
+    .popup-btn-jugar:active {
+      transform: translateY(0);
+    }
+
+    /* Badge reset diario */
+    .popup-reset-hint {
+      text-align: center;
+      font-size: .65rem;
+      color: #334155;
+      font-weight: 700;
+      margin-top: .65rem;
+    }
+  </style>
+
+  <!-- Clerk -->
+  <script data-clerk-publishable-key="pk_test_bG92aW5nLXJhcHRvci0xLmNsZXJrLmFjY291bnRzLmRldiQ"
+    src="https://cdn.jsdelivr.net/npm/@clerk/clerk-js@latest/dist/clerk.browser.js"></script>
+</head>
+
+<body>
+
+  <!-- Header y sidebar inyectados por shared.js -->
+  <div id="sharedHeader"></div>
+
+  <div class="layout">
+    <main class="main">
+
+      <!-- PAGE HEADER -->
+      <div class="page-header fade-up">
+        <div>
+          <span class="page-tag">🎮 ARCADE</span>
+          <h1 class="page-title">Juegos Educativos</h1>
+          <p class="page-subtitle">Juega, aprende y gana EduCoins. Bonus x2 activo hoy.</p>
+        </div>
+        <div class="energia-disponible" style="display:none">
+          <span class="energia-tag">⚡ ENERGÍA DISPONIBLE</span>
+          <div class="energia-val" id="energiaDisp">100/100</div>
+          <div class="energia-mini-bar">
+            <div class="energia-mini-fill" id="energiaMiniBar"></div>
+          </div>
+          <span class="energia-hint">Se recarga a las 20:00</span>
+        </div>
+      </div>
+
+      <!-- ESTADÍSTICAS RÁPIDAS -->
+      <div class="quick-stats fade-up delay-1"
+        style="grid-template-columns:repeat(3,1fr);gap:.5rem;margin-bottom:.75rem">
+        <div class="qs-item" style="padding:.6rem .75rem;gap:.3rem">
+          <span class="qs-icon" style="font-size:1.1rem">🎮</span>
+          <span class="qs-num" id="qsTotalJuegos" style="font-size:1.1rem">0</span>
+          <span class="qs-label" style="font-size:.58rem">Partidas jugadas</span>
+        </div>
+        <div class="qs-item" style="padding:.6rem .75rem;gap:.3rem">
+          <img src="../shared/coin.png" alt="coin" class="qs-icon"
+            style="height:1.1em;width:1.1em;object-fit:contain;vertical-align:middle;image-rendering:pixelated;">
+          <span class="qs-num" id="qsMonedasJuegos" style="font-size:1.1rem">0</span>
+          <span class="qs-label" style="font-size:.58rem">EduCoins ganados</span>
+        </div>
+        <div class="qs-item" style="padding:.6rem .75rem;gap:.3rem">
+          <span class="qs-icon" style="font-size:1.1rem">🏆</span>
+          <span class="qs-num" id="qsMejorJuego" style="font-size:1.1rem">—</span>
+          <span class="qs-label" style="font-size:.58rem">Juego favorito</span>
+        </div>
+        <!-- ficha energía oculta — datos siguen disponibles para JS -->
+        <div style="display:none">
+          <span id="qsEnergia">100/100</span>
+        </div>
+      </div>
+
+      <!-- BONUS x2 BANNER -->
+      <!--<div class="bonus-banner fade-up delay-2">
+        <div class="bonus-anim">⚡</div>
+        <div class="bonus-text">
+          <div class="bonus-title">BONUS x2 ACTIVO HOY</div>
+          <div class="bonus-desc">Todas las recompensas de juego están duplicadas hasta medianoche</div>
+          </div>
+        <div class="bonus-timer" id="bonusTimer">--:--:--</div>
+        </div> -->
+
+      <!-- GRID DE JUEGOS -->
+      <section class="section fade-up delay-3">
+        <div class="section-header">
+          <span class="section-title">🕹️ ELIGE TU JUEGO</span>
+        </div>
+        <div class="juegos-grid" id="juegosGrid">
+          <!-- Generado por juegos.js -->
+        </div>
+      </section>
+
+      <!-- RANKING DE HOY -->
+      <section class="section fade-up delay-4">
+        <div class="section-header">
+          <span class="section-title">🏆 TOP DE HOY</span>
+        </div>
+        <div class="top-hoy-grid" id="topHoyGrid">
+          <!-- Generado por juegos.js -->
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       POPUP DE MAPA DE NIVELES
+       ═══════════════════════════════════════════ -->
+  <div class="popup-overlay" id="popupNiveles" onclick="cerrarPopupNiveles(event)">
+    <div class="popup-box">
+      <button class="popup-close" onclick="cerrarPopupNiveles(null)">✕</button>
+
+      <div class="popup-header">
+        <div class="popup-emoji" id="popEmoji">🎮</div>
+        <div>
+          <div class="popup-title" id="popTitulo">JUEGO</div>
+          <div class="popup-subtitle" id="popSubtitulo">Cargando...</div>
+        </div>
+      </div>
+
+      <!-- Progreso del nivel actual -->
+      <div class="popup-progreso">
+        <div class="popup-progreso-top">
+          <span class="popup-nivel-badge" id="popNivelBadge">Nivel 1 / 10</span>
+          <span class="popup-intentos-txt" id="popIntentosTxt">—</span>
+        </div>
+        <div class="popup-estrellas" id="popEstrellas">
+          <div class="pop-est vacia" id="popEst0">☆</div>
+          <div class="pop-est vacia" id="popEst1">☆</div>
+          <div class="pop-est vacia" id="popEst2">☆</div>
+          <div class="pop-est vacia" id="popEst3" style="display:none">☆</div>
+          <div class="pop-est vacia" id="popEst4" style="display:none">☆</div>
+        </div>
+        <div class="popup-barra-track">
+          <div class="popup-barra-fill" id="popBarraFill" style="width:0%"></div>
+        </div>
+      </div>
+
+      <!-- Mapa de los 10 niveles -->
+      <div class="popup-niveles-titulo">MAPA DE NIVELES</div>
+      <div class="popup-niveles-grid" id="popNivelesGrid">
+        <!-- Generado por JS -->
+      </div>
+
+      <!-- Botón jugar -->
+      <button class="popup-btn-jugar" id="popBtnJugar" onclick="lanzarDesdePopup()">
+        🎮 JUGAR AHORA
+      </button>
+      <div class="popup-reset-hint">⏱ Los niveles se resetean a las 20:00 cada día</div>
+    </div>
+  </div>
+
+  <div class="toast-container" id="toastContainer"></div>
+  <script src="../auth/clerk-config.js"></script>
+  <script src="../shared/clerk-guard.js"></script>
+  <script src="../shared/shared.js"></script>
+  <script src="juegos.js"></script>
+</body>
+
+</html>

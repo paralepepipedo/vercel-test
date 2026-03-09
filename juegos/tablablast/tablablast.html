@@ -1,0 +1,2113 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TablaBlast — EduCoins</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Nunito:wght@700;800;900&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet" href="../../shared/shared.css">
+  <style>
+    body {
+      background: var(--bg);
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    .game-topbar {
+      height: 56px;
+      background: rgba(7, 7, 26, .95);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      padding: 0 1.5rem;
+      gap: 1rem;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 100;
+    }
+
+    .game-back-btn {
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      padding: .4rem .875rem;
+      font-size: .8rem;
+      font-weight: 800;
+      cursor: pointer;
+      text-decoration: none;
+      transition: border-color .2s;
+    }
+
+    .game-back-btn:hover {
+      border-color: var(--violet);
+    }
+
+    .game-title {
+      font-family: 'Press Start 2P', monospace;
+      font-size: .55rem;
+      color: var(--yellow);
+      flex: 1;
+      text-align: center;
+    }
+
+    .game-session-coins {
+      font-family: 'Press Start 2P', monospace;
+      font-size: .5rem;
+      color: var(--yellow);
+    }
+
+    .game-wrap {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 68px 1rem 1.5rem;
+      gap: .65rem;
+    }
+
+    .hud-bar {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 1.4rem;
+      flex-wrap: wrap;
+      width: 100%;
+      max-width: 620px;
+    }
+
+    .hud-item {
+      text-align: center;
+    }
+
+    .hud-label {
+      font-family: 'Press Start 2P', monospace;
+      font-size: .3rem;
+      color: var(--text-muted);
+      margin-bottom: .22rem;
+    }
+
+    .hud-val {
+      font-family: 'Press Start 2P', monospace;
+      font-size: .9rem;
+      color: white;
+    }
+
+    .hud-val.yellow {
+      color: var(--yellow);
+    }
+
+    .hud-val.cyan {
+      color: var(--cyan);
+    }
+
+    .hud-val.green {
+      color: #22c55e;
+    }
+
+    .timer-ring-wrap {
+      position: relative;
+      width: 50px;
+      height: 50px;
+    }
+
+    .timer-ring-svg {
+      transform: rotate(-90deg);
+      width: 50px;
+      height: 50px;
+    }
+
+    .timer-bg {
+      fill: none;
+      stroke: rgba(255, 255, 255, .08);
+      stroke-width: 5;
+    }
+
+    .timer-fill {
+      fill: none;
+      stroke: var(--cyan);
+      stroke-width: 5;
+      stroke-linecap: round;
+      stroke-dasharray: 151;
+      stroke-dashoffset: 0;
+      transition: stroke-dashoffset .05s linear;
+    }
+
+    .timer-text {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Press Start 2P', monospace;
+      font-size: .48rem;
+      color: white;
+    }
+
+    .vidas-wrap {
+      display: flex;
+      gap: .3rem;
+    }
+
+    .vida {
+      font-size: .95rem;
+      transition: transform .2s;
+    }
+
+    .vida.perdida {
+      filter: grayscale(1) opacity(.25);
+      transform: scale(.75);
+    }
+
+    .racha-bar {
+      display: flex;
+      align-items: center;
+      gap: .35rem;
+    }
+
+    .racha-fuego {
+      font-size: .95rem;
+    }
+
+    .racha-num {
+      font-family: 'Press Start 2P', monospace;
+      font-size: .82rem;
+      color: var(--yellow);
+    }
+
+    .tabla-card {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      max-width: 520px;
+      background: var(--bg2, #10102a);
+      border: 2px solid var(--border);
+      border-radius: 14px;
+      padding: .6rem 1.2rem;
+      box-sizing: border-box;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .tabla-info {
+      display: flex;
+      align-items: center;
+      gap: .75rem;
+    }
+
+    .tabla-num-badge {
+      width: 44px;
+      height: 44px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, var(--violet, #7c3aed), #6d28d9);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Press Start 2P', monospace;
+      font-size: .9rem;
+      color: white;
+      flex-shrink: 0;
+    }
+
+    .tabla-text-wrap {
+      text-align: left;
+    }
+
+    .tabla-label {
+      font-family: 'Press Start 2P', monospace;
+      font-size: .28rem;
+      color: var(--text-muted);
+      margin-bottom: .2rem;
+    }
+
+    .tabla-nombre {
+      font-family: 'Press Start 2P', monospace;
+      font-size: .5rem;
+      color: white;
+      line-height: 1.5;
+    }
+
+    .tabla-progreso-wrap {
+      flex: 1;
+      min-width: 120px;
+    }
+
+    .tabla-progreso-label {
+      font-family: 'Press Start 2P', monospace;
+      font-size: .27rem;
+      color: var(--text-muted);
+      margin-bottom: .25rem;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .tabla-progreso-bar {
+      width: 100%;
+      height: 8px;
+      background: rgba(255, 255, 255, .08);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+
+    .tabla-progreso-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--cyan), var(--violet, #7c3aed));
+      border-radius: 4px;
+      transition: width .4s ease;
+      width: 0%;
+    }
+
+    .operacion-card {
+      background: var(--bg2, #10102a);
+      border: 2px solid var(--border);
+      border-radius: 14px;
+      padding: .65rem 1.4rem;
+      text-align: center;
+      width: 100%;
+      max-width: 520px;
+      box-sizing: border-box;
+    }
+
+    .op-label {
+      font-family: 'Press Start 2P', monospace;
+      font-size: .28rem;
+      color: var(--text-muted);
+      margin-bottom: .35rem;
+    }
+
+    .op-expr {
+      font-family: 'Press Start 2P', monospace;
+      font-size: clamp(.95rem, 4vw, 1.5rem);
+      color: white;
+      line-height: 1.4;
+    }
+
+    .op-signo {
+      color: var(--yellow);
+    }
+
+    .op-x {
+      color: var(--cyan);
+      position: relative;
+      display: inline-block;
+    }
+
+    /* Span interno para el hint con fade */
+    .op-x-hint-num {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 100%;
+      text-align: center;
+      color: #fbbf24;
+      opacity: 0;
+      transition: opacity 1.8s ease-in;
+    }
+
+    .op-x-hint-num.visible {
+      opacity: 1;
+    }
+
+    /* Ocultar el "?" cuando aparece el hint */
+    .op-x.showing-hint>.op-x-question {
+      opacity: 0;
+      transition: opacity 0.8s ease-out;
+    }
+
+    .arena {
+      position: relative;
+      width: min(520px, 96vw);
+      height: clamp(300px, 50vh, 480px);
+      /* ← AJUSTE ALTURA */
+      background: var(--bg2, #10102a);
+      border: 2px solid var(--border);
+      border-radius: 16px;
+      overflow: hidden;
+      box-sizing: border-box;
+      cursor: default !important;
+      user-select: none;
+    }
+
+    /* Neutralizar cualquier ::before/::after de shared.css */
+    .arena::before {
+      content: none !important;
+      display: none !important;
+      pointer-events: none !important;
+    }
+
+    .arena::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 5px;
+      background: linear-gradient(90deg, transparent, #ef4444, transparent);
+      opacity: .65;
+      pointer-events: none !important;
+      cursor: default !important;
+      z-index: 0;
+    }
+
+    .arena-bg-block {
+      position: absolute;
+      inset: 0;
+      z-index: 1;
+      pointer-events: none !important;
+      cursor: default !important;
+    }
+
+    /* Capa bloqueadora invisible - cubre todo el arena y bloquea clicks fantasma */
+    .arena-click-blocker {
+      position: absolute;
+      inset: 0;
+      z-index: 5;
+      pointer-events: all;
+      cursor: default !important;
+      background: transparent;
+    }
+
+    /* Bloquear eventos en cualquier elemento hijo del arena que no sea moneda */
+    .arena>*:not(.coin-falling) {
+      pointer-events: none !important;
+      cursor: default !important;
+    }
+
+    /* Forzar cursor default en el arena cuando no está sobre moneda */
+    .arena,
+    .arena *:not(.coin-falling):not(.coin-num) {
+      cursor: default !important;
+    }
+
+    .arena-floor-label {
+      position: absolute;
+      bottom: 7px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-family: 'Press Start 2P', monospace;
+      font-size: .27rem;
+      color: #ef4444;
+      opacity: .5;
+      pointer-events: none;
+      z-index: 5;
+      white-space: nowrap;
+    }
+
+    .coin-falling {
+      position: absolute;
+      top: -80px;
+      width: clamp(58px, 13vw, 72px);
+      height: clamp(58px, 13vw, 72px);
+      border-radius: 50%;
+      background: radial-gradient(circle at 35% 35%, #fbbf24, #d97706, #92400e);
+      border: 3px solid #78350f;
+      box-shadow: 0 0 16px rgba(251, 191, 36, .3), inset 0 -5px 10px rgba(0, 0, 0, .4), inset 0 3px 5px rgba(255, 255, 255, .2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+      transition: transform .08s, box-shadow .08s;
+      z-index: 10;
+      animation: caerMoneda linear forwards;
+    }
+
+    .coin-falling::after {
+      content: '';
+      position: absolute;
+      top: 13%;
+      left: 17%;
+      width: 27%;
+      height: 11%;
+      background: rgba(255, 255, 255, .32);
+      border-radius: 50%;
+      transform: rotate(-30deg);
+      pointer-events: none;
+    }
+
+    .coin-falling:hover {
+      transform: scale(1.12);
+      box-shadow: 0 0 28px rgba(251, 191, 36, .6), inset 0 -5px 10px rgba(0, 0, 0, .4);
+    }
+
+    .coin-falling:active {
+      transform: scale(.9);
+    }
+
+    .coin-num {
+      font-family: 'Press Start 2P', monospace;
+      font-size: clamp(.5rem, 1.8vw, .7rem);
+      color: #1c1c1c;
+      font-weight: 900;
+      text-shadow: 0 1px 2px rgba(255, 255, 255, .35);
+      pointer-events: none;
+      line-height: 1;
+    }
+
+    .coin-falling.correcto-click {
+      background: radial-gradient(circle at 35% 35%, #4ade80, #16a34a, #14532d) !important;
+      border-color: #15803d !important;
+      animation: none !important;
+      transform: scale(1.25);
+      pointer-events: none;
+    }
+
+    .coin-falling.incorrecto-click {
+      background: radial-gradient(circle at 35% 35%, #f87171, #dc2626, #7f1d1d) !important;
+      border-color: #991b1b !important;
+      animation: none !important;
+      transform: scale(.88);
+      pointer-events: none;
+    }
+
+    @keyframes caerMoneda {
+      0% {
+        top: -80px;
+        opacity: 1;
+      }
+
+      88% {
+        opacity: 1;
+      }
+
+      100% {
+        top: var(--arena-h, 480px);
+        opacity: .2;
+      }
+    }
+
+    .tablas-panel {
+      width: 100%;
+      max-width: 520px;
+      background: var(--bg2, #10102a);
+      border: 2px solid var(--border);
+      border-radius: 14px;
+      padding: .6rem .8rem;
+      box-sizing: border-box;
+    }
+
+    .tablas-panel-label {
+      font-family: 'Press Start 2P', monospace;
+      font-size: .28rem;
+      color: var(--text-muted);
+      margin-bottom: .45rem;
+      text-align: center;
+    }
+
+    .tablas-grid {
+      display: grid;
+      grid-template-columns: repeat(10, 1fr);
+      gap: .3rem;
+    }
+
+    .tabla-pip {
+      aspect-ratio: 1;
+      border-radius: 6px;
+      background: var(--bg3, #1a1a3e);
+      border: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Press Start 2P', monospace;
+      font-size: .32rem;
+      color: var(--text-muted);
+      transition: background .25s, border-color .25s, color .25s;
+    }
+
+    .tabla-pip.activa {
+      background: linear-gradient(135deg, var(--violet, #7c3aed), #6d28d9);
+      border-color: var(--violet, #7c3aed);
+      color: white;
+    }
+
+    .tabla-pip.completada {
+      background: rgba(34, 197, 94, .15);
+      border-color: #22c55e;
+      color: #22c55e;
+    }
+
+    .feedback-flash {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 200;
+      opacity: 0;
+      transition: opacity .1s;
+    }
+
+    .feedback-flash.correcto {
+      background: rgba(34, 197, 94, .13);
+    }
+
+    .feedback-flash.incorrecto {
+      background: rgba(239, 68, 68, .13);
+    }
+
+    .feedback-flash.visible {
+      opacity: 1;
+    }
+
+    .float-num {
+      position: fixed;
+      pointer-events: none;
+      z-index: 9999;
+      font-family: 'Press Start 2P', monospace;
+      font-size: .55rem;
+      text-shadow: 0 2px 8px rgba(0, 0, 0, .8);
+      animation: floatUp .95s ease forwards;
+    }
+
+    @keyframes floatUp {
+      0% {
+        transform: translateY(0) scale(1);
+        opacity: 1;
+      }
+
+      100% {
+        transform: translateY(-72px) scale(.75);
+        opacity: 0;
+      }
+    }
+
+    .tabla-complete-toast {
+      position: fixed;
+      top: 70px;
+      left: 50%;
+      transform: translateX(-50%) scale(.8);
+      background: linear-gradient(135deg, #22c55e, #16a34a);
+      border-radius: 12px;
+      padding: .6rem 1.4rem;
+      font-family: 'Press Start 2P', monospace;
+      font-size: .45rem;
+      color: white;
+      z-index: 500;
+      white-space: nowrap;
+      opacity: 0;
+      transition: opacity .2s, transform .2s;
+      pointer-events: none;
+    }
+
+    .tabla-complete-toast.visible {
+      opacity: 1;
+      transform: translateX(-50%) scale(1);
+    }
+
+    .resultado-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 10000;
+      background: rgba(7, 7, 26, .92);
+      backdrop-filter: blur(10px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .4s;
+    }
+
+    .resultado-overlay.active {
+      opacity: 1;
+      pointer-events: all;
+    }
+
+    .resultado-modal {
+      background: var(--bg2);
+      border: 1px solid var(--border-b, #7c3aed55);
+      border-radius: 20px;
+      padding: 2rem 2.5rem;
+      text-align: center;
+      max-width: 440px;
+      width: 92%;
+      box-shadow: 0 0 60px rgba(251, 191, 36, .2);
+      transform: scale(.9);
+      transition: transform .4s;
+    }
+
+    .resultado-overlay.active .resultado-modal {
+      transform: scale(1);
+    }
+
+    .resultado-titulo {
+      font-family: 'Press Start 2P', monospace;
+      font-size: .95rem;
+      color: white;
+      margin-bottom: .75rem;
+      line-height: 1.6;
+    }
+
+    .resultado-stats {
+      display: flex;
+      justify-content: center;
+      gap: 1.2rem;
+      margin: .75rem 0;
+      flex-wrap: wrap;
+    }
+
+    .res-stat {
+      text-align: center;
+    }
+
+    .res-stat-lbl {
+      font-family: 'Press Start 2P', monospace;
+      font-size: .27rem;
+      color: var(--text-muted);
+      margin-bottom: .2rem;
+    }
+
+    .res-stat-val {
+      font-family: 'Press Start 2P', monospace;
+      font-size: .9rem;
+      color: white;
+    }
+
+    .res-stat-val.yellow {
+      color: var(--yellow);
+    }
+
+    .res-stat-val.green {
+      color: #22c55e;
+    }
+
+    .res-stat-val.cyan {
+      color: var(--cyan);
+    }
+
+    .res-tablas-wrap {
+      margin: .75rem 0;
+    }
+
+    .res-tablas-label {
+      font-family: 'Press Start 2P', monospace;
+      font-size: .28rem;
+      color: var(--text-muted);
+      margin-bottom: .4rem;
+    }
+
+    .res-tablas-grid {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: .3rem;
+    }
+
+    .res-tabla-pip {
+      width: 28px;
+      height: 28px;
+      border-radius: 6px;
+      background: rgba(34, 197, 94, .15);
+      border: 1px solid #22c55e;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Press Start 2P', monospace;
+      font-size: .3rem;
+      color: #22c55e;
+    }
+
+    .res-tabla-pip.incompleta {
+      background: rgba(255, 255, 255, .04);
+      border-color: var(--border);
+      color: var(--text-muted);
+    }
+
+    .resultado-coins {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 1.7rem;
+      color: var(--yellow);
+      margin: .6rem 0;
+      display: block;
+    }
+
+    .resultado-sub {
+      font-size: .85rem;
+      color: var(--text-dim, #94a3b8);
+      font-weight: 700;
+      margin-bottom: 1.2rem;
+    }
+
+    .resultado-btns {
+      display: flex;
+      gap: .75rem;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .btn-jugar-denuevo {
+      padding: .7rem 1.4rem;
+      background: linear-gradient(135deg, var(--violet, #7c3aed), #6d28d9);
+      color: white;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      font-family: 'Press Start 2P', monospace;
+      font-size: .45rem;
+      transition: all .2s;
+    }
+
+    .btn-jugar-denuevo:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(124, 58, 237, .5);
+    }
+
+    .btn-volver {
+      padding: .7rem 1.4rem;
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      cursor: pointer;
+      color: var(--text);
+      font-family: 'Press Start 2P', monospace;
+      font-size: .45rem;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      transition: border-color .2s;
+    }
+
+    .btn-volver:hover {
+      border-color: var(--violet);
+    }
+
+    @keyframes clickPart {
+      0% {
+        transform: translate(var(--tx), var(--ty)) scale(1);
+        opacity: 1;
+      }
+
+      100% {
+        transform: translate(calc(var(--tx)*3), calc(var(--ty)*3)) scale(0);
+        opacity: 0;
+      }
+    }
+
+    .click-part {
+      position: fixed;
+      pointer-events: none;
+      z-index: 9998;
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--yellow);
+      animation: clickPart .55s ease forwards;
+    }
+
+    .click-part.red-part {
+      background: #f87171;
+    }
+
+    .click-part.green-part {
+      background: #4ade80;
+    }
+
+    @media (max-width: 480px) {
+      .hud-bar {
+        gap: .8rem;
+      }
+
+      .hud-val {
+        font-size: .75rem;
+      }
+
+      .tabla-card {
+        padding: .5rem .8rem;
+      }
+
+      .tablas-grid {
+        gap: .2rem;
+      }
+
+      .tabla-pip {
+        font-size: .27rem;
+      }
+    }
+
+    /* ══════════════════════════════════════════
+       POPUP SELECTOR DE MODO
+    ══════════════════════════════════════════ */
+    .modo-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 20000;
+      background: rgba(7, 7, 26, .97);
+      backdrop-filter: blur(12px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: opacity .4s;
+    }
+
+    .modo-overlay.oculto {
+      opacity: 0;
+      pointer-events: none;
+      visibility: hidden;
+    }
+
+    .modo-modal {
+      background: var(--bg2, #10102a);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 2rem 2rem 1.8rem;
+      text-align: center;
+      max-width: 480px;
+      width: 94%;
+      box-shadow: 0 0 80px rgba(124, 58, 237, .3);
+    }
+
+    .modo-logo {
+      font-family: 'Press Start 2P', monospace;
+      font-size: clamp(.7rem, 3vw, 1.1rem);
+      color: var(--yellow);
+      margin-bottom: .25rem;
+    }
+
+    .modo-sub {
+      font-family: 'Press Start 2P', monospace;
+      font-size: .32rem;
+      color: var(--text-muted);
+      margin-bottom: 1.5rem;
+    }
+
+    .modos-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: .85rem;
+      margin-bottom: 1.2rem;
+    }
+
+    .modo-card {
+      background: var(--bg3, #1a1a3e);
+      border: 2px solid var(--border);
+      border-radius: 14px;
+      padding: 1rem .85rem;
+      cursor: pointer;
+      transition: border-color .2s, transform .15s, box-shadow .2s;
+      text-align: left;
+    }
+
+    .modo-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 30px rgba(124, 58, 237, .35);
+    }
+
+    .modo-card.seleccionado {
+      border-color: var(--violet, #7c3aed);
+      box-shadow: 0 0 20px rgba(124, 58, 237, .4);
+    }
+
+    .modo-icono {
+      font-size: 1.6rem;
+      margin-bottom: .5rem;
+      display: block;
+    }
+
+    .modo-nombre {
+      font-family: 'Press Start 2P', monospace;
+      font-size: .4rem;
+      color: white;
+      margin-bottom: .4rem;
+      line-height: 1.6;
+    }
+
+    .modo-desc {
+      font-size: .72rem;
+      color: var(--text-muted);
+      font-weight: 700;
+      line-height: 1.5;
+    }
+
+    .modo-recompensa {
+      margin-top: .5rem;
+      font-family: 'Press Start 2P', monospace;
+      font-size: .3rem;
+    }
+
+    .modo-recompensa.alta {
+      color: #fbbf24;
+    }
+
+    .modo-recompensa.media {
+      color: #06b6d4;
+    }
+
+    .btn-comenzar {
+      width: 100%;
+      padding: .85rem 1.5rem;
+      background: linear-gradient(135deg, var(--violet, #7c3aed), #6d28d9);
+      color: white;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      font-family: 'Press Start 2P', monospace;
+      font-size: .5rem;
+      transition: all .2s;
+      opacity: .5;
+      pointer-events: none;
+    }
+
+    .btn-comenzar.activo {
+      opacity: 1;
+      pointer-events: all;
+    }
+
+    .btn-comenzar.activo:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(124, 58, 237, .5);
+    }
+
+    /* Badge modo en HUD */
+    .hud-modo-badge {
+      font-family: 'Press Start 2P', monospace;
+      font-size: .28rem;
+      padding: .2rem .5rem;
+      border-radius: 6px;
+      border: 1px solid;
+    }
+
+    .hud-modo-badge.escalada {
+      color: #fbbf24;
+      border-color: #fbbf24;
+      background: rgba(251, 191, 36, .08);
+    }
+
+    .hud-modo-badge.niveles {
+      color: #06b6d4;
+      border-color: #06b6d4;
+      background: rgba(6, 182, 212, .08);
+    }
+
+
+
+    /* ══════════════════════════════════════════
+       WIDGET NIVEL (modo 2) — igual HorseRace
+    ══════════════════════════════════════════ */
+    .res-nivel-wrap {
+      background: rgba(124, 58, 237, .08);
+      border: 1px solid rgba(124, 58, 237, .3);
+      border-radius: 12px;
+      padding: .75rem 1rem;
+      margin: .6rem 0;
+      text-align: left;
+    }
+
+    .res-nivel-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: .5rem;
+    }
+
+    .res-nivel-badge {
+      font-family: 'Press Start 2P', monospace;
+      font-size: .38rem;
+      color: #a78bfa;
+    }
+
+    .res-nivel-txt {
+      font-size: .65rem;
+      font-weight: 800;
+      color: #64748b;
+    }
+
+    .res-nivel-txt.verde {
+      color: #22c55e;
+    }
+
+    .res-nivel-txt.violeta {
+      color: #a78bfa;
+    }
+
+    .res-nivel-estrellas {
+      display: flex;
+      gap: .35rem;
+      margin-bottom: .45rem;
+    }
+
+    .rne {
+      font-size: 1rem;
+      transition: transform .3s;
+    }
+
+    .rne.vacia {
+      filter: grayscale(1) opacity(.3);
+    }
+
+    .rne.g1 {
+      color: #fbbf24;
+    }
+
+    .rne.g2 {
+      color: #fbbf24;
+      transform: scale(1.1);
+    }
+
+    .rne.g3 {
+      color: #fbbf24;
+      transform: scale(1.2);
+    }
+
+    .res-nivel-barra-track {
+      background: rgba(255, 255, 255, .06);
+      border-radius: 99px;
+      height: 6px;
+      overflow: hidden;
+    }
+
+    .res-nivel-barra-fill {
+      height: 100%;
+      border-radius: 99px;
+      background: linear-gradient(90deg, #7c3aed, #06b6d4);
+      transition: width .6s ease;
+    }
+
+    .res-nivel-barra-fill.completa {
+      background: linear-gradient(90deg, #22c55e, #4ade80);
+    }
+
+    .res-nivel-subio {
+      display: none;
+      margin-top: .5rem;
+      font-family: 'Press Start 2P', monospace;
+      font-size: .32rem;
+      color: #4ade80;
+      text-align: center;
+    }
+
+    .res-nivel-subio.visible {
+      display: block;
+    }
+
+    /* Badge nivel en menú popup */
+    .nivel-popup-badge {
+      display: none;
+      background: rgba(124, 58, 237, .12);
+      border: 1px solid rgba(124, 58, 237, .35);
+      border-radius: 10px;
+      padding: .5rem .8rem;
+      margin-bottom: .8rem;
+      font-family: 'Press Start 2P', monospace;
+      font-size: .3rem;
+      color: #a78bfa;
+      text-align: center;
+    }
+  </style>
+  <script data-clerk-publishable-key="pk_test_bG92aW5nLXJhcHRvci0xLmNsZXJrLmFjY291bnRzLmRldiQ"
+    src="https://cdn.jsdelivr.net/npm/@clerk/clerk-js@latest/dist/clerk.browser.js"></script>
+</head>
+
+<body>
+
+  <!-- ══ POPUP SELECTOR DE MODO ══ -->
+  <div class="modo-overlay" id="modoOverlay">
+    <div class="modo-modal">
+      <div class="modo-logo">✖️ TABLABLAST</div>
+      <div class="modo-sub">Elige cómo quieres jugar</div>
+      <div class="nivel-popup-badge" id="nivelPopupBadge">📊 Nivel — / 10</div>
+      <div class="modos-grid">
+        <div class="modo-card" id="cardEscalada" onclick="seleccionarModo('escalada')">
+          <span class="modo-icono">🚀</span>
+          <div class="modo-nombre">ESCALADA</div>
+          <div class="modo-desc">Sube desde la tabla 1 hasta donde puedas. Cada tabla superada da más tiempo y más
+            puntos.</div>
+          <div class="modo-recompensa alta">⚡ Máximos XP y EduCoins</div>
+        </div>
+        <div class="modo-card" id="cardNiveles" onclick="seleccionarModo('niveles')">
+          <span class="modo-icono">📚</span>
+          <div class="modo-nombre">NIVELES</div>
+          <div class="modo-desc">Completa las tablas de tu nivel actual. Al terminar subes de nivel y progresas.</div>
+          <div class="modo-recompensa media">🪙 Recompensa por nivel</div>
+        </div>
+      </div>
+      <button class="btn-comenzar" id="btnComenzar" onclick="comenzarJuego()">▶ COMENZAR</button>
+    </div>
+  </div>
+  <!-- ══ FIN POPUP ══ -->
+
+  <div class="game-topbar">
+    <a href="../juegos.html" class="game-back-btn">← Volver</a>
+    <span class="game-title">✖️ TABLABLAST</span>
+    <span class="game-session-coins">🪙 <span id="sessionCoins">0</span></span>
+  </div>
+
+  <div class="feedback-flash" id="feedbackFlash"></div>
+  <div class="tabla-complete-toast" id="tablaToast">✅ ¡Tabla completada!</div>
+
+  <div class="game-wrap">
+    <div class="hud-bar">
+      <div class="hud-item">
+        <div class="hud-label">TIEMPO</div>
+        <div class="timer-ring-wrap">
+          <svg class="timer-ring-svg" viewBox="0 0 56 56">
+            <circle class="timer-bg" cx="28" cy="28" r="24" />
+            <circle class="timer-fill" cx="28" cy="28" r="24" id="timerRing" />
+          </svg>
+          <div class="timer-text" id="timerTxt">90</div>
+        </div>
+      </div>
+      <div class="hud-item">
+        <div class="hud-label">PUNTOS</div>
+        <div class="hud-val yellow" id="scoreNum">0</div>
+      </div>
+      <div class="hud-item">
+        <div class="hud-label">✅ CORRECTAS</div>
+        <div class="hud-val green" id="correctasNum">0</div>
+      </div>
+      <div class="hud-item">
+        <div class="hud-label">RACHA 🔥</div>
+        <div class="racha-bar">
+          <span class="racha-fuego" id="rachaFuego">💫</span>
+          <span class="racha-num" id="rachaNUm">0</span>
+        </div>
+      </div>
+      <div class="hud-item">
+        <div class="hud-label">VIDAS</div>
+        <div class="vidas-wrap" id="vidasWrap">
+          <span class="vida" id="vida0">❤️</span>
+          <span class="vida" id="vida1">❤️</span>
+          <span class="vida" id="vida2">❤️</span>
+        </div>
+      </div>
+      <div class="hud-item">
+        <div class="hud-label">MODO</div>
+        <div class="hud-modo-badge escalada" id="hudModoBadge">🚀 ESC</div>
+      </div>
+    </div>
+
+    <div class="tabla-card">
+      <div class="tabla-info">
+        <div class="tabla-num-badge" id="tablaNumBadge">1</div>
+        <div class="tabla-text-wrap">
+          <div class="tabla-label">TABLA ACTIVA</div>
+          <div class="tabla-nombre" id="tablaNombre">Tabla del 1</div>
+        </div>
+      </div>
+      <div class="tabla-progreso-wrap">
+        <div class="tabla-progreso-label">
+          <span>Progreso</span>
+          <span id="progresoText">0/10</span>
+        </div>
+        <div class="tabla-progreso-bar">
+          <div class="tabla-progreso-fill" id="progresoBarra"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="operacion-card">
+      <div class="op-label">¿CUÁL ES EL RESULTADO?</div>
+      <div class="op-expr" id="opExpr">
+        <span id="opA">?</span>
+        <span class="op-signo"> × </span>
+        <span id="opB">?</span>
+        <span class="op-signo"> = </span>
+        <span class="op-x" id="opX"><span class="op-x-question">?</span></span>
+      </div>
+    </div>
+
+    <div class="arena" id="arena">
+      <div class="arena-bg-block"></div>
+      <div class="arena-click-blocker"></div>
+      <div class="arena-floor-label">— SUELO: ¡NO DEJES CAER LA RESPUESTA! —</div>
+    </div>
+
+    <div class="tablas-panel">
+      <div class="tablas-panel-label">TABLAS DEL 1 AL 10</div>
+      <div class="tablas-grid" id="tablasGrid"></div>
+    </div>
+  </div>
+
+  <div class="resultado-overlay" id="resultadoOverlay">
+    <div class="resultado-modal">
+      <div class="resultado-titulo" id="resTitulo">⏰ ¡TIEMPO!</div>
+      <div class="resultado-stats">
+        <div class="res-stat">
+          <div class="res-stat-lbl">CORRECTAS</div>
+          <div class="res-stat-val green" id="resCorrectas">0</div>
+        </div>
+        <div class="res-stat">
+          <div class="res-stat-lbl">PUNTOS</div>
+          <div class="res-stat-val yellow" id="resPuntos">0</div>
+        </div>
+        <div class="res-stat">
+          <div class="res-stat-lbl">MEJOR RACHA</div>
+          <div class="res-stat-val cyan" id="resMejorRacha">0</div>
+        </div>
+        <div class="res-stat">
+          <div class="res-stat-lbl">TABLAS ✅</div>
+          <div class="res-stat-val" id="resTablasNum">0/10</div>
+        </div>
+      </div>
+      <div class="res-tablas-wrap">
+        <div class="res-tablas-label" id="resTablasLabel">TABLAS COMPLETADAS</div>
+        <div class="res-tablas-grid" id="resTablasGrid"></div>
+      </div>
+      <span class="resultado-coins" id="resCoins">0</span>
+      <div class="resultado-sub">EduCoins ganados 🪙</div>
+      <!-- Widget nivel (solo Modo 2) -->
+      <div class="res-nivel-wrap" id="resNivelWrap" style="display:none;">
+        <div class="res-nivel-header">
+          <span class="res-nivel-badge" id="resNivelBadge">Nivel 1 / 10</span>
+          <span class="res-nivel-txt" id="resNivelTxt">—</span>
+        </div>
+        <div class="res-nivel-estrellas" id="resNivelEstrellas">
+          <span class="rne vacia" id="rne0">☆</span>
+          <span class="rne vacia" id="rne1">☆</span>
+          <span class="rne vacia" id="rne2">☆</span>
+        </div>
+        <div class="res-nivel-barra-track">
+          <div class="res-nivel-barra-fill" id="resNivelBarra" style="width:0%"></div>
+        </div>
+        <div class="res-nivel-subio" id="resNivelSubio">⬆️ ¡SUBISTE DE NIVEL!</div>
+      </div>
+      <div class="resultado-btns">
+        <button class="btn-jugar-denuevo" id="btnJugarDenuevo">🔄 Jugar de nuevo</button>
+        <button class="btn-volver" onclick="window.location.href='../juegos.html'">🏠 Volver al Lobby</button>
+      </div>
+    </div>
+  </div>
+  <script src="../../auth/clerk-config.js"></script>
+  <script src="../../shared/clerk-guard.js"></script>
+  <script src="../../shared/shared.js"></script>
+  <script>
+    // ══════════════════════════════════════════════════════════
+    // CONFIGURACIÓN
+    // ══════════════════════════════════════════════════════════
+    var VELOCIDAD_BASE = 5200;  // ms que tarda una moneda en caer
+    var VELOCIDAD_VAR = 350;   // variación aleatoria ±
+    var DURACION_BASE = 90;    // segundos modo Escalada
+    var MAX_RECOMPENSA = 300;
+    var VIDAS_MAX = 3;
+    var MONEDAS_COUNT = 4;
+    var PTS_BASE = 15;
+    var PTS_RACHA = [1, 1, 1.5, 2, 2, 2.5, 3, 3, 3, 3];
+
+    // ══════════════════════════════════════════════════════════
+    // ESTADO — una sola fuente de verdad
+    // ══════════════════════════════════════════════════════════
+    var MODO_JUEGO = null;   // 'escalada' | 'niveles'
+    var CONFIG_NIVEL = null;   // respuesta API nivel actual
+
+    var STATE = {
+      // partida
+      score: 0, correctas: 0, racha: 0, mejorRacha: 0,
+      vidas: VIDAS_MAX, tiempoLeft: DURACION_BASE,
+      corriendo: false, rondaActiva: false,   // rondaActiva evita doble-miss
+      tablas: null, tablaActual: 1, opActual: null,
+      tablasCompletadas: 0,
+      opFallidas: [],        // operaciones fallidas para reintentar
+      ayudaUsada: false,
+      // timers — guardados para poder cancelarlos siempre
+      timerInterval: null, rondaTimeout: null, ayudaTimeout: null,
+      // monedas visibles en el DOM
+      coinsEnArena: [],
+      // config dinámica
+      tablaMaxEscalada: 12,
+      duracionNivel: DURACION_BASE,
+      _tablaDelNivel: 1,
+      _duracionActual: DURACION_BASE,
+      _tokenPartida: null,
+      _etapaCompletada: null,
+      _enviando: false,
+    };
+
+    var $ = function (id) { return document.getElementById(id); };
+    var arena = null; // se asigna en DOMContentLoaded
+
+    function getArenaH() { return (arena ? arena.offsetHeight : 0) || 480; }
+    function syncArenaH() { if (arena) arena.style.setProperty('--arena-h', getArenaH() + 'px'); }
+
+    // ══════════════════════════════════════════════════════════
+    // TOKEN — lee sessionStorage primero (puesto por juegos.js)
+    // ══════════════════════════════════════════════════════════
+    function getToken() {
+      return window.CLERK_TOKEN || sessionStorage.getItem('juego_token') || null;
+    }
+
+    function getTokenLuego(callback) {
+      if (window.CLERK_TOKEN) { callback(window.CLERK_TOKEN); return; }
+      var tok = sessionStorage.getItem('juego_token');
+      if (tok) { callback(tok); return; }
+      var intentos = 0;
+      var iv = setInterval(function () {
+        intentos++;
+        if (window.CLERK_TOKEN) { clearInterval(iv); callback(window.CLERK_TOKEN); return; }
+        var tok2 = sessionStorage.getItem('juego_token');
+        if (tok2) { clearInterval(iv); callback(tok2); return; }
+        if (intentos >= 25) { clearInterval(iv); callback(null); }
+      }, 200);
+    }
+
+    // ══════════════════════════════════════════════════════════
+    // POPUP SELECTOR DE MODO
+    // ══════════════════════════════════════════════════════════
+    function seleccionarModo(modo) {
+      MODO_JUEGO = modo;
+      $('cardEscalada').classList.toggle('seleccionado', modo === 'escalada');
+      $('cardNiveles').classList.toggle('seleccionado', modo === 'niveles');
+      $('btnComenzar').classList.add('activo');
+      var badge = $('hudModoBadge');
+      if (modo === 'escalada') {
+        badge.textContent = '🚀 ESC'; badge.className = 'hud-modo-badge escalada';
+      } else {
+        badge.textContent = '📚 NIV'; badge.className = 'hud-modo-badge niveles';
+      }
+    }
+
+    function comenzarJuego() {
+      if (!MODO_JUEGO) return;
+      $('modoOverlay').classList.add('oculto');
+      if (MODO_JUEGO === 'niveles') {
+        // Siempre recargar desde API para tener el nivel más reciente
+        CONFIG_NIVEL = null;
+        cargarConfigNivel(function () { iniciarJuego(); });
+      } else {
+        iniciarJuego();
+      }
+    }
+
+    // ══════════════════════════════════════════════════════════
+    // API — cargar config de nivel
+    // ══════════════════════════════════════════════════════════
+    function cargarConfigNivel(callback) {
+      var tok = getToken();
+      if (!tok) { if (callback) callback(); return; }
+      fetch('/api/juegos?action=nivel&juego_id=TablaBlast', {
+        headers: { 'Authorization': 'Bearer ' + tok }
+      })
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (data) {
+          if (data && !data.error) {
+            CONFIG_NIVEL = data;
+            STATE.duracionNivel = (data.config && data.config.tiempo) || DURACION_BASE;
+            STATE._tablaDelNivel = (data.etapas_completadas_hoy || 0) + 1;
+            var badge = $('nivelPopupBadge');
+            if (badge) {
+              badge.textContent = '📊 Nivel ' + (data.nivel_actual || 1) + ' / ' + (data.nivel_maximo || 10);
+              badge.style.display = 'block';
+            }
+          }
+          if (callback) callback();
+        })
+        .catch(function () { if (callback) callback(); });
+    }
+
+    function precargarNivelPopup() {
+      var tok = getToken();
+      if (!tok) return;
+      cargarConfigNivel(null);
+    }
+
+    // ══════════════════════════════════════════════════════════
+    // INIT TABLAS
+    // ══════════════════════════════════════════════════════════
+    function crearEstadoTablas() {
+      var t = {};
+      if (MODO_JUEGO === 'escalada') {
+        for (var i = 1; i <= STATE.tablaMaxEscalada; i++) {
+          t[i] = { pendientes: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10], completados: [], completada: false };
+        }
+      } else {
+        var n = STATE._tablaDelNivel;
+        t[n] = { pendientes: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10], completados: [], completada: false };
+        STATE.tablaActual = n;
+      }
+      return t;
+    }
+
+    // ══════════════════════════════════════════════════════════
+    // INICIAR JUEGO
+    // ══════════════════════════════════════════════════════════
+    function iniciarJuego() {
+      // Cancelar todo lo que pudiera estar corriendo
+      pararTimers();
+      limpiarArena();
+
+      STATE.score = 0; STATE.correctas = 0; STATE.racha = 0; STATE.mejorRacha = 0;
+      STATE.vidas = VIDAS_MAX; STATE.corriendo = true; STATE.rondaActiva = false;
+      STATE.opActual = null; STATE.coinsEnArena = []; STATE.tablasCompletadas = 0;
+      STATE.opFallidas = []; STATE.ayudaUsada = false;
+
+      var dur = MODO_JUEGO === 'niveles' ? STATE.duracionNivel : DURACION_BASE;
+      STATE.tiempoLeft = dur;
+      STATE._duracionActual = dur;
+
+      STATE.tablas = crearEstadoTablas();
+      STATE.tablaActual = MODO_JUEGO === 'escalada' ? 1 : STATE._tablaDelNivel;
+
+      // Guardar token ahora (ya está disponible)
+      STATE._tokenPartida = getToken();
+
+      syncArenaH();
+      renderVidas(); renderTablasGrid(); actualizarTablaCard(); actualizarHUD();
+
+      var circum = 2 * Math.PI * 24;
+      $('timerRing').style.stroke = 'var(--cyan)';
+      $('timerTxt').style.color = 'white';
+      $('timerTxt').textContent = STATE.tiempoLeft;
+      $('timerRing').style.strokeDashoffset = 0;
+
+      STATE.timerInterval = setInterval(function () {
+        if (!STATE.corriendo) return;
+        STATE.tiempoLeft--;
+        var offset = circum - (STATE.tiempoLeft / STATE._duracionActual) * circum;
+        $('timerRing').style.strokeDashoffset = offset;
+        $('timerTxt').textContent = STATE.tiempoLeft;
+        if (STATE.tiempoLeft <= 15) {
+          $('timerRing').style.stroke = '#ef4444';
+          $('timerTxt').style.color = '#ef4444';
+        }
+        if (STATE.tiempoLeft <= 0) terminarJuego('tiempo');
+      }, 1000);
+
+      setTimeout(lanzarRonda, 600);
+    }
+
+    function pararTimers() {
+      clearInterval(STATE.timerInterval);
+      clearTimeout(STATE.rondaTimeout);
+      clearTimeout(STATE.ayudaTimeout);
+      STATE.timerInterval = null;
+      STATE.rondaTimeout = null;
+      STATE.ayudaTimeout = null;
+    }
+
+    // ══════════════════════════════════════════════════════════
+    // GENERACIÓN DE OPERACIÓN
+    // ══════════════════════════════════════════════════════════
+    function elegirSiguienteTabla() {
+      var keys = Object.keys(STATE.tablas).map(Number).sort(function (a, b) { return a - b; });
+      for (var k = 0; k < keys.length; k++) {
+        if (!STATE.tablas[keys[k]].completada) return keys[k];
+      }
+      return keys[0];
+    }
+
+    function generarOperacion() {
+      // Reintentar operaciones fallidas primero
+      if (STATE.opFallidas.length > 0) {
+        return STATE.opFallidas.shift();
+      }
+      var tablaObj = STATE.tablas[STATE.tablaActual];
+      if (!tablaObj || tablaObj.pendientes.length === 0) {
+        STATE.tablaActual = elegirSiguienteTabla();
+        tablaObj = STATE.tablas[STATE.tablaActual];
+        actualizarTablaCard(); renderTablasGrid();
+      }
+      var a = STATE.tablaActual;
+      var idx = Math.floor(Math.random() * tablaObj.pendientes.length);
+      var b = tablaObj.pendientes[idx];
+      return { a: a, b: b, res: a * b };
+    }
+
+    // ══════════════════════════════════════════════════════════
+    // RONDA — una sola puede estar activa a la vez
+    // ══════════════════════════════════════════════════════════
+    function lanzarRonda() {
+      if (!STATE.corriendo) return;
+      if (STATE.vidas <= 0) { terminarJuego('sin vidas'); return; }
+
+      // Cancelar timers anteriores antes de lanzar nueva ronda
+      clearTimeout(STATE.rondaTimeout);
+      clearTimeout(STATE.ayudaTimeout);
+      STATE.rondaTimeout = null;
+      STATE.ayudaTimeout = null;
+
+      // Limpiar arena — PRIMERO remover del DOM, luego vaciar array
+      var old = STATE.coinsEnArena.slice();
+      STATE.coinsEnArena = [];
+      old.forEach(function (c) { if (c.parentNode) c.parentNode.removeChild(c); });
+
+      // ayudaHint eliminado
+      STATE.ayudaUsada = false;
+      STATE.rondaActiva = true;
+
+      syncArenaH();
+
+      var op = generarOperacion();
+      STATE.opActual = op;
+      $('opA').textContent = op.a;
+      $('opB').textContent = op.b;
+      var opX = $('opX');
+      // Reset: quitar hint anterior, restaurar "?"
+      opX.classList.remove('showing-hint');
+      var oldHint = opX.querySelector('.op-x-hint-num');
+      if (oldHint) oldHint.remove();
+      var questionSpan = opX.querySelector('.op-x-question');
+      if (questionSpan) {
+        questionSpan.textContent = '?';
+        questionSpan.style.opacity = '';
+      }
+
+      var opciones = generarOpciones(op.res, MONEDAS_COUNT, op.a);
+      var arenaW = arena.offsetWidth || 520;
+      var coinSize = Math.min(72, Math.floor(arenaW * 0.13));
+      var margin = coinSize * 0.65;
+      var slots = distribuirX(MONEDAS_COUNT, margin, arenaW - margin - coinSize);
+
+      opciones.forEach(function (num, i) {
+        var coin = crearMoneda(num, slots[i], op.res, coinSize);
+        arena.appendChild(coin);
+        STATE.coinsEnArena.push(coin);
+      });
+
+      // Duración real de la animación de esta ronda
+      var vel = VELOCIDAD_BASE + VELOCIDAD_VAR + 400;
+
+      // Ayuda al 40% del tiempo — fade-in de la respuesta en la expresión
+      STATE.ayudaTimeout = setTimeout(function () {
+        if (!STATE.corriendo || !STATE.rondaActiva) return;
+        STATE.ayudaUsada = true;
+        var opX = $('opX');
+        if (opX) {
+          // Crear span para el número con fade-in
+          var hintSpan = document.createElement('span');
+          hintSpan.className = 'op-x-hint-num';
+          hintSpan.textContent = op.res;
+          opX.appendChild(hintSpan);
+          // Marcar contenedor para ocultar el "?"
+          opX.classList.add('showing-hint');
+          // Forzar reflow antes de agregar .visible para que la transición funcione
+          void hintSpan.offsetWidth;
+          hintSpan.classList.add('visible');
+        }
+      }, Math.floor(vel * 0.4));
+
+      // Timeout de la ronda — moneda llegó al suelo sin ser clickeada
+      STATE.rondaTimeout = setTimeout(function () {
+        if (!STATE.corriendo || !STATE.rondaActiva) return;
+        // Verificar que la moneda correcta no fue clickeada
+        var correctaCaida = false;
+        for (var i = 0; i < STATE.coinsEnArena.length; i++) {
+          if (STATE.coinsEnArena[i].dataset.correcto === '1' &&
+            STATE.coinsEnArena[i].dataset.clicked === '0') {
+            correctaCaida = true; break;
+          }
+        }
+        if (correctaCaida) missRonda();
+      }, vel);
+    }
+
+    // ══════════════════════════════════════════════════════════
+    // CLICK EN MONEDA
+    // ══════════════════════════════════════════════════════════
+    function onCoinClick(e, coin, num, correcto) {
+      // Ignorar si el juego no está corriendo, si ya se clickeó, o si la ronda no está activa
+      if (!STATE.corriendo || !STATE.rondaActiva) return;
+      if (coin.dataset.clicked === '1') return;
+
+      // Marcar como clickeada y desactivar ronda para evitar doble procesamiento
+      coin.dataset.clicked = '1';
+      STATE.rondaActiva = false;
+
+      // Cancelar timers de esta ronda inmediatamente
+      clearTimeout(STATE.rondaTimeout);
+      clearTimeout(STATE.ayudaTimeout);
+      STATE.rondaTimeout = null;
+      STATE.ayudaTimeout = null;
+      // ayudaHint eliminado
+
+      if (num === correcto) {
+        coin.classList.add('correcto-click');
+        spawnParticulas(e.clientX, e.clientY, 'green');
+        STATE.correctas++;
+        STATE.racha++;
+        if (STATE.racha > STATE.mejorRacha) STATE.mejorRacha = STATE.racha;
+        var multIdx = Math.min(STATE.racha - 1, PTS_RACHA.length - 1);
+        var pts = Math.round(PTS_BASE * PTS_RACHA[multIdx]);
+        if (STATE.ayudaUsada) pts = Math.max(1, Math.floor(pts / 2));
+        STATE.score += pts;
+        var label = STATE.ayudaUsada
+          ? '+' + pts + ' 💡½'
+          : '+' + pts + (PTS_RACHA[multIdx] > 1 ? ' ×' + PTS_RACHA[multIdx] + '🔥' : '');
+        spawnFloat(e.clientX, e.clientY, label, STATE.ayudaUsada ? '#94a3b8' : '#fbbf24');
+        flashFeedback('correcto');
+        marcarCompletada(STATE.tablaActual, STATE.opActual.b);
+        actualizarHUD(); actualizarTablaCard(); renderTablasGrid();
+        // Solo lanzar siguiente ronda si marcarCompletada no terminó el juego
+        setTimeout(function () { if (STATE.corriendo) lanzarRonda(); }, 600);
+      } else {
+        coin.classList.add('incorrecto-click');
+        spawnParticulas(e.clientX, e.clientY, 'red');
+        STATE.racha = 0;
+        STATE.vidas = Math.max(0, STATE.vidas - 1);
+        renderVidas(); flashFeedback('incorrecto');
+        spawnFloat(e.clientX, e.clientY, '−❤️', '#f87171');
+        actualizarHUD();
+        // Encolar la operación fallida para reintentar
+        if (STATE.opActual) STATE.opFallidas.push({ a: STATE.opActual.a, b: STATE.opActual.b, res: STATE.opActual.res });
+        if (STATE.vidas <= 0) {
+          setTimeout(function () { terminarJuego('sin vidas'); }, 500);
+        } else {
+          // Resaltar la moneda correcta brevemente antes de limpiar
+          for (var i = 0; i < STATE.coinsEnArena.length; i++) {
+            var c = STATE.coinsEnArena[i];
+            if (c.dataset.correcto === '1' && c.dataset.clicked === '0') {
+              c.style.boxShadow = '0 0 28px 7px rgba(34,197,94,.8)'; break;
+            }
+          }
+          setTimeout(function () { if (STATE.corriendo) lanzarRonda(); }, 900);
+        }
+      }
+    }
+
+    function missRonda() {
+      if (!STATE.corriendo || !STATE.rondaActiva) return;
+      STATE.rondaActiva = false;
+      STATE.racha = 0;
+      STATE.vidas = Math.max(0, STATE.vidas - 1);
+      renderVidas(); flashFeedback('incorrecto');
+      spawnFloat(
+        arena.offsetLeft + arena.offsetWidth / 2,
+        arena.offsetTop + arena.offsetHeight - 40,
+        '−❤️ ESCAPÓ', '#f87171'
+      );
+      actualizarHUD();
+      if (STATE.opActual) STATE.opFallidas.push({ a: STATE.opActual.a, b: STATE.opActual.b, res: STATE.opActual.res });
+      if (STATE.vidas <= 0) {
+        setTimeout(function () { terminarJuego('sin vidas'); }, 400);
+      } else {
+        setTimeout(function () { if (STATE.corriendo) lanzarRonda(); }, 700);
+      }
+    }
+
+    // ══════════════════════════════════════════════════════════
+    // MARCAR TABLA COMPLETADA
+    // ══════════════════════════════════════════════════════════
+    function marcarCompletada(tablaNum, factor) {
+      var t = STATE.tablas[tablaNum];
+      if (!t) return;
+      var idx = t.pendientes.indexOf(factor);
+      if (idx !== -1) { t.pendientes.splice(idx, 1); t.completados.push(factor); }
+      if (t.pendientes.length === 0 && !t.completada) {
+        t.completada = true;
+        STATE.tablasCompletadas++;
+        mostrarToastTabla(tablaNum);
+        var bonus = 20 + tablaNum * 5;
+        STATE.score += bonus;
+        spawnFloat(window.innerWidth / 2, 120, '+' + bonus + ' ¡TABLA ' + tablaNum + '! 🌟', '#22c55e');
+        if (MODO_JUEGO === 'escalada') {
+          var extra = Math.max(15, 30 - tablaNum);
+          STATE.tiempoLeft += extra;
+          STATE._duracionActual += extra;
+          spawnFloat(window.innerWidth / 2, 90, '+' + extra + 's ⏱️', '#06b6d4');
+          var sig = elegirSiguienteTabla();
+          if (!STATE.tablas[sig] || STATE.tablas[sig].completada) {
+            // Todas las tablas completadas
+            setTimeout(function () { terminarJuego('todas'); }, 800);
+          } else {
+            STATE.tablaActual = sig;
+          }
+        } else {
+          STATE._etapaCompletada = tablaNum;
+          setTimeout(function () { terminarJuego('todas'); }, 800);
+        }
+      }
+    }
+
+    // ══════════════════════════════════════════════════════════
+    // TERMINAR JUEGO
+    // ══════════════════════════════════════════════════════════
+    function terminarJuego(motivo) {
+      if (!STATE.corriendo) return; // evitar doble llamada
+      STATE.corriendo = false;
+      STATE.rondaActiva = false;
+      pararTimers();
+      limpiarArena();
+      // ayudaHint eliminado
+
+      // Determinar si el jugador ganó o perdió
+      // Se considera "ganado" si: completó al menos una etapa O tiene puntos > 0
+      var gano = STATE._etapaCompletada || STATE.score > 0;
+
+      var titulo =
+        motivo === 'sin vidas' ? '💀 SIN VIDAS'
+          : motivo === 'todas' ? '🏆 ¡MAESTRO!'
+            : STATE.tablasCompletadas >= 10 ? '🏆 ¡MAESTRO!'
+              : STATE.tablasCompletadas >= 5 ? '⭐ ¡MUY BIEN!'
+                : STATE.correctas >= 15 ? '🎉 ¡BIEN HECHO!'
+                  : '⏰ ¡TIEMPO!';
+
+      $('resTitulo').textContent = titulo;
+      $('resCorrectas').textContent = STATE.correctas;
+      $('resPuntos').textContent = STATE.score.toLocaleString('es-CL');
+      $('resMejorRacha').textContent = STATE.mejorRacha;
+
+      var totalTablas = Object.keys(STATE.tablas).length;
+      $('resTablasNum').textContent = STATE.tablasCompletadas + '/' + totalTablas;
+      if ($('resTablasLabel')) {
+        $('resTablasLabel').textContent = MODO_JUEGO === 'niveles' ? 'TABLA DEL NIVEL' : 'TABLAS COMPLETADAS';
+      }
+      var grid = $('resTablasGrid'); grid.innerHTML = '';
+      Object.keys(STATE.tablas).map(Number).sort(function (a, b) { return a - b; }).forEach(function (i) {
+        var pip = document.createElement('div');
+        pip.className = 'res-tabla-pip' + (STATE.tablas[i].completada ? '' : ' incompleta');
+        pip.textContent = STATE.tablas[i].completada ? '✅' : 'Tabla ' + i;
+        grid.appendChild(pip);
+      });
+
+      // Mostrar "..." mientras se calcula en el servidor
+      $('resCoins').textContent = gano ? '...' : '0';
+      $('sessionCoins').textContent = gano ? '...' : '0';
+      $('resNivelWrap').style.display = 'none';
+      $('resNivelSubio').classList.remove('visible');
+      $('resultadoOverlay').classList.add('active');
+
+      // Solo enviar a la API si el jugador ganó algo
+      // Si perdió (0 puntos, sin etapa completada), no enviar nada
+      if (gano) {
+        getTokenLuego(function (tok) {
+          if (tok) {
+            _enviarResultado(tok);
+          }
+        });
+      }
+    }
+
+    function _enviarResultado(tok) {
+      STATE._enviando = true;
+      var _dur = Math.max(1, STATE._duracionActual - STATE.tiempoLeft);
+      fetch('/api/juegos', {
+        method: 'POST',
+        headers: { 'Authorization': 'Bearer ' + tok, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'completar',
+          juego_id: 'TablaBlast',
+          puntos: STATE.score,
+          duracion_seg: _dur,
+          etapa_completada: STATE._etapaCompletada || null,
+        })
+      })
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+          if (!data || !data.ok) {
+            // Si falla, mostrar 0
+            $('resCoins').textContent = '0';
+            $('sessionCoins').textContent = '0';
+            return;
+          }
+
+          // Calcular total de monedas (etapa + bonus si aplica)
+          var totalMonedas = (data.monedas_ganadas || 0) + (data.bonus_monedas || 0);
+          var totalXp = (data.xp_ganado || 0) + (data.bonus_xp || 0);
+
+          // Actualizar el modal con las monedas reales del servidor
+          $('resCoins').textContent = totalMonedas;
+          $('sessionCoins').textContent = totalMonedas;
+
+          if (typeof toast === 'function') {
+            var msgToast = '+' + totalMonedas + ' EduCoins y +' + totalXp + ' XP 🎉';
+            if (data.bonus_monedas > 0) {
+              msgToast = '+' + data.monedas_ganadas + ' +' + data.bonus_monedas + ' bonus = ' + totalMonedas + ' EduCoins 🎉';
+            }
+            toast(msgToast, 'coins');
+          }
+          if (data.subio_nivel && data.nuevo_nivel && typeof toast === 'function') {
+            setTimeout(function () {
+              toast('⬆️ ¡SUBISTE AL NIVEL ' + data.nuevo_nivel + '!', 'success');
+            }, 800);
+          }
+          if (data.misiones_completadas && data.misiones_completadas.length) {
+            data.misiones_completadas.forEach(function (m, i) {
+              setTimeout(function () {
+                if (typeof toast === 'function') toast('🎯 Misión: ' + m.descripcion + ' +' + m.monedas + ' 🪙', 'success');
+              }, (i + 1) * 400);
+            });
+          }
+          if (MODO_JUEGO === 'niveles') mostrarWidgetNivel(data);
+        })
+        .catch(function () {
+          // Si hay error de red, mostrar 0
+          $('resCoins').textContent = '0';
+          $('sessionCoins').textContent = '0';
+        })
+        .finally(function () { STATE._enviando = false; });
+    }
+
+    // ══════════════════════════════════════════════════════════
+    // WIDGET NIVEL (Modo Niveles)
+    // ══════════════════════════════════════════════════════════
+    function mostrarWidgetNivel(data) {
+      if (!data.nivel_juego) return;
+      var intentosReq = data.intentos_req || 3;
+      var intentosHoy = data.subi_nivel_juego ? 0 : Math.min(data.intentos_hoy, intentosReq);
+      var nivelActual = data.nivel_juego;
+      var esMaestro = data.es_maestro;
+
+      $('resNivelWrap').style.display = '';
+      $('resNivelBadge').textContent = 'Nivel ' + nivelActual + ' / ' + (data.nivel_maximo || 10);
+
+      var txtEl = $('resNivelTxt');
+      txtEl.className = 'res-nivel-txt';
+      if (esMaestro) {
+        txtEl.textContent = '🏆 Nivel máximo'; txtEl.classList.add('verde');
+      } else {
+        var faltan = intentosReq - intentosHoy;
+        txtEl.textContent = faltan + ' juego' + (faltan !== 1 ? 's' : '') + ' para nv.' + (nivelActual + 1);
+        txtEl.classList.add('violeta');
+      }
+
+      var iconos = ['⭐', '⭐', '🏆'];
+      var clases = ['g1', 'g2', 'g3'];
+      for (var i = 0; i < 3; i++) {
+        var el = $('rne' + i); if (!el) continue;
+        if (i < intentosHoy) { el.className = 'rne ' + clases[i]; el.textContent = iconos[i]; }
+        else { el.className = 'rne vacia'; el.textContent = '☆'; }
+      }
+
+      var pct = Math.round((intentosHoy / intentosReq) * 100);
+      var barraEl = $('resNivelBarra');
+      barraEl.style.width = pct + '%';
+      barraEl.className = 'res-nivel-barra-fill' + (intentosHoy >= intentosReq ? ' completa' : '');
+
+      if (data.subi_nivel_juego) {
+        var subioEl = $('resNivelSubio');
+        var subioTxt = '⬆️ ¡SUBISTE AL NIVEL ' + nivelActual + '!';
+        if (data.bonus_monedas > 0) subioTxt += ' +' + data.bonus_monedas + ' 🪙';
+        if (data.bonus_xp > 0) subioTxt += ' +' + data.bonus_xp + ' XP';
+        subioEl.textContent = subioTxt;
+        setTimeout(function () { subioEl.classList.add('visible'); }, 600);
+      }
+    }
+
+    // ══════════════════════════════════════════════════════════
+    // REINICIAR — vuelve al popup de selección de modo
+    // ══════════════════════════════════════════════════════════
+    function reiniciarJuego() {
+      // Esperar a que la API haya terminado de guardar antes de reiniciar
+      if (STATE._enviando) {
+        setTimeout(reiniciarJuego, 200);
+        return;
+      }
+      $('resultadoOverlay').classList.remove('active');
+      pararTimers();
+      limpiarArena();
+      MODO_JUEGO = null;
+      $('cardEscalada').classList.remove('seleccionado');
+      $('cardNiveles').classList.remove('seleccionado');
+      $('btnComenzar').classList.remove('activo');
+      $('resNivelSubio').classList.remove('visible');
+      $('timerRing').style.stroke = 'var(--cyan)';
+      $('timerTxt').style.color = 'white';
+      precargarNivelPopup();
+      $('modoOverlay').classList.remove('oculto');
+    }
+
+    // ══════════════════════════════════════════════════════════
+    // HUD Y HELPERS
+    // ══════════════════════════════════════════════════════════
+    function actualizarHUD() {
+      $('scoreNum').textContent = STATE.score.toLocaleString('es-CL');
+      $('correctasNum').textContent = STATE.correctas;
+      $('rachaNUm').textContent = STATE.racha;
+      $('rachaFuego').textContent = STATE.racha >= 5 ? '🔥' : STATE.racha >= 3 ? '✨' : '💫';
+      $('sessionCoins').textContent = Math.min(MAX_RECOMPENSA, Math.floor(STATE.score / 8));
+    }
+
+    function actualizarTablaCard() {
+      var t = STATE.tablaActual;
+      $('tablaNumBadge').textContent = t;
+      $('tablaNombre').textContent = 'Tabla del ' + t;
+      var obj = STATE.tablas ? STATE.tablas[t] : null;
+      var completados = obj ? obj.completados.length : 0;
+      $('progresoText').textContent = completados + '/10';
+      $('progresoBarra').style.width = (completados * 10) + '%';
+    }
+
+    function renderVidas() {
+      for (var i = 0; i < VIDAS_MAX; i++) {
+        var el = $('vida' + i);
+        if (el) el.classList.toggle('perdida', i >= STATE.vidas);
+      }
+    }
+
+    function renderTablasGrid() {
+      var grid = $('tablasGrid'); if (!grid) return; grid.innerHTML = '';
+      if (!STATE.tablas) return;
+      Object.keys(STATE.tablas).map(Number).sort(function (a, b) { return a - b; }).forEach(function (i) {
+        var pip = document.createElement('div');
+        var completada = STATE.tablas[i].completada;
+        var activa = i === STATE.tablaActual && !completada;
+        pip.className = 'tabla-pip' + (completada ? ' completada' : activa ? ' activa' : '');
+        pip.textContent = i;
+        grid.appendChild(pip);
+      });
+    }
+
+    function limpiarArena() {
+      // Remover cada coin del DOM explícitamente
+      STATE.coinsEnArena.forEach(function (c) {
+        if (c && c.parentNode) c.parentNode.removeChild(c);
+      });
+      STATE.coinsEnArena = [];
+      // Por si quedó algo huérfano en el arena
+      if (arena) {
+        var huerfanos = arena.querySelectorAll('.coin-falling');
+        huerfanos.forEach(function (c) { c.parentNode.removeChild(c); });
+      }
+    }
+
+    function mostrarToastTabla(num) {
+      var el = $('tablaToast');
+      el.textContent = '✅ ¡Tabla del ' + num + ' completada!';
+      el.classList.add('visible');
+      setTimeout(function () { el.classList.remove('visible'); }, 2200);
+    }
+
+    function flashFeedback(tipo) {
+      var el = $('feedbackFlash');
+      el.className = 'feedback-flash ' + tipo + ' visible';
+      setTimeout(function () { el.classList.remove('visible'); }, 170);
+    }
+
+    function spawnFloat(x, y, txt, color) {
+      var el = document.createElement('div');
+      el.className = 'float-num'; el.textContent = txt;
+      el.style.left = x + 'px'; el.style.top = y + 'px'; el.style.color = color;
+      document.body.appendChild(el);
+      setTimeout(function () { if (el.parentNode) el.parentNode.removeChild(el); }, 960);
+    }
+
+    function spawnParticulas(x, y, tipo) {
+      var col = tipo === 'green' ? ' green-part' : tipo === 'red' ? ' red-part' : '';
+      for (var i = 0; i < 8; i++) {
+        var p = document.createElement('div');
+        p.className = 'click-part' + col;
+        var angle = (i / 8) * Math.PI * 2;
+        p.style.left = x + 'px'; p.style.top = y + 'px';
+        p.style.setProperty('--tx', Math.cos(angle) * 36 + 'px');
+        p.style.setProperty('--ty', Math.sin(angle) * 36 + 'px');
+        document.body.appendChild(p);
+        setTimeout(function () { if (p.parentNode) p.parentNode.removeChild(p); }, 560);
+      }
+    }
+
+    function generarOpciones(correcto, n, tablaNum) {
+      var set = new Set([correcto]); var t = 0;
+      while (set.size < n && t < 60) {
+        t++;
+        var cand;
+        if (t % 3 === 0) { var delta = [tablaNum, 1, 2, 3][Math.floor(Math.random() * 4)]; cand = correcto + (Math.random() < .5 ? delta : -delta); }
+        else if (t % 3 === 1) { cand = tablaNum * (Math.floor(Math.random() * 10) + 1); }
+        else { cand = (Math.floor(Math.random() * 10) + 1) * (Math.floor(Math.random() * 10) + 1); }
+        if (cand !== correcto && cand > 0 && cand <= 144) set.add(cand);
+      }
+      while (set.size < n) { var c = Math.floor(Math.random() * 143) + 1; if (!set.has(c)) set.add(c); }
+      return Array.from(set).sort(function () { return Math.random() - .5; });
+    }
+
+    function distribuirX(n, min, max) {
+      var step = (max - min) / (n - 1);
+      return Array.from({ length: n }, function (_, i) { return Math.round(min + i * step); });
+    }
+    function rand(a, b) { return Math.floor(Math.random() * (b - a + 1)) + a; }
+
+    function crearMoneda(num, x, correcto, size) {
+      var coin = document.createElement('div');
+      coin.className = 'coin-falling';
+      coin.dataset.correcto = num === correcto ? '1' : '0';
+      coin.dataset.clicked = '0';
+      var vel = VELOCIDAD_BASE + rand(-VELOCIDAD_VAR, VELOCIDAD_VAR);
+      coin.style.animationDuration = vel + 'ms';
+      coin.style.left = x + 'px';
+      coin.style.width = size + 'px';
+      coin.style.height = size + 'px';
+      var label = document.createElement('span');
+      label.className = 'coin-num';
+      label.textContent = num;
+      coin.appendChild(label);
+      coin.addEventListener('click', function (e) { onCoinClick(e, coin, num, correcto); });
+      return coin;
+    }
+
+    // ══════════════════════════════════════════════════════════
+    // ARRANQUE
+    // ══════════════════════════════════════════════════════════
+    document.addEventListener('clerkReady', function () {
+      precargarNivelPopup();
+    });
+
+    document.addEventListener('DOMContentLoaded', function () {
+      arena = $('arena');
+      syncArenaH();
+      window.addEventListener('resize', syncArenaH);
+      $('btnJugarDenuevo').addEventListener('click', reiniciarJuego);
+
+      // Bloquear clicks en el fondo del arena (solo permitir clicks en monedas)
+      var arenaEl = document.getElementById('arena');
+
+      // FIX BUG 2: Neutralizar cualquier elemento con pointer-events dentro del arena
+      // que pueda venir de shared.css/shared.js
+      function neutralizarElementosFantasma() {
+        var hijos = arenaEl.querySelectorAll('*');
+        hijos.forEach(function (el) {
+          if (!el.classList.contains('coin-falling') && !el.classList.contains('coin-num')) {
+            el.style.pointerEvents = 'none';
+            el.style.cursor = 'default';
+          }
+        });
+        // También forzar en el arena mismo
+        arenaEl.style.cursor = 'default';
+      }
+
+      // Ejecutar ahora y observar cambios
+      neutralizarElementosFantasma();
+      var observer = new MutationObserver(function (mutations) {
+        mutations.forEach(function (m) {
+          if (m.addedNodes.length) {
+            m.addedNodes.forEach(function (node) {
+              if (node.nodeType === 1 && !node.classList.contains('coin-falling')) {
+                node.style.pointerEvents = 'none';
+                node.style.cursor = 'default';
+              }
+            });
+          }
+        });
+      });
+      observer.observe(arenaEl, { childList: true, subtree: true });
+
+      // El bloqueador captura todos los clicks y los redirige a monedas si corresponde
+      var blocker = arenaEl.querySelector('.arena-click-blocker');
+      if (blocker) {
+        blocker.addEventListener('click', function (e) {
+          // Ocultar temporalmente el bloqueador para ver qué hay debajo
+          blocker.style.pointerEvents = 'none';
+          var elementoDebajo = document.elementFromPoint(e.clientX, e.clientY);
+          blocker.style.pointerEvents = 'all';
+
+          // Si hay una moneda debajo, simular click en ella
+          if (elementoDebajo && (elementoDebajo.classList.contains('coin-falling') ||
+            elementoDebajo.classList.contains('coin-num'))) {
+            elementoDebajo.click();
+          }
+          // Si no hay moneda, el click simplemente se ignora
+        });
+
+        // Cambiar cursor cuando hay moneda debajo
+        blocker.addEventListener('mousemove', function (e) {
+          blocker.style.pointerEvents = 'none';
+          var elementoDebajo = document.elementFromPoint(e.clientX, e.clientY);
+          blocker.style.pointerEvents = 'all';
+
+          if (elementoDebajo && (elementoDebajo.classList.contains('coin-falling') ||
+            elementoDebajo.classList.contains('coin-num'))) {
+            blocker.style.cursor = 'pointer';
+          } else {
+            blocker.style.cursor = 'default';
+          }
+        });
+      }
+      //precargarNivelPopup();
+    });
+  </script>
+
+</body>
+
+</html>

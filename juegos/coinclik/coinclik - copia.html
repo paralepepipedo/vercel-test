@@ -1,0 +1,2046 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CoinClik — EduCoins</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Nunito:wght@700;800;900&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet" href="../../shared/shared.css">
+  <script data-clerk-publishable-key="pk_test_bG92aW5nLXJhcHRvci0xLmNsZXJrLmFjY291bnRzLmRldiQ"
+    src="https://cdn.jsdelivr.net/npm/@clerk/clerk-js@latest/dist/clerk.browser.js"></script>
+  <style>
+    body {
+      background: var(--bg);
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* TOPBAR */
+    .game-topbar {
+      height: 56px;
+      background: rgba(7, 7, 26, .95);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      padding: 0 1.5rem;
+      gap: 1rem;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 100;
+    }
+
+    .game-back-btn {
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      padding: .4rem .875rem;
+      font-size: .8rem;
+      font-weight: 800;
+      cursor: pointer;
+      text-decoration: none;
+      transition: border-color .2s;
+    }
+
+    .game-back-btn:hover {
+      border-color: var(--violet);
+    }
+
+    .game-title {
+      font-family: 'Press Start 2P', monospace;
+      font-size: .6rem;
+      color: var(--cyan);
+      flex: 1;
+      text-align: center;
+    }
+
+    .game-session-coins {
+      font-family: 'Press Start 2P', monospace;
+      font-size: .5rem;
+      color: var(--yellow);
+    }
+
+    /* LAYOUT */
+    .game-wrap {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 72px 1rem 2rem;
+      gap: .75rem;
+    }
+
+    /* HUD */
+    .hud-bar {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 1.5rem;
+      flex-wrap: wrap;
+      width: 100%;
+      max-width: 600px;
+    }
+
+    .hud-item {
+      text-align: center;
+    }
+
+    .hud-label {
+      font-family: 'Press Start 2P', monospace;
+      font-size: .32rem;
+      color: var(--text-muted);
+      margin-bottom: .25rem;
+    }
+
+    .hud-val {
+      font-family: 'Press Start 2P', monospace;
+      font-size: .95rem;
+      color: white;
+    }
+
+    .hud-val.cyan {
+      color: var(--cyan);
+    }
+
+    .hud-val.yellow {
+      color: var(--yellow);
+    }
+
+    /* TIMER */
+    .timer-ring-wrap {
+      position: relative;
+      width: 52px;
+      height: 52px;
+    }
+
+    .timer-ring-svg {
+      transform: rotate(-90deg);
+      width: 52px;
+      height: 52px;
+    }
+
+    .timer-bg {
+      fill: none;
+      stroke: rgba(255, 255, 255, .08);
+      stroke-width: 5;
+    }
+
+    .timer-fill {
+      fill: none;
+      stroke: var(--cyan);
+      stroke-width: 5;
+      stroke-linecap: round;
+      stroke-dasharray: 151;
+      stroke-dashoffset: 0;
+      transition: stroke-dashoffset .05s linear;
+    }
+
+    .timer-text {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Press Start 2P', monospace;
+      font-size: .5rem;
+      color: white;
+    }
+
+    /* BARRA ETAPA */
+    .etapa-bar {
+      width: 100%;
+      max-width: 520px;
+      background: var(--bg2, #10102a);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: .5rem 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: .5rem;
+      box-sizing: border-box;
+    }
+
+    .etapa-label {
+      font-family: 'Press Start 2P', monospace;
+      font-size: .32rem;
+      color: var(--text-muted);
+    }
+
+    .etapa-nombre {
+      font-family: 'Press Start 2P', monospace;
+      font-size: .42rem;
+      color: var(--cyan);
+    }
+
+    .etapa-preguntas {
+      display: flex;
+      gap: .35rem;
+    }
+
+    .etapa-dot {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      border: 2px solid var(--border);
+      background: transparent;
+      transition: background .2s, border-color .2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: .55rem;
+      color: white;
+    }
+
+    .etapa-dot.ok {
+      background: #22c55e;
+      border-color: #22c55e;
+    }
+
+    .etapa-dot.fail {
+      background: #ef4444;
+      border-color: #ef4444;
+    }
+
+    /* OPERACIÓN */
+    .operacion-card {
+      background: var(--bg2, #10102a);
+      border: 2px solid var(--border);
+      border-radius: 14px;
+      padding: .75rem 1.5rem;
+      text-align: center;
+      width: 100%;
+      max-width: 520px;
+      box-sizing: border-box;
+    }
+
+    .op-label {
+      font-family: 'Press Start 2P', monospace;
+      font-size: .32rem;
+      color: var(--text-muted);
+      margin-bottom: .4rem;
+    }
+
+    .op-expr {
+      font-family: 'Press Start 2P', monospace;
+      font-size: clamp(.9rem, 3.5vw, 1.4rem);
+      color: white;
+      line-height: 1.4;
+    }
+
+    .op-expr .op-signo {
+      color: var(--cyan);
+    }
+
+    .op-result-hint {
+      display: inline-block;
+      position: relative;
+    }
+
+    .op-result-hint .hint-texto {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: rgba(251, 191, 36, 0);
+      transition: color 1.5s ease;
+      font-family: 'Press Start 2P', monospace;
+      font-size: inherit;
+    }
+
+    .op-result-hint .hint-texto.visible {
+      color: rgba(251, 191, 36, 0.85);
+    }
+
+    .op-result-hint .interrogante {
+      color: var(--yellow);
+      transition: opacity .5s;
+    }
+
+    .op-result-hint .interrogante.difuminado {
+      opacity: .15;
+      animation: parpadeo .6s ease-in-out infinite;
+    }
+
+    @keyframes parpadeo {
+
+      0%,
+      100% {
+        opacity: .15
+      }
+
+      50% {
+        opacity: .4
+      }
+    }
+
+    .nivel-badge {
+      display: inline-block;
+      background: rgba(124, 58, 237, .15);
+      border: 1px solid var(--violet, #7c3aed);
+      border-radius: 20px;
+      padding: .15rem .6rem;
+      font-family: 'Press Start 2P', monospace;
+      font-size: .3rem;
+      color: var(--violet, #7c3aed);
+      margin-top: .4rem;
+    }
+
+    /* ARENA */
+    .arena {
+      position: relative;
+      width: min(520px, 96vw);
+      height: clamp(340px, 55vh, 520px);
+      background: var(--bg2, #10102a);
+      border: 2px solid var(--border);
+      border-radius: 16px;
+      overflow: hidden;
+      box-sizing: border-box;
+    }
+
+    .arena::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 5px;
+      background: linear-gradient(90deg, transparent, var(--red, #ef4444), transparent);
+      opacity: .7;
+    }
+
+    .arena-floor-label {
+      position: absolute;
+      bottom: 7px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-family: 'Press Start 2P', monospace;
+      font-size: .28rem;
+      color: var(--red, #ef4444);
+      opacity: .55;
+      pointer-events: none;
+      z-index: 5;
+      white-space: nowrap;
+    }
+
+    /* MONEDAS */
+    .coin-falling {
+      position: absolute;
+      top: -80px;
+      width: clamp(60px, 14vw, 76px);
+      height: clamp(60px, 14vw, 76px);
+      border-radius: 50%;
+      background: radial-gradient(circle at 35% 35%, #fbbf24, #d97706, #92400e);
+      border: 3px solid #78350f;
+      box-shadow: 0 0 18px rgba(251, 191, 36, .35), inset 0 -6px 12px rgba(0, 0, 0, .4), inset 0 3px 6px rgba(255, 255, 255, .2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+      transition: transform .08s, box-shadow .08s;
+      z-index: 10;
+      animation: caerMoneda linear forwards;
+    }
+
+    .coin-falling::after {
+      content: '';
+      position: absolute;
+      top: 14%;
+      left: 18%;
+      width: 26%;
+      height: 12%;
+      background: rgba(255, 255, 255, .35);
+      border-radius: 50%;
+      transform: rotate(-30deg);
+      pointer-events: none;
+    }
+
+    .coin-falling:hover {
+      transform: scale(1.1);
+    }
+
+    .coin-falling:active {
+      transform: scale(.9);
+    }
+
+    .coin-num {
+      font-family: 'Press Start 2P', monospace;
+      font-size: clamp(.55rem, 2vw, .75rem);
+      color: #1c1c1c;
+      font-weight: 900;
+      text-shadow: 0 1px 2px rgba(255, 255, 255, .4);
+      pointer-events: none;
+      line-height: 1;
+    }
+
+    .coin-falling.correcto-click {
+      background: radial-gradient(circle at 35% 35%, #4ade80, #16a34a, #14532d) !important;
+      border-color: #15803d !important;
+      animation: none !important;
+      transform: scale(1.2);
+      pointer-events: none;
+    }
+
+    .coin-falling.incorrecto-click {
+      background: radial-gradient(circle at 35% 35%, #f87171, #dc2626, #7f1d1d) !important;
+      border-color: #991b1b !important;
+      animation: none !important;
+      transform: scale(.9);
+      pointer-events: none;
+    }
+
+    @keyframes caerMoneda {
+      0% {
+        top: -80px;
+        opacity: 1
+      }
+
+      88% {
+        opacity: 1
+      }
+
+      100% {
+        top: var(--arena-h, 520px);
+        opacity: .25
+      }
+    }
+
+    /* VIDAS / RACHA */
+    .vidas-wrap {
+      display: flex;
+      gap: .35rem;
+    }
+
+    .vida {
+      font-size: 1rem;
+      transition: transform .2s;
+    }
+
+    .vida.perdida {
+      filter: grayscale(1) opacity(.3);
+      transform: scale(.8);
+    }
+
+    .racha-bar {
+      display: flex;
+      align-items: center;
+      gap: .4rem;
+    }
+
+    .racha-fuego {
+      font-size: 1rem;
+    }
+
+    .racha-num {
+      font-family: 'Press Start 2P', monospace;
+      font-size: .85rem;
+      color: var(--yellow);
+    }
+
+    /* FEEDBACK */
+    .feedback-flash {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 200;
+      opacity: 0;
+      transition: opacity .1s;
+    }
+
+    .feedback-flash.correcto {
+      background: rgba(34, 197, 94, .15);
+    }
+
+    .feedback-flash.incorrecto {
+      background: rgba(239, 68, 68, .15);
+    }
+
+    .feedback-flash.visible {
+      opacity: 1;
+    }
+
+    .float-num {
+      position: fixed;
+      pointer-events: none;
+      z-index: 9999;
+      font-family: 'Press Start 2P', monospace;
+      font-size: .58rem;
+      text-shadow: 0 2px 8px rgba(0, 0, 0, .8);
+      animation: floatUp .95s ease forwards;
+    }
+
+    @keyframes floatUp {
+      0% {
+        transform: translateY(0) scale(1);
+        opacity: 1
+      }
+
+      100% {
+        transform: translateY(-75px) scale(.75);
+        opacity: 0
+      }
+    }
+
+    /* INSTRUCCIONES */
+    .instruc-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 500;
+      background: rgba(7, 7, 26, .95);
+      backdrop-filter: blur(10px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .instruc-card {
+      background: var(--bg2, #10102a);
+      border: 2px solid var(--cyan, #22d3ee);
+      border-radius: 20px;
+      padding: 2rem 2.5rem;
+      max-width: 400px;
+      width: 90%;
+      text-align: center;
+    }
+
+    .instruc-emoji {
+      font-size: 3rem;
+      margin-bottom: .5rem;
+    }
+
+    .instruc-titulo {
+      font-family: 'Press Start 2P', monospace;
+      font-size: .85rem;
+      color: var(--cyan, #22d3ee);
+      margin-bottom: 1rem;
+      line-height: 1.6;
+    }
+
+    .instruc-reglas {
+      text-align: left;
+      margin: 0 0 1.5rem;
+      padding: 0;
+      list-style: none;
+    }
+
+    .instruc-reglas li {
+      font-family: 'Nunito', sans-serif;
+      font-size: .82rem;
+      font-weight: 700;
+      color: #94a3b8;
+      padding: .3rem 0;
+      border-bottom: 1px solid rgba(255, 255, 255, .06);
+      display: flex;
+      gap: .5rem;
+      align-items: flex-start;
+    }
+
+    .instruc-reglas li:last-child {
+      border-bottom: none;
+    }
+
+    .btn-comenzar {
+      padding: .85rem 2.5rem;
+      background: linear-gradient(135deg, var(--cyan, #22d3ee), #0891b2);
+      color: #07071a;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      font-family: 'Press Start 2P', monospace;
+      font-size: .6rem;
+      font-weight: 900;
+      transition: all .2s;
+      box-shadow: 0 4px 20px rgba(34, 211, 238, .3);
+    }
+
+    .btn-comenzar:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 30px rgba(34, 211, 238, .5);
+    }
+
+    /* COUNTDOWN */
+    .countdown-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 450;
+      background: rgba(7, 7, 26, .85);
+      backdrop-filter: blur(6px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity .2s;
+    }
+
+    .countdown-overlay.visible {
+      opacity: 1;
+    }
+
+    .countdown-num {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 6rem;
+      color: var(--cyan);
+      text-shadow: 0 0 60px rgba(34, 211, 238, .8);
+      animation: pumpNum .8s ease forwards;
+    }
+
+    @keyframes pumpNum {
+      0% {
+        transform: scale(1.5);
+        opacity: 0
+      }
+
+      30% {
+        transform: scale(1);
+        opacity: 1
+      }
+
+      80% {
+        transform: scale(1);
+        opacity: 1
+      }
+
+      100% {
+        transform: scale(0.6);
+        opacity: 0
+      }
+    }
+
+    /* ANUNCIO ETAPA */
+    .etapa-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 400;
+      background: rgba(7, 7, 26, .88);
+      backdrop-filter: blur(8px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .3s;
+    }
+
+    .etapa-overlay.active {
+      opacity: 1;
+      pointer-events: all;
+    }
+
+    .etapa-card {
+      background: var(--bg2);
+      border: 2px solid var(--cyan, #22d3ee);
+      border-radius: 20px;
+      padding: 2rem;
+      text-align: center;
+      max-width: 340px;
+      width: 90%;
+      transform: scale(.85);
+      transition: transform .3s;
+    }
+
+    .etapa-overlay.active .etapa-card {
+      transform: scale(1);
+    }
+
+    .etapa-card-emoji {
+      font-size: 3.5rem;
+      margin-bottom: .5rem;
+    }
+
+    .etapa-card-titulo {
+      font-family: 'Press Start 2P', monospace;
+      font-size: .75rem;
+      color: var(--cyan);
+      margin-bottom: .4rem;
+      line-height: 1.6;
+    }
+
+    .etapa-card-ejemplo {
+      font-family: 'Press Start 2P', monospace;
+      font-size: .85rem;
+      color: white;
+      background: rgba(255, 255, 255, .05);
+      border-radius: 10px;
+      padding: .6rem 1rem;
+      margin: .75rem 0 .5rem;
+    }
+
+    .etapa-card-ejemplo .e-signo {
+      color: var(--cyan);
+    }
+
+    .etapa-card-hint {
+      font-family: 'Nunito', sans-serif;
+      font-size: .78rem;
+      font-weight: 700;
+      color: #64748b;
+      margin-bottom: 1.25rem;
+    }
+
+    .btn-continuar {
+      padding: .75rem 1.8rem;
+      background: linear-gradient(135deg, var(--violet, #7c3aed), #6d28d9);
+      color: white;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      font-family: 'Press Start 2P', monospace;
+      font-size: .48rem;
+      transition: all .2s;
+    }
+
+    .btn-continuar:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(124, 58, 237, .5);
+    }
+
+    /* RESULTADO ETAPA */
+    .etapa-resultado-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 410;
+      background: rgba(7, 7, 26, .88);
+      backdrop-filter: blur(8px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .3s;
+    }
+
+    .etapa-resultado-overlay.active {
+      opacity: 1;
+      pointer-events: all;
+    }
+
+    .etapa-resultado-card {
+      background: var(--bg2);
+      border-radius: 18px;
+      padding: 1.75rem 2rem;
+      text-align: center;
+      max-width: 320px;
+      width: 90%;
+      transform: scale(.88);
+      transition: transform .3s;
+    }
+
+    .etapa-resultado-overlay.active .etapa-resultado-card {
+      transform: scale(1);
+    }
+
+    .etapa-resultado-card.paso {
+      border: 2px solid #22c55e;
+    }
+
+    .etapa-resultado-card.fallo {
+      border: 2px solid #ef4444;
+    }
+
+    .etapa-res-emoji {
+      font-size: 3rem;
+      margin-bottom: .4rem;
+    }
+
+    .etapa-res-titulo {
+      font-family: 'Press Start 2P', monospace;
+      font-size: .75rem;
+      color: white;
+      margin-bottom: .6rem;
+      line-height: 1.5;
+    }
+
+    .etapa-res-dots {
+      display: flex;
+      justify-content: center;
+      gap: .5rem;
+      margin-bottom: .75rem;
+    }
+
+    .etapa-res-dot {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: .9rem;
+    }
+
+    .etapa-res-dot.ok {
+      background: rgba(34, 197, 94, .2);
+    }
+
+    .etapa-res-dot.fail {
+      background: rgba(239, 68, 68, .2);
+    }
+
+    .etapa-res-desc {
+      font-family: 'Nunito', sans-serif;
+      font-size: .85rem;
+      font-weight: 700;
+      color: #94a3b8;
+    }
+
+    /* MODAL NIVEL UP */
+    .nivel-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 300;
+      background: rgba(7, 7, 26, .85);
+      backdrop-filter: blur(8px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .3s;
+    }
+
+    .nivel-overlay.active {
+      opacity: 1;
+      pointer-events: all;
+    }
+
+    .nivel-card {
+      background: var(--bg2);
+      border: 2px solid var(--violet, #7c3aed);
+      border-radius: 20px;
+      padding: 2rem;
+      text-align: center;
+      max-width: 360px;
+      width: 90%;
+      transform: scale(.85);
+      transition: transform .3s;
+    }
+
+    .nivel-overlay.active .nivel-card {
+      transform: scale(1);
+    }
+
+    .nivel-emoji {
+      font-size: 3rem;
+      margin-bottom: .5rem;
+    }
+
+    .nivel-titulo {
+      font-family: 'Press Start 2P', monospace;
+      font-size: .85rem;
+      color: white;
+      margin-bottom: .4rem;
+      line-height: 1.6;
+    }
+
+    .nivel-desc {
+      font-size: .875rem;
+      color: var(--text-dim, #94a3b8);
+      font-weight: 700;
+      margin-bottom: .75rem;
+    }
+
+    .nivel-recompensas {
+      display: flex;
+      justify-content: center;
+      gap: 1.5rem;
+      background: rgba(255, 255, 255, .04);
+      border-radius: 12px;
+      padding: .75rem 1rem;
+      margin-bottom: 1.25rem;
+    }
+
+    .nivel-reward-item {
+      text-align: center;
+    }
+
+    .nivel-reward-lbl {
+      font-family: 'Press Start 2P', monospace;
+      font-size: .28rem;
+      color: var(--text-muted);
+      margin-bottom: .25rem;
+    }
+
+    .nivel-reward-val {
+      font-family: 'Press Start 2P', monospace;
+      font-size: .85rem;
+    }
+
+    .nivel-reward-val.yellow {
+      color: var(--yellow);
+    }
+
+    .nivel-reward-val.cyan {
+      color: var(--cyan);
+    }
+
+    .nivel-btns {
+      display: flex;
+      gap: .75rem;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .btn-nivel-continuar {
+      padding: .7rem 1.4rem;
+      background: linear-gradient(135deg, var(--violet, #7c3aed), #6d28d9);
+      color: white;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      font-family: 'Press Start 2P', monospace;
+      font-size: .45rem;
+      transition: all .2s;
+    }
+
+    .btn-nivel-continuar:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(124, 58, 237, .5);
+    }
+
+    .btn-nivel-salir {
+      padding: .7rem 1.4rem;
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      cursor: pointer;
+      color: var(--text);
+      font-family: 'Press Start 2P', monospace;
+      font-size: .45rem;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      transition: border-color .2s;
+    }
+
+    .btn-nivel-salir:hover {
+      border-color: var(--violet);
+    }
+
+    /* RESULTADO FINAL */
+    .resultado-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 10000;
+      background: rgba(7, 7, 26, .92);
+      backdrop-filter: blur(10px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .4s;
+    }
+
+    .resultado-overlay.active {
+      opacity: 1;
+      pointer-events: all;
+    }
+
+    .resultado-modal {
+      background: var(--bg2);
+      border: 1px solid rgba(124, 58, 237, .33);
+      border-radius: 20px;
+      padding: 2.5rem;
+      text-align: center;
+      max-width: 420px;
+      width: 90%;
+      box-shadow: 0 0 60px rgba(124, 58, 237, .3);
+      transform: scale(.9);
+      transition: transform .4s;
+    }
+
+    .resultado-overlay.active .resultado-modal {
+      transform: scale(1);
+    }
+
+    .resultado-titulo {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 1rem;
+      color: white;
+      margin-bottom: .75rem;
+      line-height: 1.5;
+    }
+
+    .resultado-stats {
+      display: flex;
+      justify-content: center;
+      gap: 1.5rem;
+      margin: 1rem 0;
+      flex-wrap: wrap;
+    }
+
+    .res-stat {
+      text-align: center;
+    }
+
+    .res-stat-lbl {
+      font-family: 'Press Start 2P', monospace;
+      font-size: .28rem;
+      color: var(--text-muted);
+      margin-bottom: .25rem;
+    }
+
+    .res-stat-val {
+      font-family: 'Press Start 2P', monospace;
+      font-size: .95rem;
+      color: white;
+    }
+
+    .res-stat-val.yellow {
+      color: var(--yellow);
+    }
+
+    .res-stat-val.green {
+      color: #22c55e;
+    }
+
+    .resultado-recompensas {
+      display: flex;
+      justify-content: center;
+      gap: 2rem;
+      background: rgba(255, 255, 255, .04);
+      border-radius: 12px;
+      padding: .75rem 1rem;
+      margin: .75rem 0;
+    }
+
+    .res-reward-lbl {
+      font-family: 'Press Start 2P', monospace;
+      font-size: .28rem;
+      color: var(--text-muted);
+      margin-bottom: .3rem;
+    }
+
+    .res-reward-val {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 1.2rem;
+    }
+
+    .resultado-sub {
+      font-size: .875rem;
+      color: var(--text-dim, #94a3b8);
+      font-weight: 700;
+      margin-bottom: 1.5rem;
+    }
+
+    .resultado-btns {
+      display: flex;
+      gap: .75rem;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .btn-jugar-denuevo {
+      padding: .75rem 1.5rem;
+      background: linear-gradient(135deg, var(--violet, #7c3aed), #6d28d9);
+      color: white;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      font-family: 'Press Start 2P', monospace;
+      font-size: .48rem;
+      transition: all .2s;
+    }
+
+    .btn-jugar-denuevo:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(124, 58, 237, .5);
+    }
+
+    .btn-volver {
+      padding: .75rem 1.5rem;
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      cursor: pointer;
+      color: var(--text);
+      font-family: 'Press Start 2P', monospace;
+      font-size: .48rem;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      transition: border-color .2s;
+    }
+
+    .btn-volver:hover {
+      border-color: var(--violet);
+    }
+
+    /* PARTÍCULAS */
+    @keyframes clickPart {
+      0% {
+        transform: translate(var(--tx), var(--ty)) scale(1);
+        opacity: 1
+      }
+
+      100% {
+        transform: translate(calc(var(--tx)*3), calc(var(--ty)*3)) scale(0);
+        opacity: 0
+      }
+    }
+
+    .click-part {
+      position: fixed;
+      pointer-events: none;
+      z-index: 9998;
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--yellow);
+      animation: clickPart .55s ease forwards;
+    }
+
+    .click-part.red-part {
+      background: #f87171;
+    }
+
+    @media(max-width:480px) {
+      .hud-bar {
+        gap: .9rem;
+      }
+
+      .hud-val {
+        font-size: .78rem;
+      }
+
+      .operacion-card {
+        padding: .6rem 1rem;
+      }
+
+      .op-expr {
+        font-size: clamp(.75rem, 5vw, 1.1rem);
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="game-topbar">
+    <a href="../juegos.html" class="game-back-btn">← Volver</a>
+    <span class="game-title">⚡ COINCLICK MATH</span>
+    <span class="game-session-coins">🪙 <span id="sessionCoins">0</span></span>
+  </div>
+
+  <div class="feedback-flash" id="feedbackFlash"></div>
+
+  <div class="game-wrap">
+    <div class="hud-bar">
+      <div class="hud-item">
+        <div class="hud-label">TIEMPO</div>
+        <div class="timer-ring-wrap">
+          <svg class="timer-ring-svg" viewBox="0 0 56 56">
+            <circle class="timer-bg" cx="28" cy="28" r="24" />
+            <circle class="timer-fill" cx="28" cy="28" r="24" id="timerRing" />
+          </svg>
+          <div class="timer-text" id="timerTxt">90</div>
+        </div>
+      </div>
+      <div class="hud-item">
+        <div class="hud-label">PUNTOS</div>
+        <div class="hud-val yellow" id="scoreNum">0</div>
+      </div>
+      <div class="hud-item">
+        <div class="hud-label">✅ CORRECTAS</div>
+        <div class="hud-val" style="color:#22c55e" id="correctasNum">0</div>
+      </div>
+      <div class="hud-item">
+        <div class="hud-label">RACHA</div>
+        <div class="racha-bar"><span class="racha-fuego" id="rachaFuego">💫</span><span class="racha-num"
+            id="rachaNUm">0</span></div>
+      </div>
+      <div class="hud-item">
+        <div class="hud-label">NIVEL</div>
+        <div class="hud-val cyan" id="nivelNum">1</div>
+      </div>
+      <div class="hud-item">
+        <div class="hud-label">VIDAS</div>
+        <div class="vidas-wrap" id="vidasWrap">
+          <span class="vida" id="vida0">❤️</span>
+          <span class="vida" id="vida1">❤️</span>
+          <span class="vida" id="vida2">❤️</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="etapa-bar">
+      <span class="etapa-label">ETAPA <span id="etapaNumLabel">1</span>/4</span>
+      <span class="etapa-nombre" id="etapaNombreLabel">SUMAS</span>
+      <div class="etapa-preguntas" id="etapaDots">
+        <div class="etapa-dot" id="dot0"></div>
+        <div class="etapa-dot" id="dot1"></div>
+        <div class="etapa-dot" id="dot2"></div>
+      </div>
+    </div>
+
+    <div class="operacion-card">
+      <div class="op-label">¿CUÁL ES EL RESULTADO?</div>
+      <div class="op-expr" id="opExpr">
+        <span>?</span> <span class="op-signo"> + </span> <span>?</span>
+        <span class="op-signo"> = </span>
+        <span class="op-result-hint"><span class="interrogante" id="interrogante">?</span><span class="hint-texto"
+            id="hintTexto"></span></span>
+      </div>
+      <div class="nivel-badge" id="nivelBadge">NIVEL 1 · ETAPA 1/4</div>
+    </div>
+
+    <div class="arena" id="arena">
+      <div class="arena-floor-label">— SUELO: ¡NO DEJES CAER LA RESPUESTA! —</div>
+    </div>
+  </div>
+
+  <!-- INSTRUCCIONES -->
+  <div class="instruc-overlay" id="instrucOverlay">
+    <div class="instruc-card">
+      <div class="instruc-emoji">⚡🪙</div>
+      <div class="instruc-titulo">COINCLICK MATH</div>
+      <p style="font-family:'Nunito',sans-serif;font-size:.95rem;font-weight:700;color:#cbd5e1;margin-bottom:1rem;">
+        Haz clic en la moneda con el resultado correcto antes de que caiga al suelo.
+      </p>
+      <ul class="instruc-reglas">
+        <li>📚 <span>4 etapas por nivel: Sumas → Restas → Multiplicación → División</span></li>
+        <li>⏱ <span>90 segundos por nivel — ¡no te quedes sin tiempo!</span></li>
+      </ul>
+      <button class="btn-comenzar" id="btnComenzar">¡COMENZAR!</button>
+    </div>
+  </div>
+
+  <!-- COUNTDOWN -->
+  <div class="countdown-overlay" id="countdownOverlay">
+    <div class="countdown-num" id="countdownNum">3</div>
+  </div>
+
+  <!-- ANUNCIO ETAPA -->
+  <div class="etapa-overlay" id="etapaOverlay">
+    <div class="etapa-card">
+      <div class="etapa-card-emoji" id="etapaCardEmoji">➕</div>
+      <div class="etapa-card-titulo" id="etapaCardTitulo">ETAPA 1/4: SUMAS</div>
+      <div class="etapa-card-ejemplo" id="etapaCardEjemplo">
+        <span id="ejA">3</span> <span class="e-signo" id="ejOp">+</span> <span id="ejB">4</span>
+        <span class="e-signo">=</span> <span style="color:var(--yellow)">?</span>
+      </div>
+      <div class="etapa-card-hint">Esta será tu primera pregunta 👆</div>
+      <button class="btn-continuar" id="btnEtapaContinuar">¡LISTO!</button>
+    </div>
+  </div>
+
+  <!-- RESULTADO ETAPA -->
+  <div class="etapa-resultado-overlay" id="etapaResultadoOverlay">
+    <div class="etapa-resultado-card" id="etapaResultadoCard">
+      <div class="etapa-res-emoji" id="etapaResEmoji">✅</div>
+      <div class="etapa-res-titulo" id="etapaResTitulo">¡ETAPA SUPERADA!</div>
+      <div class="etapa-res-dots" id="etapaResDots"></div>
+      <div class="etapa-res-desc" id="etapaResDesc">3/3 correctas</div>
+    </div>
+  </div>
+
+  <!-- NIVEL UP con recompensas y 2 botones -->
+  <div class="nivel-overlay" id="nivelOverlay">
+    <div class="nivel-card">
+      <div class="nivel-emoji" id="nivelEmoji">⭐</div>
+      <div class="nivel-titulo" id="nivelTitulo">¡NIVEL 2!</div>
+      <div class="nivel-desc" id="nivelDesc">Las preguntas serán más difíciles.</div>
+      <div class="nivel-recompensas">
+        <div class="nivel-reward-item">
+          <div class="nivel-reward-lbl">EDUCOINS</div>
+          <div class="nivel-reward-val yellow" id="nivelBonusMonedas">+0 🪙</div>
+        </div>
+        <div class="nivel-reward-item">
+          <div class="nivel-reward-lbl">XP</div>
+          <div class="nivel-reward-val cyan" id="nivelBonusXP">+0 ⚡</div>
+        </div>
+      </div>
+      <div class="nivel-btns">
+        <button class="btn-nivel-continuar" id="btnNivelContinuar">▶ Continuar</button>
+        <a href="../juegos.html" class="btn-nivel-salir">🏠 Salir al Lobby</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- RESULTADO FINAL -->
+  <div class="resultado-overlay" id="resultadoOverlay">
+    <div class="resultado-modal">
+      <div class="resultado-titulo" id="resTitulo">¡TIEMPO!</div>
+      <div class="resultado-stats">
+        <div class="res-stat">
+          <div class="res-stat-lbl">CORRECTAS</div>
+          <div class="res-stat-val green" id="resCorrectas">0</div>
+        </div>
+        <div class="res-stat">
+          <div class="res-stat-lbl">PUNTOS</div>
+          <div class="res-stat-val" id="resPuntos">0</div>
+        </div>
+        <div class="res-stat">
+          <div class="res-stat-lbl">NIVEL</div>
+          <div class="res-stat-val yellow" id="resNivel">1</div>
+        </div>
+      </div>
+      <div class="resultado-recompensas">
+        <div>
+          <div class="res-reward-lbl">EDUCOINS GANADOS</div>
+          <div class="res-reward-val yellow" id="resCoins">0 🪙</div>
+        </div>
+        <div>
+          <div class="res-reward-lbl">XP GANADO</div>
+          <div class="res-reward-val cyan" id="resXP">0 ⚡</div>
+        </div>
+      </div>
+      <div class="resultado-sub" id="resSub">Sigue jugando para mejorar 💪</div>
+      <div class="resultado-btns">
+        <button class="btn-jugar-denuevo" id="btnJugarDenuevo">🔄 Jugar de nuevo</button>
+        <a href="../juegos.html" class="btn-volver">🏠 Salir al Lobby</a>
+      </div>
+    </div>
+  </div>
+
+  <script src="../../auth/clerk-config.js"></script>
+  <script src="../../shared/clerk-guard.js"></script>
+  <script src="../../shared/shared.js"></script>
+  <script>
+    /* ══════════════════════════════════════════════════════════
+       COINCLICK MATH — constantes
+    ══════════════════════════════════════════════════════════ */
+    var VELOCIDADES = { velBase: [8000, 7200, 6500, 5800, 5200], variacion: 400 };
+    var DURACION_NIVEL = 90;
+    var VIDAS_MAX = 3;
+    var MONEDAS_COUNT = 4;
+    var PREGUNTAS_ETAPA = 3;
+    var MINIMO_PASAR = 2;
+    var TOTAL_NIVELES = 5;
+
+    var ETAPAS = [
+      { id: 0, nombre: 'SUMAS', emoji: '➕', ops: ['+'] },
+      { id: 1, nombre: 'SUMAS Y RESTAS', emoji: '➕➖', ops: ['+', '-'] },
+      { id: 2, nombre: 'MULTIPLICACIÓN', emoji: '✖️', ops: ['×'] },
+      { id: 3, nombre: 'DIVISIÓN', emoji: '➗', ops: ['÷'] },
+    ];
+
+    var RANGOS = [
+      { sumaMax: 9, restaMax: 9, multA: [2, 5], multB: [2, 5], divRes: [2, 5], divB: [2, 5] },
+      { sumaMax: 15, restaMax: 12, multA: [2, 7], multB: [2, 7], divRes: [2, 7], divB: [2, 5] },
+      { sumaMax: 20, restaMax: 18, multA: [2, 9], multB: [2, 9], divRes: [2, 9], divB: [2, 5] },
+      { sumaMax: 30, restaMax: 25, multA: [2, 9], multB: [2, 9], divRes: [2, 9], divB: [2, 9] },
+      { sumaMax: 50, restaMax: 40, multA: [2, 12], multB: [2, 9], divRes: [2, 12], divB: [2, 9] },
+    ];
+
+    /* ── Estado global ── */
+    var STATE = {
+      score: 0, correctas: 0, racha: 0, vidas: VIDAS_MAX,
+      corriendo: false,
+      nivelIdx: 0, etapaIdx: 0, preguntaEnEtapa: 0,
+      resultadosEtapa: [],
+      opActual: null, primeraOpEtapa: null,
+      coinsEnArena: [],
+      hintTimer: null, hintActivo: false,
+      timerInterval: null, tiempoLeft: DURACION_NIVEL,
+      rondaTimeout: null,
+      apiData: null,
+    };
+
+    function $(id) { return document.getElementById(id); }
+    var arena = $('arena');
+    function getArenaH() { return arena.offsetHeight || 520; }
+    function syncArenaH() { arena.style.setProperty('--arena-h', getArenaH() + 'px'); }
+    function rand(a, b) { return Math.floor(Math.random() * (b - a + 1)) + a; }
+
+    /* ══════════════════════════════════════════════════════════
+       INICIO
+    ══════════════════════════════════════════════════════════ */
+    document.addEventListener('DOMContentLoaded', function () {
+      syncArenaH();
+      window.addEventListener('resize', syncArenaH);
+      renderVidas();
+      $('instrucOverlay').style.display = 'flex';
+      $('btnComenzar').addEventListener('click', onComenzar);
+      $('btnJugarDenuevo').addEventListener('click', reiniciarJuego);
+      $('btnNivelContinuar').addEventListener('click', onNivelContinuar);
+      $('btnEtapaContinuar').addEventListener('click', onEtapaContinuar);
+    });
+
+    function onComenzar() {
+      $('instrucOverlay').style.display = 'none';
+      mostrarCountdown(function () { iniciarJuego(); });
+    }
+
+    /* ══════════════════════════════════════════════════════════
+       COUNTDOWN 3-2-1-¡YA!
+    ══════════════════════════════════════════════════════════ */
+    function mostrarCountdown(cb) {
+      var overlay = $('countdownOverlay');
+      var numEl = $('countdownNum');
+      var n = 3;
+      function tick() {
+        numEl.textContent = n;
+        numEl.style.color = 'var(--cyan)';
+        overlay.classList.add('visible');
+        numEl.style.animation = 'none';
+        numEl.offsetHeight;
+        numEl.style.animation = 'pumpNum .85s ease forwards';
+        setTimeout(function () {
+          overlay.classList.remove('visible');
+          n--;
+          if (n > 0) {
+            setTimeout(tick, 300);
+          } else {
+            setTimeout(function () {
+              numEl.textContent = '¡YA!';
+              numEl.style.color = '#22c55e';
+              overlay.classList.add('visible');
+              numEl.style.animation = 'none';
+              numEl.offsetHeight;
+              numEl.style.animation = 'pumpNum .6s ease forwards';
+              setTimeout(function () {
+                overlay.classList.remove('visible');
+                if (cb) cb();
+              }, 700);
+            }, 150);
+          }
+        }, 850);
+      }
+      tick();
+    }
+
+    /* ══════════════════════════════════════════════════════════
+       INICIAR JUEGO
+    ══════════════════════════════════════════════════════════ */
+    function iniciarJuego() {
+      STATE.score = 0; STATE.correctas = 0; STATE.racha = 0; STATE.vidas = VIDAS_MAX;
+      STATE.corriendo = true; STATE.nivelIdx = 0; STATE.etapaIdx = 0;
+      STATE.preguntaEnEtapa = 0; STATE.resultadosEtapa = []; STATE.opActual = null;
+      STATE.primeraOpEtapa = null; STATE.coinsEnArena = []; STATE.hintActivo = false;
+      STATE.apiData = null; STATE.tiempoLeft = DURACION_NIVEL;
+      syncArenaH(); limpiarArena(); renderVidas(); actualizarHUD(); renderEtapaBar();
+      iniciarTimer();
+      mostrarAnuncioEtapa(0, function () { lanzarRonda(); });
+    }
+
+    /* ══════════════════════════════════════════════════════════
+       TIMER DE 90 SEGUNDOS POR NIVEL
+    ══════════════════════════════════════════════════════════ */
+    function iniciarTimer() {
+      clearInterval(STATE.timerInterval);
+      STATE.tiempoLeft = DURACION_NIVEL;
+      var circum = 2 * Math.PI * 24;
+      $('timerRing').style.stroke = 'var(--cyan)';
+      $('timerTxt').style.color = 'white';
+      $('timerRing').style.strokeDashoffset = '0';
+      $('timerTxt').textContent = DURACION_NIVEL;
+
+      STATE.timerInterval = setInterval(function () {
+        STATE.tiempoLeft--;
+        var offset = circum - (STATE.tiempoLeft / DURACION_NIVEL) * circum;
+        $('timerRing').style.strokeDashoffset = offset;
+        $('timerTxt').textContent = STATE.tiempoLeft;
+        if (STATE.tiempoLeft <= 10) {
+          $('timerRing').style.stroke = 'var(--red,#ef4444)';
+          $('timerTxt').style.color = 'var(--red,#ef4444)';
+        }
+        if (STATE.tiempoLeft <= 0) {
+          clearInterval(STATE.timerInterval);
+          terminarJuego('tiempo');
+        }
+      }, 1000);
+    }
+
+    function pausarTimer() { clearInterval(STATE.timerInterval); }
+
+    function reanudarTimer() {
+      clearInterval(STATE.timerInterval); // evitar intervalos acumulados
+      var circum = 2 * Math.PI * 24;
+      STATE.timerInterval = setInterval(function () {
+        STATE.tiempoLeft--;
+        var offset = circum - (STATE.tiempoLeft / DURACION_NIVEL) * circum;
+        $('timerRing').style.strokeDashoffset = offset;
+        $('timerTxt').textContent = STATE.tiempoLeft;
+        if (STATE.tiempoLeft <= 10) {
+          $('timerRing').style.stroke = 'var(--red,#ef4444)';
+          $('timerTxt').style.color = 'var(--red,#ef4444)';
+        }
+        if (STATE.tiempoLeft <= 0) {
+          clearInterval(STATE.timerInterval);
+          terminarJuego('tiempo');
+        }
+      }, 1000);
+    }
+
+    /* ══════════════════════════════════════════════════════════
+       ANUNCIO DE ETAPA — el ejemplo ES la primera pregunta
+    ══════════════════════════════════════════════════════════ */
+    function mostrarAnuncioEtapa(etapaIdx, cb) {
+      pausarTimer();
+      STATE.corriendo = false;
+      var et = ETAPAS[etapaIdx];
+
+      // Generar la operación que SERÁ la primera pregunta de esta etapa
+      var op = generarOperacionParaEtapa(etapaIdx);
+      STATE.primeraOpEtapa = op;  // guardada para usarla en lanzarRonda
+
+      $('etapaCardEmoji').textContent = et.emoji;
+      $('etapaCardTitulo').textContent = 'ETAPA ' + (etapaIdx + 1) + '/4: ' + et.nombre;
+      $('ejA').textContent = op.a;
+      $('ejOp').textContent = op.op;
+      $('ejB').textContent = op.b;
+
+      $('etapaOverlay').classList.add('active');
+      $('btnEtapaContinuar')._cb = cb;
+    }
+
+    function onEtapaContinuar() {
+      $('etapaOverlay').classList.remove('active');
+      STATE.corriendo = true;
+      reanudarTimer();
+      if ($('btnEtapaContinuar')._cb) $('btnEtapaContinuar')._cb();
+    }
+
+    /* ══════════════════════════════════════════════════════════
+       GENERADOR DE OPERACIONES
+    ══════════════════════════════════════════════════════════ */
+    function generarOperacionParaEtapa(etapaIdx) {
+      return generarOperacionConOp(ETAPAS[etapaIdx].ops, STATE.nivelIdx);
+    }
+
+    function generarOperacionConOp(ops, nivelIdx) {
+      var rng = RANGOS[nivelIdx];
+      var op = ops[Math.floor(Math.random() * ops.length)];
+      var a, b, res;
+      if (op === '+') {
+        a = rand(1, rng.sumaMax); b = rand(1, rng.sumaMax); res = a + b;
+      } else if (op === '-') {
+        a = rand(2, rng.restaMax); b = rand(1, a); res = a - b;
+      } else if (op === '×') {
+        a = rand(rng.multA[0], rng.multA[1]);
+        b = rand(rng.multB[0], rng.multB[1]);
+        res = a * b;
+      } else { // ÷
+        b = rand(rng.divB[0], rng.divB[1]);
+        res = rand(rng.divRes[0], rng.divRes[1]);
+        a = b * res;
+      }
+      return { a: a, b: b, op: op, res: res };
+    }
+
+    // Evita repetir la misma operación exacta (a, b, op) dentro de una etapa
+    function generarOperacionUnica(etapaIdx, usadas) {
+      var op, intentos = 0;
+      do {
+        op = generarOperacionParaEtapa(etapaIdx);
+        intentos++;
+      } while (
+        intentos < 10 &&
+        usadas.some(function (u) { return u.a === op.a && u.b === op.b && u.op === op.op; })
+      );
+      return op;
+    }
+
+    /* ══════════════════════════════════════════════════════════
+       LANZAR RONDA
+    ══════════════════════════════════════════════════════════ */
+    function lanzarRonda() {
+      if (!STATE.corriendo) return;
+      if (STATE.vidas <= 0) { terminarJuego('sin_vidas'); return; }
+
+      limpiarArena(); syncArenaH();
+      STATE.hintActivo = false;
+      clearTimeout(STATE.hintTimer);
+
+      // Primera pregunta de la etapa = la del ejemplo del modal
+      var op;
+      if (STATE.primeraOpEtapa && STATE.preguntaEnEtapa === 0) {
+        op = STATE.primeraOpEtapa;
+        STATE.primeraOpEtapa = null;
+      } else {
+        // Preguntas siguientes: evitar repetir la misma operación
+        var usadas = STATE.resultadosEtapa.map(function (r) { return r.op; }).filter(Boolean);
+        op = generarOperacionUnica(STATE.etapaIdx, usadas);
+      }
+      STATE.opActual = op;
+
+      $('opExpr').innerHTML =
+        '<span>' + op.a + '</span> <span class="op-signo"> ' + op.op + ' </span>' +
+        '<span>' + op.b + '</span> <span class="op-signo"> = </span>' +
+        '<span class="op-result-hint" id="resultHint">' +
+        '<span class="interrogante" id="interrogante">?</span>' +
+        '<span class="hint-texto" id="hintTexto">' + op.res + '</span>' +
+        '</span>';
+      $('nivelBadge').textContent = 'NIVEL ' + (STATE.nivelIdx + 1) + ' · ETAPA ' + (STATE.etapaIdx + 1) + '/4';
+      actualizarHUD();
+      renderEtapaBar();
+
+      var opciones = generarOpciones(op.res, MONEDAS_COUNT);
+      var arenaW = arena.offsetWidth || 520;
+      var coinSize = Math.min(76, Math.floor(arenaW * 0.14));
+      var margin = coinSize * 0.6;
+      var slots = distribuirX(MONEDAS_COUNT, margin, arenaW - margin - coinSize);
+      var velBase = VELOCIDADES.velBase[STATE.nivelIdx];
+
+      opciones.forEach(function (num, i) {
+        var coin = crearMoneda(num, slots[i], op.res, velBase, coinSize);
+        arena.appendChild(coin);
+        STATE.coinsEnArena.push(coin);
+      });
+
+      var tiempoCaida = velBase + VELOCIDADES.variacion + 350;
+
+      // Hint al 50% del tiempo de caída
+      STATE.hintTimer = setTimeout(function () {
+        if (!STATE.corriendo) return;
+        STATE.hintActivo = true;
+        var interr = $('interrogante');
+        var hint = $('hintTexto');
+        if (interr) interr.classList.add('difuminado');
+        if (hint) hint.classList.add('visible');
+      }, tiempoCaida * 0.5);
+
+      // Miss si la moneda llega al suelo sin que la clickeen
+      STATE.rondaTimeout = setTimeout(function () {
+        if (!STATE.corriendo) return;
+        var correctaCoin = STATE.coinsEnArena.find(function (c) {
+          return c.dataset.correcto === '1' && c.dataset.clicked === '0';
+        });
+        if (correctaCoin) missRonda();
+      }, tiempoCaida);
+    }
+
+    /* ══════════════════════════════════════════════════════════
+       CLICK EN MONEDA
+    ══════════════════════════════════════════════════════════ */
+    function onCoinClick(e, coin, num, correcto) {
+      if (!STATE.corriendo || coin.dataset.clicked === '1') return;
+      coin.dataset.clicked = '1';
+      clearTimeout(STATE.rondaTimeout);
+      clearTimeout(STATE.hintTimer);
+      spawnParticulas(e.clientX, e.clientY, num === correcto);
+
+      if (num === correcto) {
+        coin.classList.add('correcto-click');
+        STATE.correctas++;
+        STATE.racha++;
+        STATE.resultadosEtapa.push({ ok: true, op: STATE.opActual });
+
+        var bonus = STATE.racha >= 5 ? 3 : STATE.racha >= 3 ? 2 : 1;
+        var pts = 10 * (STATE.etapaIdx + 1) * bonus;
+        var usoAyuda = STATE.hintActivo;
+        if (usoAyuda) pts = Math.floor(pts / 2);
+        STATE.score += pts;
+
+        spawnFloat(e.clientX, e.clientY,
+          '+' + pts + (bonus > 1 ? ' ×' + bonus + '🔥' : '') + (usoAyuda ? ' 💡½' : ''),
+          usoAyuda ? '#fb923c' : '#fbbf24'
+        );
+        flashFeedback('correcto');
+        actualizarHUD();
+        setTimeout(function () { avanzarPregunta(); }, 650);
+      } else {
+        coin.classList.add('incorrecto-click');
+        STATE.racha = 0;
+        STATE.vidas = Math.max(0, STATE.vidas - 1);
+        STATE.resultadosEtapa.push({ ok: false, op: STATE.opActual });
+        renderVidas(); flashFeedback('incorrecto');
+        spawnFloat(e.clientX, e.clientY, '❌', '#f87171');
+        actualizarHUD();
+        if (STATE.vidas <= 0) {
+          setTimeout(function () { terminarJuego('sin_vidas'); }, 500);
+        } else {
+          var cCoin = STATE.coinsEnArena.find(function (c) { return c.dataset.correcto === '1'; });
+          if (cCoin) cCoin.style.boxShadow = '0 0 30px 8px rgba(34,197,94,.8)';
+          setTimeout(function () { avanzarPregunta(); }, 950);
+        }
+      }
+    }
+
+    function missRonda() {
+      STATE.racha = 0;
+      STATE.vidas = Math.max(0, STATE.vidas - 1);
+      STATE.resultadosEtapa.push({ ok: false, op: STATE.opActual });
+      renderVidas(); flashFeedback('incorrecto');
+      spawnFloat(
+        arena.offsetLeft + arena.offsetWidth / 2,
+        arena.offsetTop + arena.offsetHeight - 30,
+        '−❤️ ESCAPÓ', '#f87171'
+      );
+      actualizarHUD();
+      if (STATE.vidas <= 0) { setTimeout(function () { terminarJuego('sin_vidas'); }, 400); }
+      else { setTimeout(function () { avanzarPregunta(); }, 750); }
+    }
+
+    /* ══════════════════════════════════════════════════════════
+       AVANZAR PREGUNTA
+    ══════════════════════════════════════════════════════════ */
+    function avanzarPregunta() {
+      if (!STATE.corriendo) return;
+      STATE.preguntaEnEtapa++;
+      renderEtapaBar();
+      if (STATE.preguntaEnEtapa >= PREGUNTAS_ETAPA) {
+        finalizarEtapa();
+      } else {
+        lanzarRonda();
+      }
+    }
+
+    /* ══════════════════════════════════════════════════════════
+       FINALIZAR ETAPA
+    ══════════════════════════════════════════════════════════ */
+    function finalizarEtapa() {
+      pausarTimer();
+      STATE.corriendo = false;
+      clearTimeout(STATE.hintTimer);
+      limpiarArena();
+
+      var correctasEtapa = STATE.resultadosEtapa.filter(function (r) { return r.ok; }).length;
+      var paso = correctasEtapa >= MINIMO_PASAR;
+
+      var dotsHTML = STATE.resultadosEtapa.map(function (r) {
+        return '<div class="etapa-res-dot ' + (r.ok ? 'ok' : 'fail') + '">' + (r.ok ? '✅' : '❌') + '</div>';
+      }).join('');
+      $('etapaResDots').innerHTML = dotsHTML;
+
+      var card = $('etapaResultadoCard');
+      card.className = 'etapa-resultado-card ' + (paso ? 'paso' : 'fallo');
+      $('etapaResEmoji').textContent = paso ? '🎉' : '😞';
+      $('etapaResTitulo').textContent = paso ? '¡ETAPA SUPERADA!' : 'NO PASASTE LA ETAPA';
+      $('etapaResDesc').textContent = paso
+        ? correctasEtapa + '/' + PREGUNTAS_ETAPA + ' correctas ✔'
+        : correctasEtapa + '/' + PREGUNTAS_ETAPA + ' — necesitabas ' + MINIMO_PASAR;
+
+      $('etapaResultadoOverlay').classList.add('active');
+
+      setTimeout(function () {
+        $('etapaResultadoOverlay').classList.remove('active');
+        if (!paso) {
+          terminarJuego('etapa_fallida');
+        } else {
+          var sig = STATE.etapaIdx + 1;
+          if (sig >= ETAPAS.length) {
+            // Completó las 4 etapas → llama API con nivel_completado:true
+            llamarAPIyMostrarNivel();
+          } else {
+            STATE.etapaIdx = sig;
+            STATE.preguntaEnEtapa = 0;
+            STATE.resultadosEtapa = [];
+            pausarTimer(); // seguridad: evitar que corra durante el anuncio
+            mostrarAnuncioEtapa(sig, function () {
+              STATE.corriendo = true;
+              reanudarTimer();
+              lanzarRonda();
+            });
+          }
+        }
+      }, 2200);
+    }
+
+    /* ══════════════════════════════════════════════════════════
+       LLAMAR API AL COMPLETAR LAS 4 ETAPAS DEL NIVEL
+    ══════════════════════════════════════════════════════════ */
+    function llamarAPIyMostrarNivel() {
+      getTokenLuego(function (_tok) {
+        if (!_tok) { mostrarNivelUp({ bonus_monedas: 0, bonus_xp: 0 }); return; }
+        fetch('/api/juegos', {
+          method: 'POST',
+          headers: { 'Authorization': 'Bearer ' + _tok, 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'completar',
+            juego_id: sessionStorage.getItem('juego_id') || 'coinclik',
+            puntos: STATE.score,
+            duracion_seg: DURACION_NIVEL - STATE.tiempoLeft,
+            nivel_completado: true,  // indica al API que suba el nivel
+          })
+        })
+          .then(function (r) { return r.json(); })
+          .then(function (data) {
+            STATE.apiData = data;
+            // Actualizar monedas en el header del shared
+            actualizarHeaderMonedas(data.monedas_ganadas || 0);
+            // Mostrar toasts de misiones
+            if (data.misiones_completadas && data.misiones_completadas.length) {
+              data.misiones_completadas.forEach(function (m) {
+                setTimeout(function () {
+                  if (typeof toast === 'function') toast('🎯 Misión: ' + m.descripcion + ' +' + m.monedas + ' 🪙', 'success');
+                }, 400);
+              });
+            }
+            mostrarNivelUp(data);
+          })
+          .catch(function () { mostrarNivelUp({ bonus_monedas: 0, bonus_xp: 0 }); });
+      });
+    }
+
+    /* ══════════════════════════════════════════════════════════
+       MODAL NIVEL UP — muestra recompensas y 2 botones
+    ══════════════════════════════════════════════════════════ */
+    function mostrarNivelUp(data) {
+      var nivelNuevo = data.nivel_juego || (STATE.nivelIdx + 2);
+      var esMaestro = data.es_maestro || (nivelNuevo > TOTAL_NIVELES);
+
+      $('nivelEmoji').textContent = esMaestro ? '🏆' : '⭐';
+      $('nivelTitulo').textContent = esMaestro
+        ? '¡MAESTRO DEL CÁLCULO!'
+        : '¡NIVEL ' + nivelNuevo + ' DESBLOQUEADO!';
+      $('nivelDesc').textContent = esMaestro
+        ? '¡Completaste todos los niveles! 🎉'
+        : 'Nivel ' + (STATE.nivelIdx + 1) + ' completado. ¡Sigue así!';
+      $('nivelBonusMonedas').textContent = '+' + (data.bonus_monedas || 0) + ' 🪙';
+      $('nivelBonusXP').textContent = '+' + (data.bonus_xp || 0) + ' ⚡';
+
+      // Si es el último nivel, ocultar botón continuar
+      $('btnNivelContinuar').style.display = esMaestro ? 'none' : '';
+
+      $('nivelOverlay').classList.add('active');
+    }
+
+    function onNivelContinuar() {
+      $('nivelOverlay').classList.remove('active');
+      // Avanzar al siguiente nivel del juego interno
+      STATE.nivelIdx++;
+      STATE.etapaIdx = 0;
+      STATE.preguntaEnEtapa = 0;
+      STATE.resultadosEtapa = [];
+      STATE.primeraOpEtapa = null;
+      // Reiniciar timer completo para el nuevo nivel
+      iniciarTimer();
+      actualizarHUD();
+      mostrarAnuncioEtapa(0, function () {
+        STATE.corriendo = true;
+        lanzarRonda();
+      });
+    }
+
+    /* ══════════════════════════════════════════════════════════
+       TERMINAR JUEGO (tiempo, sin vidas, etapa fallida)
+    ══════════════════════════════════════════════════════════ */
+    function terminarJuego(motivo) {
+      STATE.corriendo = false;
+      pausarTimer();
+      clearTimeout(STATE.rondaTimeout);
+      clearTimeout(STATE.hintTimer);
+      limpiarArena();
+
+      // Si ya llamamos la API al subir nivel, no llamar de nuevo
+      if (STATE.apiData) {
+        mostrarResultado(motivo, STATE.apiData.monedas_ganadas || 0, STATE.apiData.xp_ganado || 0);
+        return;
+      }
+
+      getTokenLuego(function (_tok) {
+        if (!_tok) { mostrarResultado(motivo, 0, 0); return; }
+        fetch('/api/juegos', {
+          method: 'POST',
+          headers: { 'Authorization': 'Bearer ' + _tok, 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'completar',
+            juego_id: sessionStorage.getItem('juego_id') || 'coinclik',
+            puntos: STATE.score,
+            duracion_seg: DURACION_NIVEL - STATE.tiempoLeft,
+          })
+        })
+          .then(function (r) { return r.json(); })
+          .then(function (data) {
+            STATE.apiData = data;
+            actualizarHeaderMonedas(data.monedas_ganadas || 0);
+            if (data.subio_nivel && data.nuevo_nivel && typeof toast === 'function') {
+              setTimeout(function () { toast('⬆️ ¡SUBISTE AL NIVEL ' + data.nuevo_nivel + '!', 'success'); }, 800);
+            }
+            if (data.misiones_completadas && data.misiones_completadas.length) {
+              data.misiones_completadas.forEach(function (m) {
+                setTimeout(function () {
+                  if (typeof toast === 'function') toast('🎯 Misión: ' + m.descripcion + ' +' + m.monedas + ' 🪙', 'success');
+                }, 400);
+              });
+            }
+            mostrarResultado(motivo, data.monedas_ganadas || 0, data.xp_ganado || 0);
+          })
+          .catch(function () { mostrarResultado(motivo, 0, 0); });
+      });
+    }
+
+    function mostrarResultado(motivo, monedas, xp) {
+      var titulo;
+      if (motivo === 'completado') titulo = '🏆 ¡MAESTRO DEL CÁLCULO!';
+      else if (motivo === 'sin_vidas') titulo = '💀 SIN VIDAS';
+      else if (motivo === 'etapa_fallida') titulo = '📉 NO PASASTE LA ETAPA';
+      else titulo = '⏰ TIEMPO AGOTADO';
+
+      $('resTitulo').textContent = titulo;
+      $('resCorrectas').textContent = STATE.correctas;
+      $('resPuntos').textContent = STATE.score.toLocaleString('es-CL');
+      $('resNivel').textContent = STATE.nivelIdx + 1;
+      $('resCoins').textContent = monedas + ' 🪙';
+      $('resXP').textContent = xp + ' ⚡';
+      $('sessionCoins').textContent = monedas;
+
+      var sub;
+      if (motivo === 'etapa_fallida')
+        sub = 'Llegaste al nivel ' + (STATE.nivelIdx + 1) + ', etapa ' + (STATE.etapaIdx + 1);
+      else if (motivo === 'completado')
+        sub = '¡Completaste todos los niveles! 🎉';
+      else
+        sub = 'Llegaste al nivel ' + (STATE.nivelIdx + 1);
+      $('resSub').textContent = sub;
+
+      $('resultadoOverlay').classList.add('active');
+    }
+
+    /* ══════════════════════════════════════════════════════════
+       ACTUALIZAR HEADER DE MONEDAS (shared)
+    ══════════════════════════════════════════════════════════ */
+    function actualizarHeaderMonedas(monedasGanadas) {
+      var hc = document.getElementById('headerCoins');
+      if (!hc) return;
+      var actual = parseInt(hc.textContent.replace(/\D/g, '')) || 0;
+      if (typeof animarContador === 'function') {
+        animarContador('headerCoins', actual + Number(monedasGanadas), 600);
+      } else {
+        hc.textContent = (actual + Number(monedasGanadas)).toLocaleString('es-CL');
+      }
+    }
+
+    function reiniciarJuego() {
+      $('resultadoOverlay').classList.remove('active');
+      $('nivelOverlay').classList.remove('active');
+      clearInterval(STATE.timerInterval);
+      clearTimeout(STATE.rondaTimeout);
+      clearTimeout(STATE.hintTimer);
+      $('timerRing').style.stroke = 'var(--cyan)';
+      $('timerTxt').style.color = 'white';
+      $('timerRing').style.strokeDashoffset = '0';
+      $('instrucOverlay').style.display = 'flex';
+    }
+
+    /* ══════════════════════════════════════════════════════════
+       HUD Y BARRA DE ETAPA
+    ══════════════════════════════════════════════════════════ */
+    function actualizarHUD() {
+      $('scoreNum').textContent = STATE.score.toLocaleString('es-CL');
+      $('correctasNum').textContent = STATE.correctas;
+      $('rachaNUm').textContent = STATE.racha;
+      $('nivelNum').textContent = STATE.nivelIdx + 1;
+      $('rachaFuego').textContent = STATE.racha >= 5 ? '🔥' : STATE.racha >= 3 ? '✨' : '💫';
+      $('sessionCoins').textContent = Math.min(300, Math.floor(STATE.score / 8));
+    }
+
+    function renderEtapaBar() {
+      var et = ETAPAS[STATE.etapaIdx];
+      $('etapaNumLabel').textContent = STATE.etapaIdx + 1;
+      $('etapaNombreLabel').textContent = et.nombre;
+      for (var i = 0; i < PREGUNTAS_ETAPA; i++) {
+        var dot = $('dot' + i);
+        if (!dot) continue;
+        dot.className = 'etapa-dot';
+        dot.textContent = '';
+        if (i < STATE.resultadosEtapa.length) {
+          var ok = STATE.resultadosEtapa[i].ok;
+          dot.classList.add(ok ? 'ok' : 'fail');
+          dot.textContent = ok ? '✓' : '✗';
+        }
+      }
+    }
+
+    function renderVidas() {
+      for (var i = 0; i < VIDAS_MAX; i++) {
+        var el = $('vida' + i);
+        if (el) el.classList.toggle('perdida', i >= STATE.vidas);
+      }
+    }
+
+    /* ══════════════════════════════════════════════════════════
+       HELPERS DE JUEGO
+    ══════════════════════════════════════════════════════════ */
+    function generarOpciones(correcto, n) {
+      var set = new Set([correcto]);
+      var intentos = 0;
+      while (set.size < n && intentos < 60) {
+        intentos++;
+        var delta = rand(1, Math.max(3, Math.floor(Math.abs(correcto) * .4) + 2));
+        var cand = correcto + (Math.random() < .5 ? delta : -delta);
+        if (cand !== correcto && cand >= 0) set.add(cand);
+      }
+      while (set.size < n) set.add(correcto + set.size);
+      return Array.from(set).sort(function () { return Math.random() - .5; });
+    }
+
+    function distribuirX(n, min, max) {
+      var step = (max - min) / (n - 1);
+      return Array.from({ length: n }, function (_, i) { return Math.round(min + i * step); });
+    }
+
+    function crearMoneda(num, x, correcto, velBase, size) {
+      var coin = document.createElement('div');
+      coin.className = 'coin-falling';
+      coin.dataset.correcto = num === correcto ? '1' : '0';
+      coin.dataset.clicked = '0';
+      var vel = velBase + rand(-VELOCIDADES.variacion, VELOCIDADES.variacion);
+      coin.style.animationDuration = vel + 'ms';
+      coin.style.left = x + 'px';
+      coin.style.width = size + 'px';
+      coin.style.height = size + 'px';
+      var label = document.createElement('span');
+      label.className = 'coin-num';
+      label.textContent = num;
+      coin.appendChild(label);
+      coin.addEventListener('click', function (e) { onCoinClick(e, coin, num, correcto); });
+      return coin;
+    }
+
+    function limpiarArena() {
+      STATE.coinsEnArena.forEach(function (c) { c.remove(); });
+      STATE.coinsEnArena = [];
+    }
+
+    function flashFeedback(tipo) {
+      var el = $('feedbackFlash');
+      el.className = 'feedback-flash ' + tipo + ' visible';
+      setTimeout(function () { el.classList.remove('visible'); }, 180);
+    }
+
+    function spawnFloat(x, y, txt, color) {
+      var el = document.createElement('div');
+      el.className = 'float-num';
+      el.textContent = txt;
+      el.style.left = x + 'px';
+      el.style.top = y + 'px';
+      el.style.color = color;
+      document.body.appendChild(el);
+      setTimeout(function () { el.remove(); }, 950);
+    }
+
+    function spawnParticulas(x, y, correcto) {
+      for (var i = 0; i < 8; i++) {
+        var p = document.createElement('div');
+        p.className = 'click-part' + (correcto ? '' : ' red-part');
+        var angle = (i / 8) * Math.PI * 2;
+        p.style.left = x + 'px';
+        p.style.top = y + 'px';
+        p.style.setProperty('--tx', Math.cos(angle) * 35 + 'px');
+        p.style.setProperty('--ty', Math.sin(angle) * 35 + 'px');
+        document.body.appendChild(p);
+        setTimeout(function () { p.remove(); }, 560);
+      }
+    }
+
+    /* ══════════════════════════════════════════════════════════
+       TOKEN CLERK — espera hasta 5 segundos
+    ══════════════════════════════════════════════════════════ */
+    function getTokenLuego(callback) {
+      if (window.CLERK_TOKEN) { callback(window.CLERK_TOKEN); return; }
+      var intentos = 0;
+      var iv = setInterval(function () {
+        intentos++;
+        if (window.CLERK_TOKEN) { clearInterval(iv); callback(window.CLERK_TOKEN); return; }
+        if (intentos >= 25) { clearInterval(iv); callback(null); }
+      }, 200);
+    }
+
+    document.addEventListener('clerkReady', function () { });
+  </script>
+</body>
+
+</html>

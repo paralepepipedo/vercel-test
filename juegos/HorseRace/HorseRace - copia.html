@@ -1,0 +1,1828 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HorseRace Tabla</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Nunito:wght@700;800;900&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet" href="../../shared/shared.css">
+  <script
+    data-clerk-publishable-key="pk_test_bG92aW5nLXJhcHRvci0xLmNsZXJrLmFjY291bnRzLmRldiQ"
+    src="https://cdn.jsdelivr.net/npm/@clerk/clerk-js@latest/dist/clerk.browser.js"
+  ></script>
+  <style>
+    body {
+      background: var(--bg);
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    .game-topbar {
+      height: 56px;
+      background: rgba(7, 7, 26, .95);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      padding: 0 1.5rem;
+      gap: 1rem;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 100;
+    }
+
+    .game-back-btn {
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      padding: .4rem .875rem;
+      font-size: .8rem;
+      font-weight: 800;
+      cursor: pointer;
+      text-decoration: none;
+      transition: border-color .2s;
+    }
+
+    .game-back-btn:hover {
+      border-color: var(--violet);
+    }
+
+    .game-title {
+      font-family: 'Press Start 2P', monospace;
+      font-size: .55rem;
+      color: var(--yellow);
+      flex: 1;
+      text-align: center;
+    }
+
+    .game-session-coins {
+      font-family: 'Press Start 2P', monospace;
+      font-size: .5rem;
+      color: var(--yellow);
+    }
+
+    .screen {
+      display: none;
+      flex: 1;
+      flex-direction: column;
+      align-items: center;
+      padding: 72px 1rem 2rem;
+      gap: 1.2rem;
+    }
+
+    .screen.active {
+      display: flex;
+    }
+
+    .menu-titulo {
+      font-family: 'Press Start 2P', monospace;
+      font-size: clamp(.6rem, 2.5vw, .9rem);
+      color: white;
+      text-align: center;
+      line-height: 1.8;
+    }
+
+    .menu-subtitulo {
+      font-family: 'Press Start 2P', monospace;
+      font-size: .35rem;
+      color: var(--text-muted);
+      text-align: center;
+    }
+
+    .modo-tabs {
+      display: flex;
+      gap: .5rem;
+      flex-wrap: wrap;
+      justify-content: center;
+      width: 100%;
+      max-width: 560px;
+    }
+
+    .modo-tab {
+      flex: 1;
+      min-width: 130px;
+      padding: .6rem .5rem;
+      background: var(--bg3);
+      border: 2px solid var(--border);
+      border-radius: 12px;
+      cursor: pointer;
+      font-family: 'Press Start 2P', monospace;
+      font-size: .35rem;
+      color: var(--text-muted);
+      text-align: center;
+      line-height: 1.8;
+      transition: all .2s;
+    }
+
+    .modo-tab:hover {
+      border-color: var(--violet);
+      color: white;
+    }
+
+    .modo-tab.activo {
+      border-color: var(--violet, #7c3aed);
+      background: rgba(124, 58, 237, .15);
+      color: white;
+    }
+
+    .modo-tab .tab-emoji {
+      font-size: 1.4rem;
+      display: block;
+      margin-bottom: .3rem;
+    }
+
+    .opciones-panel {
+      width: 100%;
+      max-width: 560px;
+      background: var(--bg2, #10102a);
+      border: 2px solid var(--border);
+      border-radius: 16px;
+      padding: 1rem;
+      box-sizing: border-box;
+    }
+
+    .opciones-label {
+      font-family: 'Press Start 2P', monospace;
+      font-size: .3rem;
+      color: var(--text-muted);
+      text-align: center;
+      margin-bottom: .75rem;
+    }
+
+    .tablas-especificas-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: .5rem;
+    }
+
+    .tabla-btn {
+      aspect-ratio: 1;
+      background: var(--bg3);
+      border: 2px solid var(--border);
+      border-radius: 12px;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: .15rem;
+      transition: all .2s;
+    }
+
+    .tabla-btn:hover {
+      border-color: var(--yellow);
+      transform: translateY(-2px);
+    }
+
+    .tabla-btn.seleccionada {
+      border-color: var(--yellow);
+      background: rgba(251, 191, 36, .12);
+    }
+
+    .tabla-btn-num {
+      font-family: 'Press Start 2P', monospace;
+      font-size: clamp(.55rem, 2vw, .85rem);
+      color: white;
+    }
+
+    .tabla-btn-coins {
+      font-family: 'Press Start 2P', monospace;
+      font-size: .28rem;
+      color: var(--yellow);
+    }
+
+    .tabla-btn-stars {
+      font-size: .6rem;
+      line-height: 1;
+    }
+
+    .rango-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: .5rem;
+    }
+
+    .rango-btn {
+      padding: .7rem .5rem;
+      background: var(--bg3);
+      border: 2px solid var(--border);
+      border-radius: 12px;
+      cursor: pointer;
+      font-family: 'Press Start 2P', monospace;
+      font-size: .32rem;
+      color: var(--text-muted);
+      text-align: center;
+      line-height: 2;
+      transition: all .2s;
+    }
+
+    .rango-btn:hover {
+      border-color: var(--cyan);
+      color: white;
+    }
+
+    .rango-btn.seleccionado {
+      border-color: var(--cyan);
+      color: white;
+      background: rgba(6, 182, 212, .1);
+    }
+
+    .rango-btn .rango-emoji {
+      font-size: 1.2rem;
+      display: block;
+      margin-bottom: .2rem;
+    }
+
+    .rango-btn .rango-coins {
+      font-size: .27rem;
+      color: var(--yellow);
+    }
+
+    .sorpresa-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: .75rem;
+    }
+
+    .dado-anim {
+      font-size: 3.5rem;
+      animation: dadoGiro 1.5s ease-in-out infinite;
+    }
+
+    @keyframes dadoGiro {
+
+      0%,
+      100% {
+        transform: rotate(0deg) scale(1);
+      }
+
+      25% {
+        transform: rotate(15deg) scale(1.1);
+      }
+
+      75% {
+        transform: rotate(-15deg) scale(1.1);
+      }
+    }
+
+    .sorpresa-desc {
+      font-family: 'Press Start 2P', monospace;
+      font-size: .32rem;
+      color: var(--text-muted);
+      text-align: center;
+      line-height: 2;
+    }
+
+    .sorpresa-bonus {
+      font-family: 'Press Start 2P', monospace;
+      font-size: .38rem;
+      color: var(--yellow);
+    }
+
+    .btn-jugar-grande {
+      padding: .9rem 2.5rem;
+      background: linear-gradient(135deg, var(--violet, #7c3aed), #6d28d9);
+      color: white;
+      border: none;
+      border-radius: 14px;
+      cursor: pointer;
+      font-family: 'Press Start 2P', monospace;
+      font-size: .55rem;
+      transition: all .2s;
+      margin-top: .5rem;
+    }
+
+    .btn-jugar-grande:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 24px rgba(124, 58, 237, .5);
+    }
+
+    .btn-jugar-grande:disabled {
+      opacity: .4;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+
+    .hud-bar {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 1.2rem;
+      flex-wrap: wrap;
+      width: 100%;
+      max-width: 600px;
+    }
+
+    .hud-item {
+      text-align: center;
+    }
+
+    .hud-label {
+      font-family: 'Press Start 2P', monospace;
+      font-size: .28rem;
+      color: var(--text-muted);
+      margin-bottom: .2rem;
+    }
+
+    .hud-val {
+      font-family: 'Press Start 2P', monospace;
+      font-size: .85rem;
+      color: white;
+    }
+
+    .hud-val.yellow {
+      color: var(--yellow);
+    }
+
+    .timer-ring-wrap {
+      position: relative;
+      width: 50px;
+      height: 50px;
+    }
+
+    .timer-ring-svg {
+      transform: rotate(-90deg);
+      width: 50px;
+      height: 50px;
+    }
+
+    .timer-bg {
+      fill: none;
+      stroke: rgba(255, 255, 255, .08);
+      stroke-width: 5;
+    }
+
+    .timer-fill {
+      fill: none;
+      stroke: var(--cyan);
+      stroke-width: 5;
+      stroke-linecap: round;
+      stroke-dasharray: 151;
+      stroke-dashoffset: 0;
+      transition: stroke-dashoffset .05s linear;
+    }
+
+    .timer-text {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Press Start 2P', monospace;
+      font-size: .48rem;
+      color: white;
+    }
+
+    .victorias-wrap {
+      display: flex;
+      gap: .3rem;
+    }
+
+    .victoria-pip {
+      font-size: .95rem;
+      transition: transform .3s;
+      filter: grayscale(1) opacity(.25);
+    }
+
+    .victoria-pip.ganada {
+      filter: none;
+      transform: scale(1.15);
+    }
+
+    .decision-timer-wrap {
+      width: 100%;
+      max-width: 560px;
+      background: var(--bg2, #10102a);
+      border: 2px solid var(--border);
+      border-radius: 10px;
+      padding: .4rem .8rem;
+      box-sizing: border-box;
+    }
+
+    .decision-timer-label {
+      font-family: 'Press Start 2P', monospace;
+      font-size: .27rem;
+      color: var(--text-muted);
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: .2rem;
+    }
+
+    .decision-timer-bar-bg {
+      width: 100%;
+      height: 10px;
+      background: rgba(255, 255, 255, .07);
+      border-radius: 5px;
+      overflow: hidden;
+    }
+
+    .decision-timer-bar-fill {
+      height: 100%;
+      border-radius: 5px;
+      background: linear-gradient(90deg, #22c55e, var(--cyan));
+      transition: width .1s linear, background .3s;
+      width: 100%;
+    }
+
+    .hold-instruccion {
+      font-family: 'Press Start 2P', monospace;
+      font-size: .3rem;
+      color: var(--text-muted);
+      text-align: center;
+      width: 100%;
+      max-width: 560px;
+    }
+
+    .hold-instruccion span {
+      color: var(--yellow);
+    }
+
+    .operacion-card {
+      background: var(--bg2, #10102a);
+      border: 2px solid var(--border);
+      border-radius: 14px;
+      padding: .65rem 1.4rem;
+      text-align: center;
+      width: 100%;
+      max-width: 560px;
+      box-sizing: border-box;
+    }
+
+    .op-label {
+      font-family: 'Press Start 2P', monospace;
+      font-size: .28rem;
+      color: var(--text-muted);
+      margin-bottom: .3rem;
+    }
+
+    .op-expr {
+      font-family: 'Press Start 2P', monospace;
+      font-size: clamp(1rem, 4vw, 1.6rem);
+      color: white;
+      line-height: 1.4;
+    }
+
+    .op-signo {
+      color: var(--yellow);
+    }
+
+    .op-x {
+      color: var(--cyan);
+    }
+
+    .tabla-activa-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: .5rem;
+      background: var(--bg2, #10102a);
+      border: 2px solid var(--border);
+      border-radius: 10px;
+      padding: .4rem .9rem;
+      font-family: 'Press Start 2P', monospace;
+      font-size: .35rem;
+      color: white;
+    }
+
+    .tabla-activa-badge .badge-tabla {
+      color: var(--yellow);
+      font-size: .55rem;
+    }
+
+    .pista-wrap {
+      width: 100%;
+      max-width: 560px;
+      background: var(--bg2, #10102a);
+      border: 2px solid var(--border);
+      border-radius: 16px;
+      overflow: hidden;
+      box-sizing: border-box;
+    }
+
+    .carril {
+      position: relative;
+      display: flex;
+      align-items: center;
+      height: 76px;
+      border-bottom: 1px solid rgba(255, 255, 255, .06);
+      overflow: hidden;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    .carril:last-child {
+      border-bottom: none;
+    }
+
+    .carril.hold-activo {
+      background: rgba(251, 191, 36, .08) !important;
+    }
+
+    .carril.resultado-correcto {
+      background: rgba(34, 197, 94, .12) !important;
+    }
+
+    .carril.resultado-incorrecto {
+      background: rgba(239, 68, 68, .1) !important;
+    }
+
+    .carril-num {
+      width: 28px;
+      flex-shrink: 0;
+      font-family: 'Press Start 2P', monospace;
+      font-size: .32rem;
+      color: var(--text-muted);
+      text-align: center;
+      z-index: 2;
+    }
+
+    .carril-track {
+      flex: 1;
+      position: relative;
+      height: 100%;
+      cursor: pointer;
+      background: repeating-linear-gradient(90deg, rgba(255, 255, 255, .015) 0px, rgba(255, 255, 255, .015) 1px, transparent 1px, transparent 40px);
+    }
+
+    .caballo {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      left: 4%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      z-index: 5;
+      pointer-events: none;
+    }
+
+    .caballo-emoji {
+      font-size: 2rem;
+      line-height: 1;
+      filter: drop-shadow(0 2px 4px rgba(0, 0, 0, .5));
+      display: block;
+    }
+
+    .caballo.trotando .caballo-emoji {
+      animation: trote .18s steps(1) infinite;
+    }
+
+    @keyframes trote {
+      0% {
+        transform: scaleY(1) translateY(0);
+      }
+
+      50% {
+        transform: scaleY(.92) translateY(2px);
+      }
+
+      100% {
+        transform: scaleY(1) translateY(0);
+      }
+    }
+
+    .caballo-num {
+      font-family: 'Press Start 2P', monospace;
+      font-size: .45rem;
+      color: white;
+      background: rgba(0, 0, 0, .7);
+      border-radius: 4px;
+      padding: .1rem .3rem;
+      line-height: 1.4;
+      margin-top: .1rem;
+      border: 1px solid rgba(255, 255, 255, .2);
+      white-space: nowrap;
+    }
+
+    .meta-line {
+      position: absolute;
+      right: 6%;
+      top: 0;
+      bottom: 0;
+      width: 3px;
+      background: repeating-linear-gradient(180deg, white 0, white 6px, transparent 6px, transparent 12px);
+      opacity: .4;
+      z-index: 4;
+      pointer-events: none;
+    }
+
+    .meta-flag {
+      position: absolute;
+      right: calc(6% - 8px);
+      top: 4px;
+      font-size: .9rem;
+      z-index: 5;
+      opacity: .5;
+      pointer-events: none;
+    }
+
+    .carril-badge {
+      position: absolute;
+      right: 8px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-family: 'Press Start 2P', monospace;
+      font-size: .35rem;
+      padding: .2rem .5rem;
+      border-radius: 6px;
+      opacity: 0;
+      z-index: 10;
+      pointer-events: none;
+      white-space: nowrap;
+    }
+
+    .carril-badge.show-correcto {
+      opacity: 1;
+      background: rgba(34, 197, 94, .25);
+      color: #4ade80;
+    }
+
+    .carril-badge.show-incorrecto {
+      opacity: 1;
+      background: rgba(239, 68, 68, .25);
+      color: #f87171;
+    }
+
+    .hold-barra {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      height: 3px;
+      background: var(--yellow);
+      width: 0%;
+      z-index: 6;
+      pointer-events: none;
+      border-radius: 0 2px 2px 0;
+    }
+
+    @keyframes sprintLlegada {
+      0% {
+        transform: translateY(-50%) scale(1);
+      }
+
+      40% {
+        transform: translateY(-60%) scale(1.25);
+      }
+
+      70% {
+        transform: translateY(-45%) scale(1.1);
+      }
+
+      100% {
+        transform: translateY(-50%) scale(1);
+      }
+    }
+
+    .caballo.llegada {
+      animation: sprintLlegada .5s ease forwards;
+    }
+
+    .feedback-flash {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 200;
+      opacity: 0;
+      transition: opacity .1s;
+    }
+
+    .feedback-flash.correcto {
+      background: rgba(34, 197, 94, .13);
+    }
+
+    .feedback-flash.incorrecto {
+      background: rgba(239, 68, 68, .13);
+    }
+
+    .feedback-flash.visible {
+      opacity: 1;
+    }
+
+    .float-num {
+      position: fixed;
+      pointer-events: none;
+      z-index: 9999;
+      font-family: 'Press Start 2P', monospace;
+      font-size: .55rem;
+      text-shadow: 0 2px 8px rgba(0, 0, 0, .8);
+      animation: floatUp .9s ease forwards;
+    }
+
+    @keyframes floatUp {
+      0% {
+        transform: translateY(0) scale(1);
+        opacity: 1;
+      }
+
+      100% {
+        transform: translateY(-70px) scale(.75);
+        opacity: 0;
+      }
+    }
+
+    .entre-carreras-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 300;
+      background: rgba(7, 7, 26, .88);
+      backdrop-filter: blur(6px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .3s;
+    }
+
+    .entre-carreras-overlay.active {
+      opacity: 1;
+      pointer-events: all;
+    }
+
+    .entre-carreras-card {
+      background: var(--bg2);
+      border: 2px solid var(--border);
+      border-radius: 20px;
+      padding: 1.5rem 2rem;
+      text-align: center;
+      max-width: 360px;
+      width: 90%;
+      transform: scale(.88);
+      transition: transform .3s;
+    }
+
+    .entre-carreras-overlay.active .entre-carreras-card {
+      transform: scale(1);
+    }
+
+    .ec-emoji {
+      font-size: 2.5rem;
+      margin-bottom: .4rem;
+    }
+
+    .ec-titulo {
+      font-family: 'Press Start 2P', monospace;
+      font-size: .75rem;
+      color: white;
+      margin-bottom: .5rem;
+      line-height: 1.6;
+    }
+
+    .ec-operacion {
+      font-family: 'Press Start 2P', monospace;
+      font-size: clamp(.5rem, 2.5vw, .75rem);
+      background: var(--bg3, #1a1a3e);
+      border-radius: 10px;
+      padding: .5rem 1rem;
+      margin-bottom: .5rem;
+      line-height: 1.9;
+      border: 1px solid var(--border);
+    }
+
+    .ec-operacion .op-resultado {
+      color: var(--yellow);
+    }
+
+    .ec-operacion .op-elegido {
+      color: #f87171;
+    }
+
+    .ec-pts {
+      font-family: 'Press Start 2P', monospace;
+      font-size: .5rem;
+      color: var(--yellow);
+      margin-bottom: 1rem;
+    }
+
+    .btn-siguiente-carrera {
+      padding: .65rem 1.5rem;
+      background: linear-gradient(135deg, var(--violet, #7c3aed), #6d28d9);
+      color: white;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      font-family: 'Press Start 2P', monospace;
+      font-size: .45rem;
+      transition: all .2s;
+    }
+
+    .btn-siguiente-carrera:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(124, 58, 237, .5);
+    }
+
+    .resultado-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 10000;
+      background: rgba(7, 7, 26, .94);
+      backdrop-filter: blur(10px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .4s;
+    }
+
+    .resultado-overlay.active {
+      opacity: 1;
+      pointer-events: all;
+    }
+
+    .resultado-modal {
+      background: var(--bg2);
+      border: 1px solid rgba(124, 58, 237, .4);
+      border-radius: 20px;
+      padding: 2rem 2.5rem;
+      text-align: center;
+      max-width: 420px;
+      width: 92%;
+      box-shadow: 0 0 60px rgba(251, 191, 36, .15);
+      transform: scale(.9);
+      transition: transform .4s;
+    }
+
+    .resultado-overlay.active .resultado-modal {
+      transform: scale(1);
+    }
+
+    .resultado-titulo {
+      font-family: 'Press Start 2P', monospace;
+      font-size: .95rem;
+      color: white;
+      margin-bottom: .75rem;
+      line-height: 1.6;
+    }
+
+    .resultado-stats {
+      display: flex;
+      justify-content: center;
+      gap: 1.2rem;
+      margin: .75rem 0;
+      flex-wrap: wrap;
+    }
+
+    .res-stat {
+      text-align: center;
+    }
+
+    .res-stat-lbl {
+      font-family: 'Press Start 2P', monospace;
+      font-size: .27rem;
+      color: var(--text-muted);
+      margin-bottom: .2rem;
+    }
+
+    .res-stat-val {
+      font-family: 'Press Start 2P', monospace;
+      font-size: .9rem;
+      color: white;
+    }
+
+    .res-stat-val.yellow {
+      color: var(--yellow);
+    }
+
+    .res-stat-val.green {
+      color: #22c55e;
+    }
+
+    .resultado-coins {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 1.7rem;
+      color: var(--yellow);
+      margin: .6rem 0;
+      display: block;
+    }
+
+    .resultado-sub {
+      font-size: .85rem;
+      color: var(--text-dim, #94a3b8);
+      font-weight: 700;
+      margin-bottom: 1.2rem;
+    }
+
+    .resultado-btns {
+      display: flex;
+      gap: .75rem;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .btn-jugar-denuevo {
+      padding: .7rem 1.4rem;
+      background: linear-gradient(135deg, var(--violet, #7c3aed), #6d28d9);
+      color: white;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      font-family: 'Press Start 2P', monospace;
+      font-size: .45rem;
+      transition: all .2s;
+    }
+
+    .btn-jugar-denuevo:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(124, 58, 237, .5);
+    }
+
+    .btn-volver {
+      padding: .7rem 1.4rem;
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      cursor: pointer;
+      color: var(--text);
+      font-family: 'Press Start 2P', monospace;
+      font-size: .45rem;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      transition: border-color .2s;
+    }
+
+    .btn-volver:hover {
+      border-color: var(--violet);
+    }
+
+    @media (max-width:480px) {
+      .hud-bar { gap: .7rem; }
+      .carril { height: 66px; }
+      .caballo-emoji { font-size: 1.65rem; }
+    }
+
+    /* ══════════════════════════════════════════
+       WIDGET DE NIVEL — menú + resultado
+       ══════════════════════════════════════════ */
+    .nivel-menu-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: .5rem;
+      background: rgba(124,58,237,.15);
+      border: 1px solid rgba(124,58,237,.4);
+      border-radius: 10px;
+      padding: .4rem .8rem;
+      font-family: 'Press Start 2P', monospace;
+      font-size: .38rem;
+      color: #a78bfa;
+    }
+    .nivel-menu-segmentos { display:flex; gap:3px; }
+    .nms { width:10px; height:6px; border-radius:3px; background:rgba(255,255,255,.12); }
+    .nms.s1 { background:#facc15; }
+    .nms.s2 { background:#f97316; }
+    .nms.s3 { background:#22c55e; }
+
+    .res-nivel-wrap {
+      background: rgba(255,255,255,.04);
+      border: 1px solid rgba(255,255,255,.08);
+      border-radius: 14px;
+      padding: .9rem 1.1rem;
+      margin: .75rem 0;
+      text-align: left;
+    }
+    .res-nivel-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:.6rem; }
+    .res-nivel-badge { font-family:'Press Start 2P',monospace; font-size:.42rem; color:#a78bfa; }
+    .res-nivel-txt { font-size:.68rem; font-weight:800; color:#64748b; }
+    .res-nivel-txt.verde   { color:#22c55e; }
+    .res-nivel-txt.violeta { color:#a78bfa; }
+    .res-nivel-estrellas { display:flex; gap:.35rem; margin-bottom:.55rem; }
+    .rne { width:30px; height:30px; border-radius:50%; border:2px solid rgba(255,255,255,.08);
+           display:flex; align-items:center; justify-content:center; font-size:1rem; transition:all .3s; }
+    .rne.g1 { border-color:#facc15; background:rgba(250,204,21,.12); }
+    .rne.g2 { border-color:#f97316; background:rgba(249,115,22,.12); }
+    .rne.g3 { border-color:#22c55e; background:rgba(34,197,94,.14); }
+    .rne.vacia { opacity:.3; }
+    .res-nivel-barra-track { background:rgba(255,255,255,.06); border-radius:99px; height:7px; overflow:hidden; }
+    .res-nivel-barra-fill { height:100%; border-radius:99px; background:linear-gradient(90deg,#7c3aed,#06b6d4); transition:width .6s ease; }
+    .res-nivel-barra-fill.completa { background:linear-gradient(90deg,#22c55e,#4ade80); }
+    .res-nivel-subio {
+      display:none;
+      background:linear-gradient(135deg,rgba(34,197,94,.2),rgba(74,222,128,.1));
+      border:1px solid rgba(34,197,94,.4);
+      border-radius:10px;
+      padding:.6rem .9rem;
+      font-family:'Press Start 2P',monospace;
+      font-size:.4rem;
+      color:#4ade80;
+      text-align:center;
+      margin-top:.65rem;
+      animation:pulsoVerde .5s ease;
+    }
+    .res-nivel-subio.visible { display:block; }
+    @keyframes pulsoVerde {
+      0%  { transform:scale(.95); opacity:0; }
+      60% { transform:scale(1.03); }
+      100%{ transform:scale(1); opacity:1; }
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="game-topbar">
+    <a href="../juegos.html" class="game-back-btn">&larr; Volver</a>
+    <span class="game-title">🐴 HORSERACE TABLA</span>
+    <span class="game-session-coins">🪙 <span id="sessionCoins">0</span></span>
+  </div>
+  <div class="feedback-flash" id="feedbackFlash"></div>
+
+  <!-- MENU -->
+  <div class="screen active" id="screenMenu">
+    <div class="menu-titulo">🐴 ELIGE TU DESAFIO</div>
+    <div class="menu-subtitulo">Con que tabla quieres competir hoy?</div>
+
+    <!-- Badge nivel actual (se rellena por JS al cargar) -->
+    <div id="nivelMenuWrap" style="display:none;">
+      <div class="nivel-menu-badge">
+        <span id="nivelMenuTxt">Nivel 1/10</span>
+        <div class="nivel-menu-segmentos" id="nivelMenuSegs"></div>
+        <span id="nivelMenuHint" style="color:#64748b;font-size:.32rem;"></span>
+      </div>
+    </div>
+    <div class="modo-tabs">
+      <div class="modo-tab activo" id="tabEspecifica" onclick="cambiarModo('especifica')"><span
+          class="tab-emoji">🎯</span>Tabla<br>Especifica</div>
+      <div class="modo-tab" id="tabRango" onclick="cambiarModo('rango')"><span class="tab-emoji">📦</span>Rango
+        de<br>Tablas</div>
+      <div class="modo-tab" id="tabSorpresa" onclick="cambiarModo('sorpresa')"><span
+          class="tab-emoji">🎲</span>Tabla<br>Sorpresa</div>
+    </div>
+    <div class="opciones-panel" id="panelEspecifica">
+      <div class="opciones-label">ELIGE UNA TABLA</div>
+      <div class="tablas-especificas-grid" id="tablasGrid"></div>
+    </div>
+    <div class="opciones-panel" id="panelRango" style="display:none">
+      <div class="opciones-label">ELIGE UN RANGO DE TABLAS</div>
+      <div class="rango-grid">
+        <div class="rango-btn" onclick="seleccionarRango('facil')" id="rangoFacil"><span
+            class="rango-emoji">🟢</span>Facil 1-3<div class="rango-coins">🪙 15 coins</div>
+        </div>
+        <div class="rango-btn" onclick="seleccionarRango('medio')" id="rangoMedio"><span
+            class="rango-emoji">🟡</span>Medio 4-6<div class="rango-coins">🪙 25 coins</div>
+        </div>
+        <div class="rango-btn" onclick="seleccionarRango('dificil')" id="rangoDificil"><span
+            class="rango-emoji">🔴</span>Dificil 7-9<div class="rango-coins">🪙 35 coins</div>
+        </div>
+        <div class="rango-btn" onclick="seleccionarRango('mixto')" id="rangoMixto"><span
+            class="rango-emoji">🌈</span>Mixto 1-10<div class="rango-coins">🪙 28 coins</div>
+        </div>
+      </div>
+    </div>
+    <div class="opciones-panel" id="panelSorpresa" style="display:none">
+      <div class="sorpresa-wrap">
+        <div class="dado-anim">🎲</div>
+        <div class="sorpresa-desc">El sistema elige una tabla al azar.<br>No sabras cual hasta que empiece!</div>
+        <div class="sorpresa-bonus">🪙 +20% bonus por sorpresa</div>
+      </div>
+    </div>
+    <button class="btn-jugar-grande" id="btnIniciarJuego" disabled onclick="iniciarJuego()">🏁 A CORRER!</button>
+  </div>
+
+  <!-- JUEGO -->
+  <div class="screen" id="screenJuego">
+    <div class="hud-bar">
+      <div class="hud-item">
+        <div class="hud-label">TIEMPO</div>
+        <div class="timer-ring-wrap">
+          <svg class="timer-ring-svg" viewBox="0 0 56 56">
+            <circle class="timer-bg" cx="28" cy="28" r="24" />
+            <circle class="timer-fill" cx="28" cy="28" r="24" id="timerRing" />
+          </svg>
+          <div class="timer-text" id="timerTxt">60</div>
+        </div>
+      </div>
+      <div class="hud-item">
+        <div class="hud-label">PUNTOS</div>
+        <div class="hud-val yellow" id="scoreNum">0</div>
+      </div>
+      <div class="hud-item">
+        <div class="hud-label">VICTORIAS</div>
+        <div class="victorias-wrap">
+          <span class="victoria-pip" id="v0">🏆</span>
+          <span class="victoria-pip" id="v1">🏆</span>
+          <span class="victoria-pip" id="v2">🏆</span>
+          <span class="victoria-pip" id="v3">🏆</span>
+          <span class="victoria-pip" id="v4">🏆</span>
+        </div>
+      </div>
+      <div class="hud-item">
+        <div class="hud-label">RACHA 🔥</div>
+        <div class="hud-val yellow" id="rachaNum">0</div>
+      </div>
+    </div>
+    <div class="tabla-activa-badge">Practicando: <span class="badge-tabla" id="badgeTabla">x?</span></div>
+    <div class="decision-timer-wrap">
+      <div class="decision-timer-label"><span>⏱ TIEMPO PARA ELEGIR</span><span id="decisionTiempoTxt">8s</span></div>
+      <div class="decision-timer-bar-bg">
+        <div class="decision-timer-bar-fill" id="decisionBarra"></div>
+      </div>
+    </div>
+    <div class="hold-instruccion">Manten presionado <span>el caballo correcto</span> para que llegue a la meta 🏁</div>
+    <div class="operacion-card">
+      <div class="op-label">QUE CABALLO LLEVA EL RESULTADO CORRECTO?</div>
+      <div class="op-expr" id="opExpr">? <span class="op-signo">x</span> ? <span class="op-signo">=</span> <span
+          class="op-x">?</span></div>
+    </div>
+    <div class="pista-wrap" id="pistaWrap"></div>
+  </div>
+
+  <!-- OVERLAY ENTRE CARRERAS -->
+  <div class="entre-carreras-overlay" id="entreCarrerasOverlay">
+    <div class="entre-carreras-card">
+      <div class="ec-emoji" id="ecEmoji">🎉</div>
+      <div class="ec-titulo" id="ecTitulo">CORRECTO!</div>
+      <div class="ec-operacion" id="ecOperacion"></div>
+      <div class="ec-pts" id="ecPts">+20 pts</div>
+      <button class="btn-siguiente-carrera" id="btnSiguienteCarrera">🏁 Siguiente carrera</button>
+    </div>
+  </div>
+
+  <!-- RESULTADO FINAL -->
+  <div class="resultado-overlay" id="resultadoOverlay">
+    <div class="resultado-modal">
+      <div class="resultado-titulo" id="resTitulo">TIEMPO!</div>
+      <div class="resultado-stats">
+        <div class="res-stat">
+          <div class="res-stat-lbl">VICTORIAS</div>
+          <div class="res-stat-val green" id="resVictorias">0/5</div>
+        </div>
+        <div class="res-stat">
+          <div class="res-stat-lbl">PUNTOS</div>
+          <div class="res-stat-val yellow" id="resPuntos">0</div>
+        </div>
+        <div class="res-stat">
+          <div class="res-stat-lbl">MEJOR RACHA</div>
+          <div class="res-stat-val" id="resMejorRacha">0</div>
+        </div>
+      </div>
+      <span class="resultado-coins" id="resCoins">0</span>
+      <div class="resultado-sub">EduCoins ganados 🪙</div>
+
+      <!-- Widget de nivel del juego -->
+      <div class="res-nivel-wrap" id="resNivelWrap" style="display:none;">
+        <div class="res-nivel-header">
+          <span class="res-nivel-badge" id="resNivelBadge">Nivel 1 / 10</span>
+          <span class="res-nivel-txt" id="resNivelTxt">—</span>
+        </div>
+        <div class="res-nivel-estrellas" id="resNivelEstrellas">
+          <div class="rne vacia" id="rne0">☆</div>
+          <div class="rne vacia" id="rne1">☆</div>
+          <div class="rne vacia" id="rne2">☆</div>
+        </div>
+        <div class="res-nivel-barra-track">
+          <div class="res-nivel-barra-fill" id="resNivelBarra" style="width:0%"></div>
+        </div>
+        <div class="res-nivel-subio" id="resNivelSubio">⬆️ ¡SUBISTE DE NIVEL!</div>
+      </div>
+
+      <div class="resultado-btns">
+        <button class="btn-jugar-denuevo" id="btnJugarDenuevo">🔄 Cambiar tabla</button>
+        <a href="../juegos.html" class="btn-volver">🏠 Volver al Lobby</a>
+      </div>
+    </div>
+  </div>
+
+  <script src="../../auth/clerk-config.js"></script>
+  <script src="../../shared/clerk-guard.js"></script>
+  <script src="../../shared/shared.js"></script>
+  <script>
+    /* ================================================================
+       CONFIGURACION MANUAL — MODIFICAR AQUI
+       ================================================================ */
+    var DURACION_TOTAL = 60;    // segundos totales de partida
+    var VICTORIAS_META = 5;     // victorias para ganar
+
+    var TIEMPO_DECISION = {      // segundos para elegir caballo
+      t1: 5, t2: 5, t3: 6, t4: 6, t5: 7,
+      t6: 7, t7: 9, t8: 9, t9: 10, t10: 5,
+      facil: 5, medio: 7, dificil: 9, mixto: 8, sorpresa: 8
+    };
+
+    var VELOCIDAD_RIVALES = {    // velocidad automatica rivales (% pista / tick 80ms)
+      t1: .35, t2: .35, t3: .5, t4: .5, t5: .65,
+      t6: .65, t7: .85, t8: .85, t9: .95, t10: .35,
+      facil: .35, medio: .65, dificil: .9, mixto: .65, sorpresa: .7
+    };
+
+    var VEL_HOLD = 1.8;          // velocidad al hacer hold (% pista / tick 40ms)
+
+    var COINS_BASE = {
+      t1: 10, t2: 12, t3: 15, t4: 18, t5: 20,
+      t6: 25, t7: 30, t8: 32, t9: 35, t10: 20,
+      facil: 15, medio: 25, dificil: 35, mixto: 28
+    };
+    /* ================================================================ */
+
+    var TABLA_STARS = { 1: '⭐', 2: '⭐', 3: '⭐⭐', 4: '⭐⭐', 5: '⭐⭐', 6: '⭐⭐⭐', 7: '⭐⭐⭐', 8: '⭐⭐⭐', 9: '⭐⭐⭐⭐', 10: '⭐⭐' };
+    var EMOJIS_CABALLOS = ['🐴', '🦄', '🐎', '🏇'];
+    var COLORES_CARRIL = ['rgba(251,191,36,.06)', 'rgba(6,182,212,.06)', 'rgba(167,139,250,.06)', 'rgba(34,197,94,.06)'];
+
+    var SEL = { modo: null, tablaKey: null, tablas: [], coinsBase: 0, sorpresaBonus: false };
+    var STATE = {
+      score: 0, victorias: 0, racha: 0, mejorRacha: 0,
+      tiempoLeft: DURACION_TOTAL, corriendo: false, carreraActiva: false,
+      tablaActual: 1, factorActual: 1, respuestaCorrecta: 0,
+      pos: [4, 4, 4, 4], holdIdx: -1,
+      timerInterval: null, rivalInterval: null, decisionInterval: null, holdInterval: null,
+      decisionMaxSeg: 8, decisionRestante: 8
+    };
+
+    function gid(id) { return document.getElementById(id); }
+
+    document.addEventListener('DOMContentLoaded', function () {
+      var grid = gid('tablasGrid');
+      for (var i = 1; i <= 10; i++) {
+        (function (n) {
+          var btn = document.createElement('div');
+          btn.className = 'tabla-btn';
+          btn.id = 'btnTabla' + n;
+          btn.innerHTML =
+            '<span class="tabla-btn-num">x' + n + '</span>' +
+            '<span class="tabla-btn-stars">' + TABLA_STARS[n] + '</span>' +
+            '<span class="tabla-btn-coins">🪙' + COINS_BASE['t' + n] + '</span>';
+          btn.onclick = function () { seleccionarTablaEspecifica(n); };
+          grid.appendChild(btn);
+        })(i);
+      }
+      gid('btnJugarDenuevo').addEventListener('click', volverAlMenu);
+      gid('btnSiguienteCarrera').addEventListener('click', siguienteCarrera);
+    });
+
+    document.addEventListener('clerkReady', function () {
+      cargarNivelMenu();
+    });
+
+    // Esperar a que CLERK_TOKEN esté disponible antes de llamar a la API
+    function getTokenLuego(callback) {
+      if (window.CLERK_TOKEN) { callback(window.CLERK_TOKEN); return; }
+      var intentos = 0;
+      var iv = setInterval(function () {
+        intentos++;
+        if (window.CLERK_TOKEN) { clearInterval(iv); callback(window.CLERK_TOKEN); return; }
+        if (intentos >= 25) { clearInterval(iv); callback(null); } // timeout 5s
+      }, 200);
+    }
+
+    function cambiarModo(modo) {
+      var lista = ['especifica', 'rango', 'sorpresa'];
+      for (var i = 0; i < lista.length; i++) {
+        var m = lista[i];
+        var k = m.charAt(0).toUpperCase() + m.slice(1);
+        gid('tab' + k).classList.toggle('activo', m === modo);
+        gid('panel' + k).style.display = m === modo ? '' : 'none';
+      }
+      SEL.modo = modo; SEL.tablaKey = null;
+      document.querySelectorAll('.tabla-btn').forEach(function (b) { b.classList.remove('seleccionada'); });
+      document.querySelectorAll('.rango-btn').forEach(function (b) { b.classList.remove('seleccionado'); });
+      if (modo === 'sorpresa') {
+        SEL.tablaKey = 'sorpresa'; SEL.coinsBase = 0; SEL.sorpresaBonus = true;
+        gid('btnIniciarJuego').disabled = false;
+      } else {
+        SEL.sorpresaBonus = false;
+        gid('btnIniciarJuego').disabled = true;
+      }
+    }
+
+    function seleccionarTablaEspecifica(num) {
+      document.querySelectorAll('.tabla-btn').forEach(function (b) { b.classList.remove('seleccionada'); });
+      gid('btnTabla' + num).classList.add('seleccionada');
+      SEL.tablaKey = 't' + num; SEL.tablas = [num];
+      SEL.coinsBase = COINS_BASE['t' + num]; SEL.sorpresaBonus = false;
+      gid('btnIniciarJuego').disabled = false;
+    }
+
+    function seleccionarRango(rango) {
+      document.querySelectorAll('.rango-btn').forEach(function (b) { b.classList.remove('seleccionado'); });
+      var k = rango.charAt(0).toUpperCase() + rango.slice(1);
+      gid('rango' + k).classList.add('seleccionado');
+      var rangos = { facil: [1, 2, 3], medio: [4, 5, 6], dificil: [7, 8, 9], mixto: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10] };
+      SEL.tablaKey = rango; SEL.tablas = rangos[rango];
+      SEL.coinsBase = COINS_BASE[rango]; SEL.sorpresaBonus = false;
+      gid('btnIniciarJuego').disabled = false;
+    }
+
+    function iniciarJuego() {
+      if (SEL.sorpresaBonus) {
+        var n = Math.floor(Math.random() * 10) + 1;
+        SEL.tablas = [n]; SEL.tablaKey = 'sorpresa';
+        SEL.coinsBase = Math.round((COINS_BASE['t' + n] || 20) * 1.2);
+      }
+      STATE.score = 0; STATE.victorias = 0; STATE.racha = 0; STATE.mejorRacha = 0;
+      STATE.tiempoLeft = DURACION_TOTAL; STATE.corriendo = true; STATE.carreraActiva = false;
+      gid('screenMenu').classList.remove('active');
+      gid('screenJuego').classList.add('active');
+      gid('timerRing').style.stroke = 'var(--cyan)';
+      gid('timerTxt').style.color = 'white';
+      actualizarHUD(); renderVictorias();
+      var circum = 2 * Math.PI * 24;
+      STATE.timerInterval = setInterval(function () {
+        STATE.tiempoLeft--;
+        gid('timerRing').style.strokeDashoffset = circum - (STATE.tiempoLeft / DURACION_TOTAL) * circum;
+        gid('timerTxt').textContent = STATE.tiempoLeft;
+        if (STATE.tiempoLeft <= 15) {
+          gid('timerRing').style.stroke = '#ef4444';
+          gid('timerTxt').style.color = '#ef4444';
+        }
+        if (STATE.tiempoLeft <= 0) { terminarJuego('tiempo'); }
+      }, 1000);
+      setTimeout(lanzarCarrera, 400);
+    }
+
+    function elegirTablaActual() { return SEL.tablas[Math.floor(Math.random() * SEL.tablas.length)]; }
+
+    function lanzarCarrera() {
+      if (!STATE.corriendo) { return; }
+      STATE.carreraActiva = true; STATE.pos = [4, 4, 4, 4]; STATE.holdIdx = -1;
+      STATE.tablaActual = elegirTablaActual();
+      STATE.factorActual = Math.floor(Math.random() * 10) + 1;
+      STATE.respuestaCorrecta = STATE.tablaActual * STATE.factorActual;
+      gid('badgeTabla').textContent = 'x' + STATE.tablaActual;
+      gid('opExpr').innerHTML =
+        '<span>' + STATE.tablaActual + '</span>' +
+        '<span class="op-signo"> x </span>' +
+        '<span>' + STATE.factorActual + '</span>' +
+        '<span class="op-signo"> = </span>' +
+        '<span class="op-x">?</span>';
+      var opciones = generarOpciones(STATE.respuestaCorrecta, 4, STATE.tablaActual);
+      construirPista(opciones);
+      var tD = TIEMPO_DECISION[SEL.tablaKey] || 8;
+      STATE.decisionMaxSeg = tD; STATE.decisionRestante = tD;
+      iniciarTimerDecision(tD);
+      var velR = VELOCIDAD_RIVALES[SEL.tablaKey] || 0.65;
+      STATE.rivalInterval = setInterval(function () {
+        if (!STATE.carreraActiva) { return; }
+        for (var i = 0; i < 4; i++) {
+          if (i === STATE.holdIdx) { continue; }
+          STATE.pos[i] = Math.min(92, STATE.pos[i] + velR + (Math.random() * velR * .3 - velR * .15));
+          moverCaballo(i, STATE.pos[i]);
+        }
+        for (var j = 0; j < 4; j++) {
+          if (STATE.pos[j] >= 92) {
+            var c = document.getElementById('carril' + j);
+            if (c && c.dataset.correcto !== '1') { finCarrera(false, -1); }
+            return;
+          }
+        }
+      }, 80);
+    }
+
+    function moverCaballo(idx, pct) {
+      var cab = document.querySelector('#carril' + idx + ' .caballo');
+      if (cab) { cab.style.left = pct + '%'; }
+    }
+
+    function iniciarTimerDecision(total) {
+      var left = total;
+      gid('decisionTiempoTxt').textContent = left + 's';
+      gid('decisionBarra').style.width = '100%';
+      gid('decisionBarra').style.background = 'linear-gradient(90deg,#22c55e,var(--cyan))';
+      clearInterval(STATE.decisionInterval);
+      STATE.decisionInterval = setInterval(function () {
+        left -= 0.1; STATE.decisionRestante = left;
+        var pct = Math.max(0, (left / total) * 100);
+        gid('decisionBarra').style.width = pct + '%';
+        gid('decisionTiempoTxt').textContent = Math.ceil(left) + 's';
+        if (pct < 35) { gid('decisionBarra').style.background = '#ef4444'; }
+        else if (pct < 60) { gid('decisionBarra').style.background = '#f59e0b'; }
+        if (left <= 0) {
+          clearInterval(STATE.decisionInterval);
+          if (STATE.carreraActiva) { finCarrera(false, -1); }
+        }
+      }, 100);
+    }
+
+    function construirPista(opciones) {
+      var pista = gid('pistaWrap');
+      pista.innerHTML = '';
+      for (var i = 0; i < opciones.length; i++) {
+        (function (idx, num) {
+          var carril = document.createElement('div');
+          carril.className = 'carril'; carril.id = 'carril' + idx;
+          carril.style.background = COLORES_CARRIL[idx];
+          carril.dataset.num = num;
+          carril.dataset.correcto = (num === STATE.respuestaCorrecta) ? '1' : '0';
+          carril.innerHTML =
+            '<div class="carril-num">' + (idx + 1) + '</div>' +
+            '<div class="carril-track" id="track' + idx + '">' +
+            '<div class="caballo trotando" id="caballo' + idx + '" style="left:4%">' +
+            '<span class="caballo-emoji">' + EMOJIS_CABALLOS[idx] + '</span>' +
+            '<span class="caballo-num">' + num + '</span>' +
+            '</div>' +
+            '<div class="meta-line"></div>' +
+            '<div class="meta-flag">🚩</div>' +
+            '</div>' +
+            '<div class="carril-badge" id="badge' + idx + '"></div>' +
+            '<div class="hold-barra" id="holdBarra' + idx + '"></div>';
+          var track = carril.querySelector('.carril-track');
+          function iniciarHold(e) {
+            e.preventDefault();
+            if (!STATE.carreraActiva) { return; }
+            activarHold(idx);
+          }
+          function liberarHold() {
+            if (STATE.holdIdx === idx) { detenerHold(); }
+          }
+          track.addEventListener('mousedown', iniciarHold);
+          track.addEventListener('touchstart', iniciarHold, { passive: false });
+          track.addEventListener('mouseup', liberarHold);
+          track.addEventListener('mouseleave', liberarHold);
+          track.addEventListener('touchend', liberarHold);
+          track.addEventListener('touchcancel', liberarHold);
+          pista.appendChild(carril);
+        })(i, opciones[i]);
+      }
+      pista.addEventListener('mouseleave', function () {
+        if (STATE.holdIdx >= 0) { detenerHold(); }
+      });
+    }
+
+    function activarHold(idx) {
+      if (STATE.holdIdx !== -1 && STATE.holdIdx !== idx) {
+        var pc = document.getElementById('carril' + STATE.holdIdx);
+        if (pc) { pc.classList.remove('hold-activo'); }
+        var pb = document.getElementById('holdBarra' + STATE.holdIdx);
+        if (pb) { pb.style.width = '0%'; }
+        clearInterval(STATE.holdInterval);
+      }
+      STATE.holdIdx = idx;
+      var carril = document.getElementById('carril' + idx);
+      var holdBar = document.getElementById('holdBarra' + idx);
+      if (carril) { carril.classList.add('hold-activo'); }
+      clearInterval(STATE.holdInterval);
+      STATE.holdInterval = setInterval(function () {
+        if (!STATE.carreraActiva || STATE.holdIdx !== idx) {
+          clearInterval(STATE.holdInterval); return;
+        }
+        STATE.pos[idx] = Math.min(92, STATE.pos[idx] + VEL_HOLD);
+        moverCaballo(idx, STATE.pos[idx]);
+        var pct = Math.min(100, (STATE.pos[idx] / 92) * 100);
+        if (holdBar) { holdBar.style.width = pct + '%'; }
+        if (STATE.pos[idx] >= 92) {
+          clearInterval(STATE.holdInterval);
+          var esCorrecta = document.getElementById('carril' + idx).dataset.correcto === '1';
+          finCarrera(esCorrecta, idx);
+        }
+      }, 40);
+    }
+
+    function detenerHold() {
+      var idx = STATE.holdIdx; STATE.holdIdx = -1;
+      clearInterval(STATE.holdInterval);
+      if (idx >= 0) {
+        var c = document.getElementById('carril' + idx);
+        if (c) { c.classList.remove('hold-activo'); }
+      }
+    }
+
+    function finCarrera(ganada, idxElegido) {
+      if (!STATE.carreraActiva) { return; }
+      STATE.carreraActiva = false;
+      clearInterval(STATE.rivalInterval);
+      clearInterval(STATE.decisionInterval);
+      clearInterval(STATE.holdInterval);
+      STATE.holdIdx = -1;
+      document.querySelectorAll('.caballo').forEach(function (c) { c.classList.remove('trotando'); });
+
+      var a = STATE.tablaActual, b = STATE.factorActual, r = STATE.respuestaCorrecta;
+
+      if (ganada) {
+        var cabG = document.getElementById('caballo' + idxElegido);
+        if (cabG) { cabG.classList.add('llegada'); }
+        var carrilG = document.getElementById('carril' + idxElegido);
+        if (carrilG) { carrilG.classList.add('resultado-correcto'); }
+        var badgeG = document.getElementById('badge' + idxElegido);
+        if (badgeG) { badgeG.textContent = '🏆 META!'; badgeG.classList.add('show-correcto'); }
+
+        STATE.victorias++;
+        STATE.racha++;
+        if (STATE.racha > STATE.mejorRacha) { STATE.mejorRacha = STATE.racha; }
+        var bonusRacha = STATE.racha >= 3 ? Math.round(STATE.racha * 0.5) : 0;
+        var bonusRapido = STATE.decisionRestante > STATE.decisionMaxSeg * 0.4 ? 10 : 0;
+        var ptsTotal = 20 + bonusRacha + bonusRapido;
+        STATE.score += ptsTotal;
+        flashFeedback('correcto');
+        spawnFloat(Math.floor(window.innerWidth / 2), 200,
+          '+' + ptsTotal + (STATE.racha >= 3 ? ' RACHA!' : ''), '#fbbf24');
+        actualizarHUD(); renderVictorias();
+
+        var ecOp = '<span class="op-resultado">' + a + ' x ' + b + ' = ' + r + '</span> ✅';
+        var ecPts = '+' + ptsTotal + ' pts' +
+          (bonusRacha > 0 ? ' | racha x' + STATE.racha + ' 🔥' : '') +
+          (bonusRapido > 0 ? ' | rapido ⚡' : '');
+
+        if (STATE.victorias >= VICTORIAS_META) {
+          setTimeout(function () { terminarJuego('victoria'); }, 700);
+          return;
+        }
+        mostrarEntreCarreras(true, ecOp, ecPts);
+
+      } else {
+        if (idxElegido >= 0) {
+          var ce = document.getElementById('carril' + idxElegido);
+          if (ce) { ce.classList.add('resultado-incorrecto'); }
+          var be = document.getElementById('badge' + idxElegido);
+          if (be) { be.textContent = '❌'; be.classList.add('show-incorrecto'); }
+        }
+        var cc = document.querySelector('.carril[data-correcto="1"]');
+        if (cc) {
+          cc.style.boxShadow = 'inset 0 0 20px rgba(34,197,94,.3)';
+          var bidx = cc.id.replace('carril', '');
+          var bc = document.getElementById('badge' + bidx);
+          if (bc) { bc.textContent = '✅ Era: ' + r; bc.classList.add('show-correcto'); }
+        }
+        STATE.racha = 0;
+        flashFeedback('incorrecto');
+
+        var numElegidoVal = -1;
+        if (idxElegido >= 0) {
+          var ceEl = document.getElementById('carril' + idxElegido);
+          if (ceEl) { numElegidoVal = parseInt(ceEl.dataset.num, 10); }
+        }
+        var ecOpP = '<span class="op-resultado">' + a + ' x ' + b + ' = ' + r + '</span>';
+        if (numElegidoVal > 0 && numElegidoVal !== r) {
+          ecOpP += ' | elegiste <span class="op-elegido">' + numElegidoVal + '</span> ❌';
+        } else {
+          ecOpP += ' ❌';
+        }
+        var ecPtsP = idxElegido === -1 ? 'Se acabo el tiempo ⏱' : 'Respuesta incorrecta';
+        actualizarHUD();
+        mostrarEntreCarreras(false, ecOpP, ecPtsP);
+      }
+    }
+
+    function mostrarEntreCarreras(ganada, ecOp, ecPts) {
+      gid('ecEmoji').textContent = ganada ? (STATE.racha > 1 ? '🔥' : '🎉') : '😅';
+      gid('ecTitulo').textContent = ganada ? '¡CORRECTO!' : '¡INCORRECTO!';
+      gid('ecOperacion').innerHTML = ecOp;
+      gid('ecPts').innerHTML = ecPts;
+      gid('entreCarrerasOverlay').classList.add('active');
+    }
+
+    function siguienteCarrera() {
+      gid('entreCarrerasOverlay').classList.remove('active');
+      for (var i = 0; i < 4; i++) {
+        var hb = document.getElementById('holdBarra' + i);
+        if (hb) { hb.style.width = '0%'; }
+      }
+      if (STATE.corriendo) { setTimeout(lanzarCarrera, 300); }
+    }
+
+    function terminarJuego(motivo) {
+      STATE.corriendo = false;
+      clearInterval(STATE.timerInterval);
+      clearInterval(STATE.rivalInterval);
+      clearInterval(STATE.decisionInterval);
+      clearInterval(STATE.holdInterval);
+      gid('entreCarrerasOverlay').classList.remove('active');
+      var ganoPorVictorias = motivo === 'victoria';
+      var recompensa = Math.min(300,
+        SEL.coinsBase + STATE.victorias * 5 +
+        (ganoPorVictorias ? Math.floor(STATE.tiempoLeft * 0.5) : 0));
+      var titulo;
+      if (ganoPorVictorias)        titulo = '🏆 CAMPEON!';
+      else if (STATE.victorias >= 3) titulo = '⭐ BIEN HECHO!';
+      else if (STATE.victorias >= 1) titulo = '👍 BUEN INTENTO!';
+      else                           titulo = '⏰ TIEMPO!';
+      gid('resTitulo').textContent    = titulo;
+      gid('resVictorias').textContent = STATE.victorias + '/' + VICTORIAS_META;
+      gid('resPuntos').textContent    = STATE.score.toLocaleString('es-CL');
+      gid('resMejorRacha').textContent = STATE.mejorRacha;
+      gid('resCoins').textContent     = recompensa;
+      gid('sessionCoins').textContent = recompensa;
+
+      // Ocultar widget nivel hasta recibir respuesta de la API
+      gid('resNivelWrap').style.display = 'none';
+      gid('resultadoOverlay').classList.add('active');
+
+      var _sid = sessionStorage.getItem('juego_session_id');
+      var _jid = sessionStorage.getItem('juego_id') || 'HorseRace';
+      var _puntos = STATE.score;
+      var _dur    = DURACION_TOTAL - STATE.tiempoLeft;
+
+      getTokenLuego(function (_tok) {
+        if (!_tok) return;
+        fetch('/api/juegos', {
+          method: 'POST',
+          headers: { 'Authorization': 'Bearer ' + _tok, 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action:       'completar',
+            juego_id:     _jid,
+            puntos:       _puntos,
+            duracion_seg: _dur,
+            session_id:   _sid
+          })
+        })
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+          if (!data.ok) return;
+
+          // Toast de EduCoins y XP
+          if (typeof toast === 'function') {
+            toast('+' + data.monedas_ganadas + ' EduCoins y +' + data.xp_ganado + ' XP 🎉', 'coins');
+          }
+
+          // Subida de nivel de EduCoins (no del juego)
+          if (data.subio_nivel && data.nuevo_nivel && typeof toast === 'function') {
+            setTimeout(function () {
+              toast('⬆️ ¡SUBISTE AL NIVEL ' + data.nuevo_nivel + '!', 'success');
+            }, 800);
+          }
+
+          // Misiones completadas
+          if (data.misiones_completadas && data.misiones_completadas.length) {
+            data.misiones_completadas.forEach(function (m) {
+              setTimeout(function () {
+                if (typeof toast === 'function') {
+                  toast('🎯 Misión: ' + m.descripcion + ' +' + m.monedas + ' 🪙', 'success');
+                }
+              }, 400);
+            });
+          }
+
+          // Widget de nivel del juego
+          mostrarWidgetNivel(data);
+
+          // Limpiar sessionStorage
+          sessionStorage.removeItem('juego_session_id');
+          sessionStorage.removeItem('juego_id');
+          sessionStorage.removeItem('juego_token');
+        })
+        .catch(function () {});
+      }); // fin getTokenLuego
+    }
+
+    // ── Widget de nivel en pantalla de resultado ──────────────────────
+    function mostrarWidgetNivel(data) {
+      if (!data.nivel_juego) return;
+
+      var intentosReq = data.intentos_req || 3;
+      // intentos_hoy viene con el nuevo valor ya incrementado
+      // Si subió de nivel, mostrar el nuevo nivel con 0/3 estrellas (reset)
+      var intentosHoy = data.subi_nivel_juego ? 0 : Math.min(data.intentos_hoy, intentosReq);
+      var nivelActual = data.nivel_juego;
+      var esMaestro   = data.es_maestro;
+
+      gid('resNivelWrap').style.display = '';
+      gid('resNivelBadge').textContent  = 'Nivel ' + nivelActual + ' / 10';
+
+      // Texto de estado
+      var txtEl = gid('resNivelTxt');
+      txtEl.className = 'res-nivel-txt';
+      if (esMaestro) {
+        txtEl.textContent = '🏆 Nivel máximo';
+        txtEl.classList.add('verde');
+      } else if (data.subi_nivel_juego) {
+        var faltan = intentosReq;
+        txtEl.textContent = faltan + ' juego' + (faltan !== 1 ? 's' : '') + ' para nv.' + (nivelActual + 1);
+        txtEl.classList.add('violeta');
+      } else {
+        var faltan2 = intentosReq - intentosHoy;
+        txtEl.textContent = faltan2 + ' juego' + (faltan2 !== 1 ? 's' : '') + ' para nv.' + (nivelActual + 1);
+        txtEl.classList.add('violeta');
+      }
+
+      // Estrellas
+      var iconos = ['⭐','⭐','🏆'];
+      var clases = ['g1','g2','g3'];
+      for (var i = 0; i < intentosReq; i++) {
+        var el = gid('rne' + i);
+        if (!el) continue;
+        if (i < intentosHoy) {
+          el.className  = 'rne ' + clases[i];
+          el.textContent = iconos[i];
+        } else {
+          el.className  = 'rne vacia';
+          el.textContent = '☆';
+        }
+      }
+
+      // Barra
+      var pct    = Math.round((intentosHoy / intentosReq) * 100);
+      var barraEl = gid('resNivelBarra');
+      barraEl.style.width = pct + '%';
+      barraEl.className   = 'res-nivel-barra-fill' + (intentosHoy >= intentosReq ? ' completa' : '');
+
+      // Animación de subida de nivel
+      if (data.subi_nivel_juego) {
+        var subioEl = gid('resNivelSubio');
+        subioEl.textContent = '⬆️ ¡SUBISTE AL NIVEL ' + nivelActual + '! +' +
+          (data.bonus_monedas > 0 ? data.bonus_monedas + ' 🪙' : '') +
+          (data.bonus_xp > 0 ? ' +' + data.bonus_xp + ' XP' : '');
+        setTimeout(function () { subioEl.classList.add('visible'); }, 600);
+      }
+    }
+
+    // ── Cargar nivel actual al iniciar para el badge del menú ─────────
+    function cargarNivelMenu() {
+      var _tok = window.CLERK_TOKEN || sessionStorage.getItem('juego_token');
+      if (!_tok) return;
+      fetch('/api/juegos?action=nivel&juego_id=HorseRace', {
+        headers: { 'Authorization': 'Bearer ' + _tok }
+      })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (data) {
+        if (!data) return;
+        var wrap   = gid('nivelMenuWrap');
+        var txtEl  = gid('nivelMenuTxt');
+        var segsEl = gid('nivelMenuSegs');
+        var hintEl = gid('nivelMenuHint');
+        if (!wrap) return;
+
+        var nivelActual = data.nivel_actual || 1;
+        var intentosHoy = Math.min(data.intentos_hoy || 0, data.intentos_requeridos || 3);
+        var intentosReq = data.intentos_requeridos || 3;
+        var faltan      = intentosReq - intentosHoy;
+        var esMaestro   = data.es_maestro;
+
+        txtEl.textContent  = 'Nivel ' + nivelActual + '/10';
+        hintEl.textContent = esMaestro ? '🏆 Maestro'
+          : faltan + ' juego' + (faltan !== 1 ? 's' : '') + ' para nv.' + (nivelActual + 1);
+
+        var colores = ['s1','s2','s3'];
+        var html = '';
+        for (var i = 0; i < intentosReq; i++) {
+          html += '<div class="nms' + (i < intentosHoy ? ' ' + (colores[i] || 's3') : '') + '"></div>';
+        }
+        segsEl.innerHTML = html;
+        wrap.style.display = '';
+      })
+      .catch(function () {});
+    }
+
+    function volverAlMenu() {
+      gid('resultadoOverlay').classList.remove('active');
+      gid('screenJuego').classList.remove('active');
+      gid('screenMenu').classList.add('active');
+      clearInterval(STATE.timerInterval);
+      clearInterval(STATE.rivalInterval);
+      clearInterval(STATE.decisionInterval);
+      clearInterval(STATE.holdInterval);
+      gid('timerRing').style.stroke = 'var(--cyan)';
+      gid('timerTxt').style.color = 'white';
+      document.querySelectorAll('.tabla-btn').forEach(function (b) { b.classList.remove('seleccionada'); });
+      document.querySelectorAll('.rango-btn').forEach(function (b) { b.classList.remove('seleccionado'); });
+      gid('btnIniciarJuego').disabled = true;
+      SEL.tablaKey = null;
+      // Limpiar animación de nivel para la próxima partida
+      var subioEl = gid('resNivelSubio');
+      if (subioEl) subioEl.classList.remove('visible');
+      // Refrescar badge del menú con datos actualizados
+      cargarNivelMenu();
+    }
+
+    function actualizarHUD() {
+      gid('scoreNum').textContent = STATE.score.toLocaleString('es-CL');
+      gid('rachaNum').textContent = STATE.racha;
+      gid('sessionCoins').textContent = Math.min(300, SEL.coinsBase + STATE.victorias * 5);
+    }
+
+    function renderVictorias() {
+      for (var i = 0; i < VICTORIAS_META; i++) {
+        var el = document.getElementById('v' + i);
+        if (el) { el.classList.toggle('ganada', i < STATE.victorias); }
+      }
+    }
+
+    function generarOpciones(correcto, n, tablaNum) {
+      var set = [correcto], t = 0;
+      while (set.length < n && t < 80) {
+        t++;
+        var cand;
+        if (t % 3 === 0) { cand = tablaNum * (Math.floor(Math.random() * 10) + 1); }
+        else if (t % 3 === 1) { var d = [tablaNum, 1, 2][Math.floor(Math.random() * 3)]; cand = correcto + (Math.random() < .5 ? d : -d); }
+        else { cand = (Math.floor(Math.random() * 10) + 1) * (Math.floor(Math.random() * 10) + 1); }
+        if (cand !== correcto && cand > 0 && cand <= 100 && set.indexOf(cand) === -1) { set.push(cand); }
+      }
+      while (set.length < n) {
+        var c = Math.floor(Math.random() * 99) + 1;
+        if (set.indexOf(c) === -1) { set.push(c); }
+      }
+      return set.sort(function () { return Math.random() - .5; });
+    }
+
+    function flashFeedback(tipo) {
+      var el = gid('feedbackFlash');
+      el.className = 'feedback-flash ' + tipo + ' visible';
+      setTimeout(function () { el.classList.remove('visible'); }, 180);
+    }
+
+    function spawnFloat(x, y, txt, color) {
+      var el = document.createElement('div');
+      el.className = 'float-num'; el.textContent = txt;
+      el.style.left = x + 'px'; el.style.top = y + 'px'; el.style.color = color;
+      document.body.appendChild(el);
+      setTimeout(function () { if (el.parentNode) { el.parentNode.removeChild(el); } }, 920);
+    }
+  </script>
+</body>
+
+</html>

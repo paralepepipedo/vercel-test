@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+  <title>Memoria — EduCoins</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Nunito:wght@700;800;900&display=swap"
+    rel="stylesheet" />
+  <link rel="stylesheet" href="../../shared/shared.css" />
+  <style>
+    body {
+      background: var(--bg);
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+
+    .game-topbar {
+      height: 56px;
+      background: rgba(7, 7, 26, .95);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      padding: 0 1.5rem;
+      gap: 1rem;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 100;
+    }
+
+    .game-back-btn {
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      padding: .4rem .875rem;
+      font-size: .8rem;
+      font-weight: 800;
+      cursor: pointer;
+      text-decoration: none;
+      transition: border-color .2s;
+    }
+
+    .game-back-btn:hover {
+      border-color: var(--violet);
+    }
+
+    .game-title {
+      font-family: 'Press Start 2P', monospace;
+      font-size: .6rem;
+      color: var(--pink);
+      flex: 1;
+      text-align: center;
+    }
+
+    .game-timer {
+      font-family: 'Press Start 2P', monospace;
+      font-size: .5rem;
+      color: var(--cyan);
+    }
+
+    .game-wrap {
+      padding: 72px 1.5rem 2rem;
+      max-width: 800px;
+      margin: 0 auto;
+      width: 100%;
+    }
+
+    .meta-bar {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+      flex-wrap: wrap;
+    }
+
+    .meta-item {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: .625rem 1rem;
+      display: flex;
+      gap: .5rem;
+      align-items: center;
+    }
+
+    .meta-label {
+      font-family: 'Press Start 2P', monospace;
+      font-size: .35rem;
+      color: var(--text-muted);
+    }
+
+    .meta-val {
+      font-family: 'Press Start 2P', monospace;
+      font-size: .6rem;
+      color: white;
+    }
+
+    /* GRID DE CARTAS */
+    .cartas-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: .875rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .carta {
+      aspect-ratio: 3/4;
+      border-radius: 12px;
+      cursor: pointer;
+      perspective: 600px;
+      position: relative;
+    }
+
+    .carta-inner {
+      width: 100%;
+      height: 100%;
+      position: relative;
+      transform-style: preserve-3d;
+      transition: transform .4s ease;
+      border-radius: 12px;
+    }
+
+    .carta.volteada .carta-inner,
+    .carta.emparejada .carta-inner {
+      transform: rotateY(180deg);
+    }
+
+    .carta-frente,
+    .carta-dorso {
+      position: absolute;
+      inset: 0;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      backface-visibility: hidden;
+      -webkit-backface-visibility: hidden;
+      border: 2px solid var(--border);
+    }
+
+    .carta-dorso {
+      background: linear-gradient(135deg, var(--bg3), var(--bg2));
+      font-size: 2rem;
+      color: var(--border-b);
+    }
+
+    .carta-dorso::before {
+      content: '🎴';
+      font-size: 2rem;
+    }
+
+    .carta-frente {
+      background: var(--bg2);
+      transform: rotateY(180deg);
+      flex-direction: column;
+      gap: .5rem;
+      padding: .75rem;
+      text-align: center;
+      border-color: var(--violet);
+    }
+
+    .carta-emoji {
+      font-size: 2.5rem;
+    }
+
+    .carta-texto {
+      font-family: 'Press Start 2P', monospace;
+      font-size: .35rem;
+      color: white;
+      line-height: 1.6;
+    }
+
+    .carta.emparejada .carta-frente {
+      border-color: var(--green);
+      background: rgba(34, 197, 94, .08);
+      animation: emparejadoPop .3s cubic-bezier(.34, 1.56, .64, 1);
+    }
+
+    @keyframes emparejadoPop {
+      0% {
+        transform: rotateY(180deg) scale(.9)
+      }
+
+      100% {
+        transform: rotateY(180deg) scale(1)
+      }
+    }
+
+    .carta:hover:not(.volteada):not(.emparejada) .carta-dorso {
+      border-color: var(--violet);
+    }
+
+    /* RESULTADO */
+    .resultado-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 10000;
+      background: rgba(7, 7, 26, .92);
+      backdrop-filter: blur(10px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .4s;
+    }
+
+    .resultado-overlay.active {
+      opacity: 1;
+      pointer-events: all;
+    }
+
+    .resultado-modal {
+      background: var(--bg2);
+      border: 1px solid var(--border-b);
+      border-radius: 20px;
+      padding: 2.5rem;
+      text-align: center;
+      max-width: 380px;
+      width: 90%;
+      box-shadow: 0 0 60px rgba(236, 72, 153, .25);
+    }
+
+    .resultado-titulo {
+      font-family: 'Press Start 2P', monospace;
+      font-size: .9rem;
+      color: white;
+      margin-bottom: .75rem;
+      line-height: 1.5;
+    }
+
+    .resultado-coins {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 2rem;
+      color: var(--yellow);
+      margin: .875rem 0;
+      display: block;
+    }
+
+    .resultado-sub {
+      font-size: .875rem;
+      color: var(--text-dim);
+      font-weight: 700;
+      margin-bottom: 1.5rem;
+    }
+
+    .resultado-btns {
+      display: flex;
+      gap: .75rem;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .btn-play {
+      padding: .75rem 1.5rem;
+      background: linear-gradient(135deg, var(--pink), #be185d);
+      color: white;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      font-family: 'Press Start 2P', monospace;
+      font-size: .48rem;
+      transition: all .2s;
+    }
+
+    .btn-play:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(236, 72, 153, .5);
+    }
+
+    .btn-volver {
+      padding: .75rem 1.5rem;
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      cursor: pointer;
+      color: var(--text);
+      font-family: 'Press Start 2P', monospace;
+      font-size: .48rem;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      transition: border-color .2s;
+    }
+
+    .btn-volver:hover {
+      border-color: var(--violet);
+    }
+  </style>
+</head>
+
+<body>
+  <div class="game-topbar">
+    <a href="../juegos.html" class="game-back-btn">← Volver</a>
+    <span class="game-title">🃏 MEMORIA</span>
+    <span class="game-timer">⏱ <span id="timerTxt">00:00</span></span>
+  </div>
+
+  <div class="game-wrap">
+    <div class="meta-bar">
+      <div class="meta-item"><span class="meta-label">PARES</span><span class="meta-val" id="paresVal">0/8</span></div>
+      <div class="meta-item"><span class="meta-label">INTENTOS</span><span class="meta-val" id="intentosVal">0</span>
+      </div>
+      <div class="meta-item"><span class="meta-label">NIVEL</span><span class="meta-val" id="nivelVal">1</span></div>
+    </div>
+    <div class="cartas-grid" id="cartasGrid"></div>
+  </div>
+
+  <div class="resultado-overlay" id="resultadoOverlay">
+    <div class="resultado-modal">
+      <div class="resultado-titulo" id="resTitulo">🎉 ¡COMPLETADO!</div>
+      <span class="resultado-coins" id="resCoins">0 🪙</span>
+      <div class="resultado-sub" id="resSub">—</div>
+      <div class="resultado-btns">
+        <button class="btn-play" id="btnDenuevo">↺ Jugar de nuevo</button>
+        <a href="../juegos.html" class="btn-volver">← Lobby</a>
+      </div>
+    </div>
+  </div>
+
+  <script src="../../shared/shared.js"></script>
+  <script>
+    // Pares de concepto + definición (asignaturas variadas)
+    var PARES_POOL = [
+      { emoji: '➕', texto: 'SUMA' }, { emoji: '2+2', texto: 'CUATRO' },
+      { emoji: '🌍', texto: 'PLANETA' }, { emoji: '☀️', texto: 'ESTRELLA' },
+      { emoji: '📖', texto: 'LIBRO' }, { emoji: '✏️', texto: 'LÁPIZ' },
+      { emoji: '💧', texto: 'AGUA' }, { emoji: '🔥', texto: 'FUEGO' },
+      { emoji: '🌱', texto: 'PLANTA' }, { emoji: '🐋', texto: 'MAMÍFERO' },
+      { emoji: '⚗️', texto: 'QUÍMICA' }, { emoji: '🏔️', texto: 'MONTAÑA' },
+      { emoji: '🎵', texto: 'MÚSICA' }, { emoji: '🎨', texto: 'ARTE' },
+      { emoji: '🧮', texto: 'CÁLCULO' }, { emoji: '📐', texto: 'GEOMETRÍA' },
+    ];
+
+    var STATE = { cartas: [], volteadas: [], emparejadas: 0, intentos: 0, bloqueado: false, nivel: 1, timerSeg: 0, timerInt: null, iniciado: false };
+
+    document.addEventListener('DOMContentLoaded', function () {
+      iniciarJuego();
+      document.getElementById('btnDenuevo').addEventListener('click', function () {
+        document.getElementById('resultadoOverlay').classList.remove('active');
+        STATE.nivel++;
+        iniciarJuego();
+      });
+    });
+
+    function iniciarJuego() {
+      clearInterval(STATE.timerInt);
+      STATE.volteadas = []; STATE.emparejadas = 0; STATE.intentos = 0; STATE.bloqueado = false; STATE.timerSeg = 0; STATE.iniciado = false;
+
+      var totalPares = Math.min(4 + STATE.nivel, 8);
+      var pool = shuffleArr(PARES_POOL.slice()).slice(0, totalPares);
+      var cartas = [];
+      pool.forEach(function (p, i) {
+        cartas.push({ id: 'c' + i + 'a', parId: i, tipo: 'emoji', contenido: p.emoji, emparejada: false });
+        cartas.push({ id: 'c' + i + 'b', parId: i, tipo: 'texto', contenido: p.texto, emparejada: false });
+      });
+      STATE.cartas = shuffleArr(cartas);
+
+      var cols = totalPares <= 4 ? 4 : totalPares <= 6 ? 4 : 4;
+      var grid = document.getElementById('cartasGrid');
+      grid.style.gridTemplateColumns = 'repeat(' + cols + ',1fr)';
+      grid.innerHTML = STATE.cartas.map(function (c) {
+        return '<div class="carta" data-id="' + c.id + '">' +
+          '<div class="carta-inner">' +
+          '<div class="carta-dorso"></div>' +
+          '<div class="carta-frente">' +
+          (c.tipo === 'emoji'
+            ? '<span class="carta-emoji">' + c.contenido + '</span>'
+            : '<span class="carta-texto">' + c.contenido + '</span>') +
+          '</div>' +
+          '</div>' +
+          '</div>';
+      }).join('');
+
+      grid.querySelectorAll('.carta').forEach(function (el) {
+        el.addEventListener('click', function () { clickCarta(this.dataset.id); });
+      });
+
+      actualizarMeta();
+      document.getElementById('nivelVal').textContent = STATE.nivel;
+    }
+
+    function clickCarta(id) {
+      if (STATE.bloqueado) return;
+      var carta = STATE.cartas.find(function (c) { return c.id === id; });
+      if (!carta || carta.emparejada || STATE.volteadas.includes(id)) return;
+
+      if (!STATE.iniciado) {
+        STATE.iniciado = true;
+        STATE.timerInt = setInterval(function () {
+          STATE.timerSeg++;
+          var m = Math.floor(STATE.timerSeg / 60), s = STATE.timerSeg % 60;
+          document.getElementById('timerTxt').textContent = pad(m) + ':' + pad(s);
+        }, 1000);
+      }
+
+      STATE.volteadas.push(id);
+      document.querySelector('.carta[data-id="' + id + '"]').classList.add('volteada');
+
+      if (STATE.volteadas.length === 2) {
+        STATE.intentos++;
+        STATE.bloqueado = true;
+        var c1 = STATE.cartas.find(function (c) { return c.id === STATE.volteadas[0]; });
+        var c2 = STATE.cartas.find(function (c) { return c.id === STATE.volteadas[1]; });
+        if (c1.parId === c2.parId) {
+          c1.emparejada = c2.emparejada = true;
+          document.querySelector('.carta[data-id="' + c1.id + '"]').classList.add('emparejada');
+          document.querySelector('.carta[data-id="' + c2.id + '"]').classList.add('emparejada');
+          STATE.emparejadas++;
+          STATE.volteadas = [];
+          STATE.bloqueado = false;
+          actualizarMeta();
+          if (STATE.emparejadas === STATE.cartas.length / 2) terminar();
+        } else {
+          setTimeout(function () {
+            STATE.volteadas.forEach(function (vid) {
+              document.querySelector('.carta[data-id="' + vid + '"]').classList.remove('volteada');
+            });
+            STATE.volteadas = [];
+            STATE.bloqueado = false;
+            actualizarMeta();
+          }, 900);
+        }
+      } else {
+        actualizarMeta();
+      }
+    }
+
+    function getTokenLuego(callback) {
+      if (window.CLERK_TOKEN) { callback(window.CLERK_TOKEN); return; }
+      var tok = sessionStorage.getItem('juego_token');
+      if (tok) { callback(tok); return; }
+      var intentos = 0;
+      var iv = setInterval(function () {
+        intentos++;
+        if (window.CLERK_TOKEN) { clearInterval(iv); callback(window.CLERK_TOKEN); return; }
+        var tok2 = sessionStorage.getItem('juego_token');
+        if (tok2) { clearInterval(iv); callback(tok2); return; }
+        if (intentos >= 25) { clearInterval(iv); callback(null); }
+      }, 200);
+    }
+
+    function terminar() {
+      clearInterval(STATE.timerInt);
+      var totalPares = STATE.cartas.length / 2;
+      var precision = Math.round((totalPares / STATE.intentos) * 100);
+      var tiempoBonus = Math.max(0, 60 - STATE.timerSeg);
+      var recompensa = Math.min(200, 50 + Math.round(precision * 0.8) + Math.round(tiempoBonus * 0.5));
+
+      document.getElementById('resTitulo').textContent = precision >= 90 ? '🌟 ¡PERFECTO!' : '🎉 ¡COMPLETADO!';
+      document.getElementById('resCoins').textContent = '+' + recompensa + ' 🪙';
+      document.getElementById('resSub').textContent = 'Precisión: ' + precision + '% | Tiempo: ' + document.getElementById('timerTxt').textContent;
+      document.getElementById('resultadoOverlay').classList.add('active');
+      toast('+' + recompensa + ' EduCoins ganados 🃏', 'coins');
+      var _sid = sessionStorage.getItem('juego_session_id');
+      var _jid = sessionStorage.getItem('juego_id');
+
+      getTokenLuego(function (_tok) {
+        if (_tok) {
+          fetch('/api/juegos', {
+            method: 'POST',
+            headers: { 'Authorization': 'Bearer ' + _tok, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'completar', juego_id: _jid, puntos: recompensa, duracion_seg: STATE.timerSeg, session_id: _sid })
+          }).then(function (r) { return r.json(); }).then(function (data) {
+            if (!data.ok) return;
+            toast('+' + data.monedas_ganadas + ' EduCoins y +' + data.xp_ganado + ' XP 🎉', 'coins');
+            if (data.subio_nivel) toast('⬆️ ¡SUBISTE AL NIVEL ' + data.nuevo_nivel + '!', 'success');
+            if (data.misiones_completadas && data.misiones_completadas.length) {
+              data.misiones_completadas.forEach(function (m) { toast('🎯 Misión completada: ' + m.descripcion + ' +' + m.recompensa + ' 🪙', 'success'); });
+            }
+            sessionStorage.removeItem('juego_session_id');
+            sessionStorage.removeItem('juego_id');
+            sessionStorage.removeItem('juego_token');
+          }).catch(function () { });
+        }
+      });
+    }
+
+    function actualizarMeta() {
+      document.getElementById('paresVal').textContent = STATE.emparejadas + '/' + (STATE.cartas.length / 2);
+      document.getElementById('intentosVal').textContent = STATE.intentos;
+    }
+    function shuffleArr(a) { for (var i = a.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)); var t = a[i]; a[i] = a[j]; a[j] = t; } return a; }
+    function pad(n) { return String(n).padStart(2, '0'); }
+  </script>
+</body>
+
+</html>

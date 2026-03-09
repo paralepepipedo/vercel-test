@@ -1,0 +1,1959 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cuestionario</title>
+  <script data-clerk-publishable-key="pk_test_..."
+    src="https://cdn.jsdelivr.net/npm/@clerk/clerk-js@latest/dist/clerk.browser.js"></script>
+  <link rel="stylesheet" href="../../shared/shared.css">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap');
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      --color: #667eea;
+      --color2: #764ba2;
+      --match: #11998e;
+      --match2: #38ef7d;
+    }
+
+    body {
+      background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      font-family: 'Poppins', sans-serif;
+      padding: 1rem;
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+      opacity: 0.035;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+      background-size: 200px 200px;
+    }
+
+    body>* {
+      position: relative;
+      z-index: 1;
+    }
+
+
+    /* ── BOTÓN VOLVER ── */
+    .btn-volver {
+      position: fixed;
+      top: 1rem;
+      left: 1rem;
+      z-index: 50;
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: #fff;
+      border-radius: 12px;
+      padding: 8px 16px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: 'Poppins', sans-serif;
+      backdrop-filter: blur(8px);
+      transition: all 0.2s;
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .btn-volver:hover {
+      background: rgba(255, 255, 255, 0.18);
+    }
+
+    /* ── HEADER ── */
+    .game-header {
+      width: 100%;
+      max-width: 700px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.4rem;
+      margin-top: 3rem;
+      margin-bottom: 0.8rem;
+    }
+
+    .asig-badge {
+      padding: 4px 20px;
+      border-radius: 20px;
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: #fff;
+    }
+
+    .game-title {
+      color: #fff;
+      font-size: 0.95rem;
+      font-weight: 600;
+      text-align: center;
+      opacity: 0.8;
+      padding: 0 1rem;
+    }
+
+    .nivel-info {
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+      color: rgba(255, 255, 255, 0.7);
+      font-size: 0.75rem;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .nivel-chip {
+      color: #fff;
+      padding: 3px 14px;
+      border-radius: 20px;
+      font-weight: 700;
+      font-size: 0.72rem;
+    }
+
+    /* ── ETAPAS ── */
+    .etapas-bar {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 0.8rem;
+    }
+
+    .etapa-dot {
+      width: 28px;
+      height: 6px;
+      border-radius: 3px;
+      background: rgba(255, 255, 255, 0.15);
+      transition: background 0.4s;
+    }
+
+    .etapa-dot.completada {
+      background: var(--match2);
+      box-shadow: 0 0 8px var(--match2);
+    }
+
+    .etapa-dot.activa {
+      background: var(--color);
+      box-shadow: 0 0 8px var(--color);
+    }
+
+    /* ── STATS ── */
+    .stats-bar {
+      display: flex;
+      gap: 0.6rem;
+      margin-bottom: 0.8rem;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .stat {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      padding: 4px 14px;
+      border-radius: 20px;
+      color: #fff;
+      font-size: 0.75rem;
+      backdrop-filter: blur(8px);
+      white-space: nowrap;
+    }
+
+    /* ── TEMPORIZADOR BARRA ── */
+    .timer-wrap {
+      width: 100%;
+      max-width: 700px;
+      margin-bottom: 1rem;
+      padding: 0 0.5rem;
+    }
+
+    .timer-track {
+      width: 100%;
+      height: 8px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+
+    .timer-fill {
+      height: 100%;
+      border-radius: 4px;
+      transition: width 1s linear, background 1s;
+      background: var(--color);
+    }
+
+    .timer-fill.amarillo {
+      background: #f5a623;
+    }
+
+    .timer-fill.rojo {
+      background: #f5576c;
+    }
+
+    /* ── LABEL MECÁNICA ── */
+    .mecanica-label {
+      color: rgba(255, 255, 255, 0.45);
+      font-size: 0.65rem;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-bottom: 0.8rem;
+      text-align: center;
+    }
+
+    /* ── GAME AREA ── */
+    .game-area {
+      width: 100%;
+      max-width: 700px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    /* ════════ IMAGEN PREGUNTA ════════ */
+    /* Contenedor cuadrado responsivo que no distorsiona */
+    .img-wrap {
+      width: 100%;
+      max-width: 420px;
+      aspect-ratio: 4/3;
+      border-radius: 16px;
+      overflow: hidden;
+      margin-bottom: 0.8rem;
+      background: #000;
+      isolation: isolate;
+      transform: translateZ(0);
+      will-change: transform;
+    }
+
+    .img-wrap img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      display: block;
+      image-rendering: crisp-edges;
+      transform: translateZ(0);
+    }
+
+    /* ════════ MECÁNICA A — QUIZ ════════ */
+    .quiz-card {
+      width: 100%;
+      background: rgba(20, 18, 60, 0.92);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 20px;
+      padding: 1.2rem;
+      animation: fadeUp 0.4s ease;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .quiz-pregunta {
+      color: #fff;
+      font-size: 0.95rem;
+      font-weight: 600;
+      line-height: 1.4;
+      margin-bottom: 1rem;
+      text-align: center;
+      width: 100%;
+    }
+
+    .quiz-opciones {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.6rem;
+      width: 100%;
+    }
+
+    @media(max-width:480px) {
+      .quiz-opciones {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .opcion-btn {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      border-radius: 12px;
+      padding: 10px 14px;
+      color: #fff;
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: 'Poppins', sans-serif;
+      transition: all 0.2s;
+      text-align: left;
+      line-height: 1.3;
+    }
+
+    .opcion-btn:hover:not(:disabled) {
+      background: rgba(255, 255, 255, 0.15);
+      border-color: rgba(255, 255, 255, 0.35);
+      transform: translateY(-2px);
+    }
+
+    .opcion-btn.correcta {
+      background: linear-gradient(135deg, #11998e, #38ef7d);
+      border-color: transparent;
+      animation: pulse 0.4s ease;
+    }
+
+    .opcion-btn.incorrecta {
+      background: linear-gradient(135deg, #c0392b, #f5576c);
+      border-color: transparent;
+      animation: shake 0.4s ease;
+    }
+
+    .opcion-btn:disabled {
+      cursor: default;
+    }
+
+    .quiz-progreso {
+      color: rgba(255, 255, 255, 0.4);
+      font-size: 0.7rem;
+      text-align: center;
+      margin-top: 0.8rem;
+    }
+
+    /* ════════ MECÁNICA B — V/F ════════ */
+    .vof-card {
+      width: 100%;
+      background: rgba(20, 18, 60, 0.92);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 20px;
+      padding: 1.2rem;
+      text-align: center;
+      animation: fadeUp 0.4s ease;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .vof-afirmacion {
+      color: #fff;
+      font-size: 0.95rem;
+      font-weight: 600;
+      line-height: 1.5;
+      margin-bottom: 1.2rem;
+      font-style: italic;
+      width: 100%;
+    }
+
+    .vof-botones {
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .vof-btn {
+      padding: 14px 28px;
+      border-radius: 14px;
+      border: none;
+      font-size: 0.95rem;
+      font-weight: 800;
+      cursor: pointer;
+      font-family: 'Poppins', sans-serif;
+      transition: all 0.2s;
+      min-width: 120px;
+      color: #fff;
+    }
+
+    .vof-btn.verdadero {
+      background: linear-gradient(135deg, #11998e, #38ef7d);
+      box-shadow: 0 4px 15px rgba(56, 239, 125, 0.3);
+    }
+
+    .vof-btn.falso {
+      background: linear-gradient(135deg, #f093fb, #f5576c);
+      box-shadow: 0 4px 15px rgba(245, 87, 108, 0.3);
+    }
+
+    .vof-btn:hover:not(:disabled) {
+      transform: translateY(-3px);
+      opacity: 0.9;
+    }
+
+    .vof-btn:disabled {
+      opacity: 0.5;
+      cursor: default;
+      transform: none;
+    }
+
+    .vof-btn.acierto {
+      box-shadow: 0 0 20px rgba(56, 239, 125, 0.8) !important;
+      animation: pulse 0.4s ease;
+    }
+
+    .vof-btn.error-vof {
+      animation: shake 0.4s ease;
+      opacity: 0.4;
+    }
+
+    /* ════════ MECÁNICA C — UNIR ════════ */
+    .unir-container {
+      width: 100%;
+      animation: fadeUp 0.4s ease;
+    }
+
+    .unir-titulo {
+      color: rgba(255, 255, 255, 0.6);
+      font-size: 0.78rem;
+      text-align: center;
+      margin-bottom: 0.8rem;
+    }
+
+    .unir-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.6rem;
+    }
+
+    .unir-col {
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+    }
+
+    .unir-item {
+      background: rgba(255, 255, 255, 0.08);
+      border: 2px solid rgba(255, 255, 255, 0.15);
+      border-radius: 12px;
+      padding: 8px 12px;
+      color: #fff;
+      font-size: 0.78rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-align: center;
+      min-height: 52px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      line-height: 1.3;
+      overflow: hidden;
+    }
+
+    .unir-item .img-mini {
+      width: 100%;
+      height: 64px;
+      object-fit: contain;
+      border-radius: 8px;
+    }
+
+    .unir-item:hover:not(.matched-unir):not(.selected-unir) {
+      border-color: var(--color);
+      background: rgba(255, 255, 255, 0.14);
+    }
+
+    .unir-item.selected-unir {
+      border-color: var(--color);
+      background: rgba(102, 126, 234, 0.25);
+      box-shadow: 0 0 12px var(--color);
+    }
+
+    .unir-item.matched-unir {
+      border-color: #38ef7d;
+      background: rgba(56, 239, 125, 0.15);
+      cursor: default;
+      animation: pulse 0.4s ease;
+    }
+
+    .unir-item.error-unir {
+      border-color: #f5576c;
+      background: rgba(245, 87, 108, 0.15);
+      animation: shake 0.4s ease;
+    }
+
+    /* ════════ MECÁNICA D — CLASIFICAR ════════ */
+    .clasif-container {
+      width: 100%;
+      animation: fadeUp 0.4s ease;
+    }
+
+    .clasif-titulo {
+      color: #fff;
+      font-size: 0.88rem;
+      font-weight: 700;
+      text-align: center;
+      margin-bottom: 1rem;
+      background: rgba(255,255,255,0.07);
+      border-radius: 10px;
+      padding: 0.5rem 1rem;
+      border: 1px solid rgba(255,255,255,0.12);
+    }
+
+    .clasif-items {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      justify-content: center;
+      margin-bottom: 0.8rem;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px dashed rgba(255, 255, 255, 0.1);
+      border-radius: 14px;
+      padding: 0.6rem;
+      min-height: 60px;
+    }
+
+    .clasif-item {
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 10px;
+      padding: 6px 12px;
+      color: #fff;
+      font-size: 0.78rem;
+      font-weight: 600;
+      cursor: grab;
+      transition: all 0.2s;
+      user-select: none;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .clasif-item .img-mini-sq {
+      width: 64px;
+      height: 64px;
+      object-fit: cover;
+      border-radius: 50%;
+      border: 2px solid rgba(255,255,255,0.3);
+      flex-shrink: 0;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+    }
+
+    .clasif-item:hover {
+      transform: scale(1.04);
+      border-color: var(--color);
+    }
+
+    .clasif-item.dragging {
+      opacity: 0.4;
+    }
+
+    .clasif-categorias {
+      display: grid;
+      gap: 0.6rem;
+    }
+
+    .categoria-zona {
+      background: rgba(255, 255, 255, 0.06);
+      border: 2px dashed rgba(255, 255, 255, 0.2);
+      border-radius: 14px;
+      padding: 0.7rem;
+      min-height: 68px;
+      transition: border-color 0.2s, background 0.2s;
+    }
+
+    .categoria-zona.drag-over {
+      border-color: var(--color);
+      background: rgba(102, 126, 234, 0.1);
+    }
+
+    .categoria-zona.correcta-cat {
+      border-color: #38ef7d;
+      background: rgba(56, 239, 125, 0.08);
+    }
+
+    .categoria-zona.error-cat {
+      border-color: #f5576c;
+      background: rgba(245, 87, 108, 0.08);
+      animation: shake 0.4s ease;
+    }
+
+    .categoria-nombre {
+      color: rgba(255, 255, 255, 0.5);
+      font-size: 0.68rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 0.4rem;
+    }
+
+    .categoria-items {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+      min-height: 32px;
+    }
+
+    /* ════════ MECÁNICA E — ZONAS ════════ */
+    .zonas-card {
+      width: 100%;
+      background: rgba(20, 18, 60, 0.92);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 20px;
+      padding: 1.2rem;
+      animation: fadeUp 0.4s ease;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .zonas-pregunta {
+      color: #fff;
+      font-size: 0.95rem;
+      font-weight: 600;
+      line-height: 1.4;
+      margin-bottom: 1rem;
+      text-align: center;
+      width: 100%;
+    }
+
+    .zonas-opciones {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      width: 100%;
+      max-width: 400px;
+    }
+
+    .zona-check {
+      display: flex;
+      align-items: center;
+      gap: 0.7rem;
+      background: rgba(255, 255, 255, 0.07);
+      border: 2px solid rgba(255, 255, 255, 0.15);
+      border-radius: 12px;
+      padding: 10px 16px;
+      cursor: pointer;
+      transition: all 0.2s;
+      color: #fff;
+      font-size: 0.85rem;
+      font-weight: 600;
+    }
+
+    .zona-check:hover:not(.disabled-zona) {
+      background: rgba(255, 255, 255, 0.14);
+      border-color: rgba(255, 255, 255, 0.3);
+    }
+
+    .zona-check.seleccionada {
+      border-color: var(--color);
+      background: rgba(102, 126, 234, 0.2);
+    }
+
+    .zona-check.correcta-zona {
+      border-color: #38ef7d;
+      background: rgba(56, 239, 125, 0.15);
+    }
+
+    .zona-check.incorrecta-zona {
+      border-color: #f5576c;
+      background: rgba(245, 87, 108, 0.1);
+    }
+
+    .zona-check.disabled-zona {
+      cursor: default;
+    }
+
+    .zona-circulo {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      border: 2px solid rgba(255, 255, 255, 0.4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      font-size: 0.7rem;
+    }
+
+    .zona-check.seleccionada .zona-circulo {
+      background: var(--color);
+      border-color: var(--color);
+    }
+
+    .btn-confirmar {
+      margin-top: 1rem;
+      background: linear-gradient(135deg, var(--color), var(--color2));
+      color: #fff;
+      border: none;
+      border-radius: 14px;
+      padding: 12px 32px;
+      font-size: 0.9rem;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: 'Poppins', sans-serif;
+      transition: opacity 0.2s;
+      width: 100%;
+      max-width: 400px;
+    }
+
+    .btn-confirmar:hover {
+      opacity: 0.85;
+    }
+
+    .btn-confirmar:disabled {
+      opacity: 0.4;
+      cursor: default;
+    }
+
+    /* ── ANIMACIONES ── */
+    @keyframes fadeUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes pulse {
+
+      0%,
+      100% {
+        transform: scale(1);
+      }
+
+      50% {
+        transform: scale(1.06);
+      }
+    }
+
+    @keyframes shake {
+
+      0%,
+      100% {
+        transform: translateX(0);
+      }
+
+      25% {
+        transform: translateX(-6px);
+      }
+
+      75% {
+        transform: translateX(6px);
+      }
+    }
+
+    /* ── FEEDBACK ── */
+    .feedback-overlay {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 4rem;
+      pointer-events: none;
+      z-index: 200;
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+
+    .feedback-overlay.show {
+      opacity: 1;
+    }
+
+    /* ── MODALES ── */
+    .overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(6px);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .overlay.active {
+      display: flex;
+    }
+
+    .modal {
+      background: linear-gradient(135deg, #1a1740, #2d2b69);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 24px;
+      padding: 2rem;
+      width: min(320px, 90vw);
+      text-align: center;
+      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.5);
+      animation: fadeUp 0.4s ease;
+    }
+
+    .modal-icon {
+      font-size: 3rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .modal-title {
+      color: #fff;
+      font-size: 1.3rem;
+      font-weight: 700;
+      margin-bottom: 0.3rem;
+    }
+
+    .modal-sub {
+      color: rgba(255, 255, 255, 0.5);
+      font-size: 0.8rem;
+      margin-bottom: 1rem;
+    }
+
+    .nivel-up-badge {
+      display: none;
+      background: linear-gradient(135deg, #38ef7d, #11998e);
+      color: #fff;
+      border-radius: 12px;
+      padding: 8px 16px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      margin-bottom: 1rem;
+    }
+
+    .modal-rewards {
+      display: flex;
+      justify-content: center;
+      gap: 1rem;
+      margin-bottom: 1rem;
+    }
+
+    .reward-box {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 14px;
+      padding: 10px 20px;
+    }
+
+    .reward-box .valor {
+      font-size: 1.4rem;
+      font-weight: 800;
+      color: #ffd700;
+    }
+
+    .reward-box .label {
+      font-size: 0.6rem;
+      color: rgba(255, 255, 255, 0.5);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .modal-score {
+      color: rgba(255, 255, 255, 0.6);
+      font-size: 0.8rem;
+      margin-bottom: 1.2rem;
+    }
+
+    .modal-score span {
+      color: #fff;
+      font-weight: 700;
+    }
+
+    .btn-accion {
+      border: none;
+      border-radius: 14px;
+      padding: 12px 32px;
+      font-size: 0.9rem;
+      font-weight: 700;
+      cursor: pointer;
+      width: 100%;
+      font-family: 'Poppins', sans-serif;
+      transition: opacity 0.2s;
+      color: #fff;
+      margin-bottom: 0.5rem;
+    }
+
+    .btn-accion:hover {
+      opacity: 0.85;
+    }
+
+    .btn-siguiente {
+      background: linear-gradient(135deg, var(--color), var(--color2));
+    }
+
+    .btn-reintentar {
+      background: linear-gradient(135deg, #f093fb, #f5576c);
+    }
+
+    .modal.derrota {
+      border-color: rgba(245, 87, 108, 0.3);
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- BOTÓN VOLVER -->
+  <a class="btn-volver" href="/juegos/juegos.html">← Volver</a>
+
+  <!-- FEEDBACK EMOJI -->
+  <div class="feedback-overlay" id="feedbackOverlay"></div>
+
+  <!-- HEADER -->
+  <div class="game-header">
+    <div class="asig-badge" id="asigBadge">📘 Historia</div>
+    <div class="game-title" id="asigTitulo"></div>
+    <div class="nivel-info">
+      <span class="nivel-chip" id="nivelChip">🌱 Principiante</span>
+      <span id="nivelNum">Nivel 1</span>
+      <span>·</span>
+      <span id="etapaNum">Etapa 1 de 3</span>
+    </div>
+  </div>
+
+  <!-- ETAPAS -->
+  <div class="etapas-bar">
+    <div class="etapa-dot activa" id="dot0"></div>
+    <div class="etapa-dot" id="dot1"></div>
+    <div class="etapa-dot" id="dot2"></div>
+  </div>
+
+  <!-- STATS -->
+  <div class="stats-bar">
+    <div class="stat" id="statTiempo">⏱ 00:00</div>
+    <div class="stat" id="statPuntos">⭐ 0 pts</div>
+    <div class="stat" id="statProgreso">📝 0/0</div>
+  </div>
+
+  <!-- TEMPORIZADOR BARRA -->
+  <div class="timer-wrap">
+    <div class="timer-track">
+      <div class="timer-fill" id="timerFill" style="width:100%"></div>
+    </div>
+  </div>
+
+  <!-- LABEL MECÁNICA -->
+  <div class="mecanica-label" id="mecanicaLabel"></div>
+
+  <!-- ÁREA JUEGO -->
+  <div class="game-area" id="gameArea"></div>
+
+  <!-- MODAL VICTORIA -->
+  <div class="overlay" id="modalVictoria">
+    <div class="modal">
+      <div class="modal-icon" id="modalIcon">🎉</div>
+      <div class="modal-title" id="modalTitle">¡Etapa completada!</div>
+      <div class="modal-sub" id="modalSub">Obtuviste tus recompensas</div>
+      <div class="nivel-up-badge" id="nivelUpBadge"></div>
+      <div class="modal-rewards">
+        <div class="reward-box">
+          <div class="valor" id="resCoins">...</div>
+          <div class="label">🪙 EduCoins</div>
+        </div>
+        <div class="reward-box">
+          <div class="valor" id="resXP">...</div>
+          <div class="label">⭐ XP</div>
+        </div>
+      </div>
+      <div class="modal-score">Puntaje: <span id="resPuntaje">0</span> pts</div>
+      <button class="btn-accion btn-siguiente" id="btnSiguiente">Siguiente etapa →</button>
+    </div>
+  </div>
+
+  <!-- MODAL DERROTA -->
+  <div class="overlay" id="modalDerrota">
+    <div class="modal derrota">
+      <div class="modal-icon">😔</div>
+      <div class="modal-title">Se acabó el tiempo</div>
+      <div class="modal-sub">¡Inténtalo de nuevo!</div>
+      <button class="btn-accion btn-reintentar" onclick="reiniciarEtapa()">🔄 Reintentar</button>
+    </div>
+  </div>
+
+  <script src="../../auth/clerk-config.js"></script>
+  <script src="../../shared/clerk-guard.js"></script>
+  <script src="../../shared/shared.js"></script>
+  <script>
+    // ══════════════════════════════════════════════════════════════
+    // 🔑 ID DEL JUEGO
+    // ══════════════════════════════════════════════════════════════
+    var JUEGO_ID = 'cuestionario';
+
+    // ══════════════════════════════════════════════════════════════
+    // ⚙️  ASIGNATURAS Y UNIDADES ACTIVAS
+    // El admin lo controla desde juegos_catalogo.config (jsonb).
+    // Valores por defecto para desarrollo local:
+    // ══════════════════════════════════════════════════════════════
+    var CONFIG_ACTIVA = {
+      historia: [1],
+      ciencias: [],
+      lenguaje: []
+    };
+
+    // ══════════════════════════════════════════════════════════════
+    // 📚 CONTENIDO
+    // ══════════════════════════════════════════════════════════════
+    var CONTENIDO = {
+      historia: {
+        u1: {
+          nombre: 'Diversidad geográfica de Chile',
+
+          // ── QUIZ ──────────────────────────────────────────────
+          // Todas las preguntas llevan imagen obligatoria.
+          // Si no tienes imagen específica usa una temática general.
+          quiz: [
+            {
+              pregunta: '¿Qué río separa el Norte Grande del Norte Chico?',
+              imagen: 'images/historia/u1/quiz/rio_copiapo.jpg',
+              opciones: ['Río Loa', 'Río Copiapó', 'Río Aconcagua', 'Río Biobío'], correcta: 1
+            },
+            {
+              pregunta: '¿Qué macroforma del relieve desaparece al sur de Puerto Montt?',
+              imagen: 'images/historia/u1/quiz/fiordo.jpg',
+              opciones: ['Cordillera de los Andes', 'Depresión intermedia', 'Planicies litorales', 'Cordillera de la Costa'], correcta: 1
+            },
+            {
+              pregunta: '¿A qué altura mínima se encuentra el Altiplano?',
+              imagen: 'images/historia/u1/quiz/altiplano.jpg',
+              opciones: ['1.000 metros', '2.000 metros', '3.000 metros', '5.000 metros'], correcta: 2
+            },
+            {
+              pregunta: '¿Por qué el flamenco rosado tiene ese color?',
+              imagen: 'images/historia/u1/grupo2/flamenco.jpg',
+              opciones: ['Por el frío del altiplano', 'Por su dieta de camarones', 'Por adaptación al sol', 'Por su plumaje natural'], correcta: 1
+            },
+            {
+              pregunta: '¿Para qué pueblo es sagrada la Araucaria?',
+              imagen: 'images/historia/u1/grupo2/araucaria.jpg',
+              opciones: ['Pueblo Aymara', 'Pueblo Rapa Nui', 'Pueblo Mapuche', 'Pueblo Atacameño'], correcta: 2
+            },
+            {
+              pregunta: '¿Cuántas toneladas de cobre produjo Chuquicamata en 2022?',
+              imagen: 'images/historia/u1/grupo3/camion_minero.jpg',
+              opciones: ['3.874 toneladas', '268.348 toneladas', '18.000.000 toneladas', '500.000 toneladas'], correcta: 1
+            },
+            {
+              pregunta: '¿Qué porcentaje del bosque chileno es bosque nativo?',
+              imagen: 'images/historia/u1/quiz/bosque_nativo.jpg',
+              opciones: ['17%', '23%', '82%', '1%'], correcta: 2
+            },
+            {
+              pregunta: '¿Qué tipo de recurso es la energía solar?',
+              imagen: 'images/historia/u1/grupo3/panel_solar.jpg',
+              opciones: ['No renovable', 'Renovable', 'Perpetuo o inagotable', 'Mineral'], correcta: 2
+            },
+            {
+              pregunta: '¿Qué fenómeno permite que florezca la Añañuca?',
+              imagen: 'images/historia/u1/quiz/ananuca.jpg',
+              opciones: ['El invierno altiplánico', 'El desierto florido', 'La camanchaca', 'La corriente de Humboldt'], correcta: 1
+            },
+            {
+              pregunta: '¿Cuántas "R" tiene el modelo de economía circular?',
+              imagen: 'images/historia/u1/quiz/cadena_productiva.jpg',
+              opciones: ['5', '6', '7', '8'], correcta: 2
+            },
+            {
+              pregunta: '¿En qué zona se concentra la mayor minería de cobre?',
+              imagen: 'images/historia/u1/grupo3/cobre.jpg',
+              opciones: ['Zona Central', 'Norte Chico', 'Norte Grande', 'Zona Sur'], correcta: 2
+            },
+            {
+              pregunta: '¿Qué tipo de cuenca es aquella donde el agua no llega al mar?',
+              imagen: 'images/historia/u1/quiz/cuenca_endorreica.jpg',
+              opciones: ['Exorreica', 'Arreica', 'Endorreica', 'Hidrográfica'], correcta: 2
+            },
+            {
+              pregunta: '¿Cuál animal del escudo nacional está en peligro de extinción?',
+              imagen: 'images/historia/u1/quiz/escudo.jpg',
+              opciones: ['Puma', 'Cóndor', 'Huemul', 'Vicuña'], correcta: 2
+            },
+            {
+              pregunta: '¿Qué tipo de clima tiene la Zona Austral?',
+              imagen: 'images/historia/u1/grupo1/glaciar.jpg',
+              opciones: ['Templado mediterráneo', 'Desértico', 'Marítimo lluvioso y polar', 'Semiárido'], correcta: 2
+            },
+            {
+              pregunta: '¿Qué tipo de recurso es el carbón mineral?',
+              imagen: 'images/historia/u1/grupo3/carbon.jpg',
+              opciones: ['Renovable', 'Perpetuo', 'No renovable', 'Forestal'], correcta: 2
+            }
+          ],
+
+          // ── V/F ───────────────────────────────────────────────
+          vof: [
+            { afirmacion: 'La Zona Austral tiene glaciares y campos de hielo.', imagen: 'images/historia/u1/grupo1/glaciar.jpg', verdad: true },
+            { afirmacion: 'El Norte Grande tiene lluvias abundantes todo el año.', imagen: 'images/historia/u1/grupo1/desierto.jpg', verdad: false },
+            { afirmacion: 'El Altiplano está sobre los 3.000 metros de altura.', imagen: 'images/historia/u1/quiz/altiplano.jpg', verdad: true },
+            { afirmacion: 'La Cordillera de la Costa crece en altura hacia el sur.', imagen: 'images/historia/u1/quiz/fiordo.jpg', verdad: false },
+            { afirmacion: 'La Araucaria es un árbol sagrado para el pueblo Mapuche.', imagen: 'images/historia/u1/grupo2/araucaria.jpg', verdad: true },
+            { afirmacion: 'El petróleo es un recurso renovable.', imagen: 'images/historia/u1/grupo3/petroleo.jpg', verdad: false },
+            { afirmacion: 'El Huemul está en peligro de extinción.', imagen: 'images/historia/u1/grupo2/huemul.jpg', verdad: true },
+            { afirmacion: 'Chuquicamata está en la Región de Valparaíso.', imagen: 'images/historia/u1/grupo3/camion_minero.jpg', verdad: false },
+            { afirmacion: 'El 82% del bosque chileno es bosque nativo.', imagen: 'images/historia/u1/quiz/bosque_nativo.jpg', verdad: true },
+            { afirmacion: 'La energía solar es un recurso perpetuo.', imagen: 'images/historia/u1/grupo3/panel_solar.jpg', verdad: true },
+            { afirmacion: 'La Zona Central tiene clima desértico.', imagen: 'images/historia/u1/grupo1/vinedos.jpg', verdad: false },
+            { afirmacion: 'El flamenco vive en lagunas del altiplano.', imagen: 'images/historia/u1/grupo2/flamenco.jpg', verdad: true },
+            { afirmacion: 'La depresión intermedia desaparece en la Zona Sur.', imagen: 'images/historia/u1/grupo1/volcan_nevado.jpg', verdad: false },
+            { afirmacion: 'La vicuña habita en el altiplano del Norte Grande.', imagen: 'images/historia/u1/grupo2/vicuna.jpg', verdad: true },
+            { afirmacion: 'El modelo de las 7R incluye Reciclar y Reutilizar.', imagen: 'images/historia/u1/quiz/cadena_productiva.jpg', verdad: true }
+          ],
+
+          // ── UNIR ──────────────────────────────────────────────
+          unir: [
+            {
+              titulo: 'Une cada zona natural con su límite sur',
+              pares: [
+                { izq: 'Norte Grande', imgIzq: 'images/historia/u1/grupo1/desierto.jpg', der: 'Río Copiapó' },
+                { izq: 'Norte Chico', imgIzq: 'images/historia/u1/grupo1/vinedos.jpg', der: 'Río Aconcagua' },
+                { izq: 'Zona Central', imgIzq: 'images/historia/u1/grupo1/pisco_elqui.jpg', der: 'Río Biobío' },
+                { izq: 'Zona Sur', imgIzq: 'images/historia/u1/grupo1/volcan_nevado.jpg', der: 'Golfo Corcovado' }
+              ]
+            },
+            {
+              titulo: 'Une cada animal con la zona donde vive',
+              pares: [
+                { izq: 'Vicuña', imgIzq: 'images/historia/u1/grupo2/vicuna.jpg', der: 'Norte Grande' },
+                { izq: 'Flamenco', imgIzq: 'images/historia/u1/grupo2/flamenco.jpg', der: 'Norte Grande' },
+                { izq: 'Pingüino', imgIzq: 'images/historia/u1/grupo2/pinguino.jpg', der: 'Costa Norte y Central' },
+                { izq: 'Huemul', imgIzq: 'images/historia/u1/grupo2/huemul.jpg', der: 'Cordillera Sur' },
+                { izq: 'Araucaria', imgIzq: 'images/historia/u1/grupo2/araucaria.jpg', der: 'Zona Sur' }
+              ]
+            },
+            {
+              titulo: 'Une cada recurso con su tipo',
+              pares: [
+                { izq: 'Energía solar', imgIzq: 'images/historia/u1/grupo3/panel_solar.jpg', der: 'Recurso perpetuo' },
+                { izq: 'Cobre', imgIzq: 'images/historia/u1/grupo3/cobre.jpg', der: 'Recurso no renovable' },
+                { izq: 'Pesca', imgIzq: 'images/historia/u1/grupo3/bote_pesca.jpg', der: 'Recurso renovable' },
+                { izq: 'Carbón', imgIzq: 'images/historia/u1/grupo3/carbon.jpg', der: 'Recurso no renovable' }
+              ]
+            }
+          ],
+
+          // ── CLASIFICAR ────────────────────────────────────────
+          clasif: [
+            {
+              titulo: 'Arrastra cada animal a la zona donde vive',
+              items: [
+                { texto: 'Vicuña', imagen: 'images/historia/u1/grupo2/vicuna.jpg', categoria: 'Norte' },
+                { texto: 'Flamenco', imagen: 'images/historia/u1/grupo2/flamenco.jpg', categoria: 'Norte' },
+                { texto: 'Araucaria', imagen: 'images/historia/u1/grupo2/araucaria.jpg', categoria: 'Sur' },
+                { texto: 'Huemul', imagen: 'images/historia/u1/grupo2/huemul.jpg', categoria: 'Sur' },
+                { texto: 'Pingüino', imagen: 'images/historia/u1/grupo2/pinguino.jpg', categoria: 'Central' },
+                { texto: 'Palma', imagen: 'images/historia/u1/grupo1/palmas.jpg', categoria: 'Central' }
+              ],
+              categorias: ['Norte', 'Central', 'Sur']
+            },
+            {
+              titulo: 'Clasifica cada recurso según su tipo',
+              items: [
+                { texto: 'Cobre', imagen: 'images/historia/u1/grupo3/cobre.jpg', categoria: 'No renovable' },
+                { texto: 'Carbón', imagen: 'images/historia/u1/grupo3/carbon.jpg', categoria: 'No renovable' },
+                { texto: 'Pesca', imagen: 'images/historia/u1/grupo3/bote_pesca.jpg', categoria: 'Renovable' },
+                { texto: 'Ovejas', imagen: 'images/historia/u1/grupo3/ovejas.jpg', categoria: 'Renovable' },
+                { texto: 'Energía solar', imagen: 'images/historia/u1/grupo3/panel_solar.jpg', categoria: 'Perpetuo' }
+              ],
+              categorias: ['Renovable', 'No renovable', 'Perpetuo']
+            }
+          ],
+
+          // ── ZONAS (mecánica E) ─────────────────────────────────
+          // Basado en la tabla del libro (pág. 32-33)
+          // Datos extraídos de la imagen del libro compartida.
+          zonas: [
+            { especie: 'Llareta', imagen: 'images/historia/u1/quiz/llareta.jpg', zonas: ['Norte Grande'] },
+            { especie: 'Parina (Flamenco)', imagen: 'images/historia/u1/grupo2/flamenco.jpg', zonas: ['Norte Grande'] },
+            { especie: 'Pingüino de Humboldt', imagen: 'images/historia/u1/grupo2/pinguino.jpg', zonas: ['Norte Grande', 'Norte Chico'] },
+            { especie: 'Añañuca', imagen: 'images/historia/u1/quiz/ananuca.jpg', zonas: ['Norte Chico'] },
+            { especie: 'Palma Chilena', imagen: 'images/historia/u1/grupo1/palmas.jpg', zonas: ['Zona Central'] },
+            { especie: 'Puma', imagen: 'images/historia/u1/grupo2/puma.jpg', zonas: ['Zona Central', 'Zona Sur'] },
+            { especie: 'Araucaria', imagen: 'images/historia/u1/grupo2/araucaria.jpg', zonas: ['Zona Sur'] },
+            { especie: 'Huemul', imagen: 'images/historia/u1/grupo2/huemul.jpg', zonas: ['Zona Sur'] },
+            { especie: 'Lenga', imagen: 'images/historia/u1/quiz/bosque_nativo.jpg', zonas: ['Zona Sur', 'Zona Austral'] },
+            { especie: 'Ñandú de Magallanes', imagen: 'images/historia/u1/grupo2/nandu.jpg', zonas: ['Zona Austral'] },
+            { especie: 'Vicuña', imagen: 'images/historia/u1/grupo2/vicuna.jpg', zonas: ['Norte Grande'] }
+          ]
+        }
+        // u2: { ... } ← agregar cuando esté listo
+      },
+      ciencias: {},
+      lenguaje: {}
+    };
+
+
+    // ══════════════════════════════════════════════════════════════
+    // 📊 NIVELES
+    // ══════════════════════════════════════════════════════════════
+    var NIVELES = [
+      { nivel: 1, nombre: '🌱 Principiante', pregs: [6, 8, 10] },
+      { nivel: 2, nombre: '🐣 Aprendiz', pregs: [6, 8, 10] },
+      { nivel: 3, nombre: '📖 Estudiante', pregs: [8, 10, 12] },
+      { nivel: 4, nombre: '🔍 Explorador', pregs: [8, 10, 12] },
+      { nivel: 5, nombre: '⚡ Ágil', pregs: [10, 12, 14] },
+      { nivel: 6, nombre: '🧩 Analítico', pregs: [10, 12, 14] },
+      { nivel: 7, nombre: '🎯 Preciso', pregs: [12, 14, 15] },
+      { nivel: 8, nombre: '🏅 Avanzado', pregs: [12, 14, 15] },
+      { nivel: 9, nombre: '🔥 Experto', pregs: [13, 15, 15] },
+      { nivel: 10, nombre: '🏆 Gran Maestro', pregs: [14, 15, 15] }
+    ];
+
+    var TIEMPO_POR_NIVEL = [120, 115, 110, 105, 100, 90, 80, 70, 60, 50];
+
+    var MECANICAS_IDS = ['quiz', 'vof', 'unir', 'clasif', 'zonas'];
+    var MECANICA_LABELS = {
+      quiz: '🎯 Elige la alternativa correcta',
+      vof: '✅ Verdadero o Falso',
+      unir: '🔗 Une con líneas',
+      clasif: '📦 Clasifica los elementos',
+      zonas: '🗺️ ¿En qué zona(s) vive?'
+    };
+
+    var ASIG_CONFIG = {
+      historia: { emoji: '📘', label: 'Historia', color: '#667eea', color2: '#764ba2' },
+      ciencias: { emoji: '🔬', label: 'Ciencias', color: '#11998e', color2: '#38ef7d' },
+      lenguaje: { emoji: '📖', label: 'Lenguaje', color: '#f093fb', color2: '#f5576c' }
+    };
+
+    var ZONAS_TODAS = ['Norte Grande', 'Norte Chico', 'Zona Central', 'Zona Sur', 'Zona Austral'];
+
+    // ══════════════════════════════════════════════════════════════
+    // 🔀 SORTEO DIARIO DETERMINISTA
+    // ══════════════════════════════════════════════════════════════
+    function semillaDelDia() {
+      var ahora = new Date();
+      var base = ahora.getHours() >= 20
+        ? new Date(ahora.getFullYear(), ahora.getMonth(), ahora.getDate() + 1)
+        : new Date(ahora.getFullYear(), ahora.getMonth(), ahora.getDate());
+      return base.getFullYear() * 10000 + (base.getMonth() + 1) * 100 + base.getDate();
+    }
+    function rng(s, e) { var x = Math.sin(s + e) * 10000; return x - Math.floor(x); }
+
+    // ══════════════════════════════════════════════════════════════
+    // 🔀 SHUFFLE — barajar array aleatoriamente (Fisher-Yates)
+    // ══════════════════════════════════════════════════════════════
+    function shuffle(arr) {
+      var a = arr.slice();
+      for (var i = a.length - 1; i > 0; i--) {
+        var j = Math.floor(Math.random() * (i + 1));
+        var temp = a[i]; a[i] = a[j]; a[j] = temp;
+      }
+      return a;
+    }
+
+    // Shuffle determinista basado en semilla (para mecánicas del día)
+    function shuffleSeed(arr, seed) {
+      var a = arr.slice();
+      for (var i = a.length - 1; i > 0; i--) {
+        var j = Math.floor(rng(seed, i * 7) * (i + 1));
+        var temp = a[i]; a[i] = a[j]; a[j] = temp;
+      }
+      return a;
+    }
+
+    function sortearAsignatura(semilla) {
+      var disponibles = [];
+      Object.keys(CONFIG_ACTIVA).forEach(function (asig) {
+        var us = CONFIG_ACTIVA[asig];
+        if (!us || !us.length) return;
+        if (us.some(function (u) { return CONTENIDO[asig] && CONTENIDO[asig]['u' + u]; }))
+          disponibles.push(asig);
+      });
+      if (!disponibles.length) return 'historia';
+      return disponibles[Math.floor(rng(semilla, 1) * disponibles.length)];
+    }
+
+    function sortearMecanicas(semilla, asig, uKey) {
+      var u = CONTENIDO[asig] && CONTENIDO[asig][uKey];
+      if (!u) return ['quiz', 'vof', 'quiz'];
+
+      // Parámetro ?test= para forzar mecánica en desarrollo
+      var testParam = new URLSearchParams(window.location.search).get('test');
+      if (testParam && MECANICAS_IDS.indexOf(testParam) >= 0) {
+        var otros = MECANICAS_IDS.filter(function (m) { return m !== testParam && u[m] && u[m].length; });
+        otros = shuffleSeed(otros, semilla);
+        return [testParam, otros[0] || testParam, otros[1] || testParam];
+      }
+
+      var disp = MECANICAS_IDS.filter(function (m) { return u[m] && u[m].length; });
+
+      // ══════════════════════════════════════════════════════════════
+      // MEJORA: Evitar que la mecánica de cada posición se repita del día anterior
+      // Usamos semilla + offset diferente para cada posición
+      // ══════════════════════════════════════════════════════════════
+      var resultado = [];
+      var usadas = [];
+
+      for (var pos = 0; pos < 3; pos++) {
+        // Filtrar disponibles no usadas aún hoy
+        var disponiblesAhora = disp.filter(function (m) { return usadas.indexOf(m) === -1; });
+        if (disponiblesAhora.length === 0) disponiblesAhora = disp.slice();
+
+        // Barajar con semilla única para esta posición
+        // Multiplicamos por primos diferentes para cada posición
+        var offsetPos = [17, 31, 47][pos];
+        disponiblesAhora = shuffleSeed(disponiblesAhora, semilla * offsetPos + pos);
+
+        // Elegir la primera de la lista barajada
+        var elegida = disponiblesAhora[0];
+        resultado.push(elegida);
+        usadas.push(elegida);
+      }
+
+      return resultado;
+    }
+
+    // ══════════════════════════════════════════════════════════════
+    // 🎮 ESTADO
+    // ══════════════════════════════════════════════════════════════
+    var STATE = {
+      nivelIdx: 0, etapaIdx: 0,
+      asignatura: 'historia', unidadKey: 'u1',
+      mecanicas: ['quiz', 'vof', 'clasif'], mecanicaActual: 'quiz',
+      semilla: 0, puntos: 0,
+      preguntaIdx: 0, totalPregs: 0,
+      segundos: 0, tiempoLimite: 120,
+      timer: null, bloqueado: false, gano: false,
+      unirSelecIzq: null, unirPareados: 0, unirTotal: 0,
+      clasifCorrectos: 0, clasifTotal: 0,
+      zonasSelec: [], _pool: []
+    };
+
+    // ══════════════════════════════════════════════════════════════
+    // 🔌 API
+    // ══════════════════════════════════════════════════════════════
+    function getToken() { return window.CLERK_TOKEN || null; }
+
+    // ══════════════════════════════════════════════════════════════
+    // getTokenLuego: espera a que el token esté disponible (async)
+    // Necesario porque al completar etapa el token podría no estar listo
+    // ══════════════════════════════════════════════════════════════
+    // getTokenLuego: obsoleto, enviarResultado ya usa window.CLERK_TOKEN directamente
+
+    function cargarConfigNivel(cb) {
+      var tok = getToken();
+      if (!tok) { if (cb) cb(); return; }
+      var BASE2 = (typeof window.EDUCOINS_BASE !== 'undefined' ? window.EDUCOINS_BASE : '') || '';
+      fetch(BASE2 + '/api/juegos?action=nivel&juego_id=' + JUEGO_ID, {
+        credentials: 'include',
+        headers: { ...(tok ? { 'Authorization': 'Bearer ' + tok } : {}) }
+      })
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (data) {
+          if (data && !data.error) {
+            STATE.nivelIdx = Math.min((data.nivel_actual || 1) - 1, 9);
+            STATE.etapaIdx = Math.min(data.intentos_hoy || 0, 2);
+            // ══════════════════════════════════════════════════
+            // Leer config_juego (unidades activas por asignatura)
+            // La API devuelve config_juego con las unidades activas
+            // ══════════════════════════════════════════════════
+            var cfg = data.config_juego || data.config;
+            if (cfg) {
+              if (cfg.historia) CONFIG_ACTIVA.historia = cfg.historia;
+              if (cfg.ciencias) CONFIG_ACTIVA.ciencias = cfg.ciencias;
+              if (cfg.lenguaje) CONFIG_ACTIVA.lenguaje = cfg.lenguaje;
+            }
+          }
+          if (cb) cb();
+        }).catch(function () { if (cb) cb(); });
+    }
+
+    function enviarResultado() {
+      var BASE = (typeof window.EDUCOINS_BASE !== 'undefined' ? window.EDUCOINS_BASE : '') || '';
+
+      function doEnviar(intentoExtra) {
+        // Si no hay token y es primer intento, reintentar en 600ms
+        if (!window.CLERK_TOKEN && !intentoExtra) {
+          setTimeout(function() { doEnviar(true); }, 600);
+          return;
+        }
+        fetch(BASE + '/api/juegos', {
+          method: 'POST',
+          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(window.CLERK_TOKEN ? { 'Authorization': 'Bearer ' + window.CLERK_TOKEN } : {})
+          },
+          body: JSON.stringify({
+            action: 'completar', juego_id: JUEGO_ID,
+            puntos: STATE.puntos, duracion_seg: STATE.segundos,
+            etapa_completada: STATE.etapaIdx + 1
+          })
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+          if (!data || !data.ok) {
+            document.getElementById('resCoins').textContent = '—';
+            document.getElementById('resXP').textContent = '—';
+            return;
+          }
+          var coins = (data.monedas_ganadas || 0) + (data.bonus_monedas || 0);
+          var xp    = (data.xp_ganado || 0) + (data.bonus_xp || 0);
+          document.getElementById('resCoins').textContent = coins;
+          document.getElementById('resXP').textContent    = xp;
+          if (data.subi_nivel_juego) {
+            var b = document.getElementById('nivelUpBadge');
+            b.textContent   = '🎮 ¡Subiste al nivel ' + data.nivel_juego + '!';
+            b.style.display = 'block';
+          }
+          if (typeof toast === 'function') toast('+' + coins + ' EduCoins 🎉', 'coins');
+          if (data.misiones_completadas) {
+            data.misiones_completadas.forEach(function(m) {
+              if (typeof toast === 'function') toast('🎯 ' + m.descripcion + ' +' + m.monedas + ' 🪙', 'success');
+            });
+          }
+        })
+        .catch(function() {
+          document.getElementById('resCoins').textContent = '—';
+          document.getElementById('resXP').textContent    = '—';
+        });
+      }
+
+      doEnviar(false);
+    }
+
+    // ══════════════════════════════════════════════════════════════
+    // 🚀 INICIO
+    // ══════════════════════════════════════════════════════════════
+    function iniciarJuego() {
+      STATE.semilla = semillaDelDia();
+      STATE.asignatura = sortearAsignatura(STATE.semilla);
+      var us = CONFIG_ACTIVA[STATE.asignatura] || [1];
+      STATE.unidadKey = 'u' + us[Math.floor(rng(STATE.semilla, 99) * us.length)];
+      STATE.mecanicas = sortearMecanicas(STATE.semilla, STATE.asignatura, STATE.unidadKey);
+      iniciarEtapa();
+    }
+
+    function iniciarEtapa() {
+      STATE.mecanicaActual = STATE.mecanicas[STATE.etapaIdx];
+      STATE.puntos = 0; STATE.segundos = 0;
+      STATE.bloqueado = false; STATE.gano = false;
+      STATE.tiempoLimite = TIEMPO_POR_NIVEL[STATE.nivelIdx];
+      clearInterval(STATE.timer);
+
+      var nCfg = NIVELES[STATE.nivelIdx];
+      var aCfg = ASIG_CONFIG[STATE.asignatura];
+      document.documentElement.style.setProperty('--color', aCfg.color);
+      document.documentElement.style.setProperty('--color2', aCfg.color2);
+
+      var badge = document.getElementById('asigBadge');
+      badge.textContent = aCfg.emoji + ' ' + aCfg.label;
+      badge.style.background = 'linear-gradient(135deg,' + aCfg.color + ',' + aCfg.color2 + ')';
+      var u = CONTENIDO[STATE.asignatura][STATE.unidadKey];
+      document.getElementById('asigTitulo').textContent = u ? u.nombre : '';
+      document.getElementById('nivelChip').textContent = nCfg.nombre;
+      document.getElementById('nivelChip').style.background = 'linear-gradient(135deg,' + aCfg.color + ',' + aCfg.color2 + ')';
+      document.getElementById('nivelNum').textContent = 'Nivel ' + nCfg.nivel;
+      document.getElementById('etapaNum').textContent = 'Etapa ' + (STATE.etapaIdx + 1) + ' de 3';
+      document.getElementById('mecanicaLabel').textContent = MECANICA_LABELS[STATE.mecanicaActual];
+      document.getElementById('statPuntos').textContent = '⭐ 0 pts';
+      document.getElementById('statTiempo').textContent = '⏱ ' + STATE.tiempoLimite + 's';
+      document.getElementById('timerFill').style.width = '100%';
+      document.getElementById('timerFill').className = 'timer-fill';
+
+      for (var i = 0; i < 3; i++) {
+        var dot = document.getElementById('dot' + i);
+        dot.className = 'etapa-dot';
+        if (i < STATE.etapaIdx) dot.classList.add('completada');
+        else if (i === STATE.etapaIdx) dot.classList.add('activa');
+      }
+
+      switch (STATE.mecanicaActual) {
+        case 'quiz': renderQuiz(); break;
+        case 'vof': renderVof(); break;
+        case 'unir': renderUnir(); break;
+        case 'clasif': renderClasif(); break;
+        case 'zonas': renderZonas(); break;
+      }
+
+      // Timer regresivo con barra
+      STATE.timer = setInterval(function () {
+        STATE.segundos++;
+        var restante = STATE.tiempoLimite - STATE.segundos;
+        var pct = Math.max(0, restante / STATE.tiempoLimite * 100);
+        var fill = document.getElementById('timerFill');
+        fill.style.width = pct + '%';
+        fill.className = 'timer-fill' + (pct < 30 ? ' rojo' : pct < 60 ? ' amarillo' : '');
+        document.getElementById('statTiempo').textContent = '⏱ ' + restante + 's';
+        if (restante <= 0 && !STATE.gano) {
+          clearInterval(STATE.timer);
+          mostrarDerrota();
+        }
+      }, 1000);
+    }
+
+    // ══════════════════════════════════════════════════════════════
+    // 🖼️ HELPER IMAGEN — renderiza imagen con objeto-fit:contain
+    // para que se vea nítida sin recorte ni distorsión
+    // ══════════════════════════════════════════════════════════════
+    function imgHtml(src, alt) {
+      return '<div class="img-wrap"><img src="' + src + '" alt="' + (alt || '') + '" loading="lazy"></div>';
+    }
+
+    // ══════════════════════════════════════════════════════════════
+    // 🎯 MECÁNICA A — QUIZ
+    // ══════════════════════════════════════════════════════════════
+    function renderQuiz() {
+      var u = CONTENIDO[STATE.asignatura][STATE.unidadKey];
+      var pool = shuffle(u.quiz.slice()); // Usar shuffle Fisher-Yates
+      var n = NIVELES[STATE.nivelIdx].pregs[STATE.etapaIdx];
+      STATE.preguntaIdx = 0;
+      STATE.totalPregs = Math.min(n, pool.length);
+      STATE._pool = pool.slice(0, STATE.totalPregs);
+      actualizarProgreso(0);
+      mostrarPreguntaQuiz();
+    }
+
+    function mostrarPreguntaQuiz() {
+      var p = STATE._pool[STATE.preguntaIdx];
+      var area = document.getElementById('gameArea');
+      actualizarProgreso(STATE.preguntaIdx);
+      area.innerHTML =
+        '<div class="quiz-card">'
+        + imgHtml(p.imagen, p.pregunta)
+        + '<div class="quiz-pregunta">' + p.pregunta + '</div>'
+        + '<div class="quiz-opciones" id="opciones"></div>'
+        + '<div class="quiz-progreso">Pregunta ' + (STATE.preguntaIdx + 1) + ' de ' + STATE.totalPregs + '</div>'
+        + '</div>';
+      var cont = document.getElementById('opciones');
+
+      // ══════════════════════════════════════════════════════════════
+      // MEJORA: Aleatorizar orden de opciones manteniendo track de la correcta
+      // ══════════════════════════════════════════════════════════════
+      var opcionesConIndice = p.opciones.map(function (op, i) {
+        return { texto: op, indiceOriginal: i };
+      });
+      var opcionesBarajadas = shuffle(opcionesConIndice);
+      // Encontrar nuevo índice de la respuesta correcta
+      var nuevoIndiceCorrecta = opcionesBarajadas.findIndex(function (op) {
+        return op.indiceOriginal === p.correcta;
+      });
+
+      opcionesBarajadas.forEach(function (op, i) {
+        var btn = document.createElement('button');
+        btn.className = 'opcion-btn';
+        btn.textContent = op.texto;
+        btn.addEventListener('click', function () { responderQuiz(i, nuevoIndiceCorrecta, btn); });
+        cont.appendChild(btn);
+      });
+    }
+
+    function responderQuiz(elegida, correcta, btnElegido) {
+      if (STATE.bloqueado) return;
+      STATE.bloqueado = true;
+      var btns = document.querySelectorAll('.opcion-btn');
+      btns.forEach(function (b) { b.disabled = true; });
+      if (elegida === correcta) {
+        btnElegido.classList.add('correcta');
+        STATE.puntos += 10;
+        mostrarFeedback('✅');
+        document.getElementById('statPuntos').textContent = '⭐ ' + STATE.puntos + ' pts';
+      } else {
+        btnElegido.classList.add('incorrecta');
+        btns[correcta].classList.add('correcta');
+        mostrarFeedback('❌');
+      }
+      setTimeout(function () {
+        STATE.preguntaIdx++;
+        STATE.bloqueado = false;
+        actualizarProgreso(STATE.preguntaIdx);
+        if (STATE.preguntaIdx >= STATE.totalPregs) mostrarVictoria();
+        else mostrarPreguntaQuiz();
+      }, 1200);
+    }
+
+    // ══════════════════════════════════════════════════════════════
+    // ✅ MECÁNICA B — VERDADERO/FALSO
+    // ══════════════════════════════════════════════════════════════
+    function renderVof() {
+      var u = CONTENIDO[STATE.asignatura][STATE.unidadKey];
+      var pool = shuffle(u.vof.slice()); // Usar shuffle Fisher-Yates
+      var n = NIVELES[STATE.nivelIdx].pregs[STATE.etapaIdx];
+      STATE.preguntaIdx = 0; STATE.totalPregs = Math.min(n, pool.length);
+      STATE._pool = pool.slice(0, STATE.totalPregs);
+      actualizarProgreso(0);
+      mostrarPreguntaVof();
+    }
+
+    function mostrarPreguntaVof() {
+      var p = STATE._pool[STATE.preguntaIdx];
+      var area = document.getElementById('gameArea');
+      actualizarProgreso(STATE.preguntaIdx);
+      area.innerHTML =
+        '<div class="vof-card">'
+        + imgHtml(p.imagen, p.afirmacion)
+        + '<div class="vof-afirmacion">"' + p.afirmacion + '"</div>'
+        + '<div class="vof-botones">'
+        + '<button class="vof-btn verdadero" id="btnV" onclick="responderVof(true)">✅ Verdadero</button>'
+        + '<button class="vof-btn falso" id="btnF" onclick="responderVof(false)">❌ Falso</button>'
+        + '</div>'
+        + '<div class="quiz-progreso">Pregunta ' + (STATE.preguntaIdx + 1) + ' de ' + STATE.totalPregs + '</div>'
+        + '</div>';
+    }
+
+    function responderVof(resp) {
+      if (STATE.bloqueado) return;
+      STATE.bloqueado = true;
+      var p = STATE._pool[STATE.preguntaIdx];
+      var acierto = (resp === p.verdad);
+      var btnV = document.getElementById('btnV');
+      var btnF = document.getElementById('btnF');
+      btnV.disabled = true; btnF.disabled = true;
+      if (acierto) {
+        (resp ? btnV : btnF).classList.add('acierto');
+        STATE.puntos += 10;
+        mostrarFeedback('✅');
+        document.getElementById('statPuntos').textContent = '⭐ ' + STATE.puntos + ' pts';
+      } else {
+        (resp ? btnV : btnF).classList.add('error-vof');
+        mostrarFeedback('❌');
+      }
+      setTimeout(function () {
+        STATE.preguntaIdx++;
+        STATE.bloqueado = false;
+        actualizarProgreso(STATE.preguntaIdx);
+        if (STATE.preguntaIdx >= STATE.totalPregs) mostrarVictoria();
+        else mostrarPreguntaVof();
+      }, 1200);
+    }
+
+    // ══════════════════════════════════════════════════════════════
+    // 🔗 MECÁNICA C — UNIR LÍNEAS
+    // ══════════════════════════════════════════════════════════════
+    function renderUnir() {
+      var u = CONTENIDO[STATE.asignatura][STATE.unidadKey];
+      var sets = shuffle(u.unir.slice()); // Aleatorizar qué set sale
+      var set = sets[0];
+      STATE.unirSelecIzq = null; STATE.unirPareados = 0; STATE.unirTotal = set.pares.length;
+      actualizarProgreso(0);
+
+      // Aleatorizar orden de opciones derechas
+      var derechas = shuffle(set.pares.map(function (p, i) { return { texto: p.der, idx: i }; }));
+
+      var area = document.getElementById('gameArea');
+      area.innerHTML =
+        '<div class="unir-container">'
+        + '<div class="unir-titulo">' + set.titulo + '</div>'
+        + '<div class="unir-grid">'
+        + '<div class="unir-col" id="colIzq"></div>'
+        + '<div class="unir-col" id="colDer"></div>'
+        + '</div></div>';
+
+      var colIzq = document.getElementById('colIzq');
+      set.pares.forEach(function (p, i) {
+        var el = document.createElement('div');
+        el.className = 'unir-item'; el.dataset.pairIdx = i; el.dataset.col = 'izq';
+        if (p.imgIzq) el.innerHTML = '<img class="img-mini" src="' + p.imgIzq + '" alt="' + p.izq + '">';
+        else el.textContent = p.izq;
+        el.addEventListener('click', function () { clickUnir(el, set); });
+        colIzq.appendChild(el);
+      });
+
+      var colDer = document.getElementById('colDer');
+      derechas.forEach(function (d) {
+        var el = document.createElement('div');
+        el.className = 'unir-item'; el.dataset.pairIdx = d.idx; el.dataset.col = 'der';
+        el.textContent = d.texto;
+        el.addEventListener('click', function () { clickUnir(el, set); });
+        colDer.appendChild(el);
+      });
+    }
+
+    function clickUnir(el, set) {
+      if (el.classList.contains('matched-unir')) return;
+      if (el.dataset.col === 'izq') {
+        document.querySelectorAll('.unir-item[data-col="izq"]').forEach(function (e) { e.classList.remove('selected-unir'); });
+        el.classList.add('selected-unir');
+        STATE.unirSelecIzq = el; return;
+      }
+      if (el.dataset.col === 'der' && STATE.unirSelecIzq) {
+        if (parseInt(STATE.unirSelecIzq.dataset.pairIdx) === parseInt(el.dataset.pairIdx)) {
+          STATE.unirSelecIzq.classList.remove('selected-unir');
+          STATE.unirSelecIzq.classList.add('matched-unir');
+          el.classList.add('matched-unir');
+          STATE.puntos += 10; STATE.unirPareados++;
+          mostrarFeedback('✅');
+          document.getElementById('statPuntos').textContent = '⭐ ' + STATE.puntos + ' pts';
+          actualizarProgreso(STATE.unirPareados);
+          STATE.unirSelecIzq = null;
+          if (STATE.unirPareados >= STATE.unirTotal) setTimeout(mostrarVictoria, 600);
+        } else {
+          var s1 = STATE.unirSelecIzq;
+          s1.classList.add('error-unir'); el.classList.add('error-unir');
+          mostrarFeedback('❌');
+          setTimeout(function () { s1.classList.remove('selected-unir', 'error-unir'); el.classList.remove('error-unir'); STATE.unirSelecIzq = null; }, 800);
+        }
+      }
+    }
+
+    // ══════════════════════════════════════════════════════════════
+    // 📦 MECÁNICA D — CLASIFICAR
+    // ══════════════════════════════════════════════════════════════
+    function renderClasif() {
+      var u = CONTENIDO[STATE.asignatura][STATE.unidadKey];
+      var sets = shuffle(u.clasif.slice()); // Aleatorizar qué set sale
+      var set = sets[0];
+      STATE.clasifCorrectos = 0; STATE.clasifTotal = set.items.length;
+      actualizarProgreso(0);
+
+      // Aleatorizar orden de items a clasificar
+      var itemsBarajados = shuffle(set.items.map(function (it, i) {
+        return { item: it, idx: i };
+      }));
+
+      var itemsHtml = itemsBarajados.map(function (obj) {
+        var it = obj.item;
+        return '<div class="clasif-item" draggable="true" data-idx="' + obj.idx + '" data-cat="' + it.categoria + '">'
+          + '<img class="img-mini-sq" src="' + it.imagen + '" alt="' + it.texto + '">'
+          + '<span>' + it.texto + '</span></div>';
+      }).join('');
+
+      // También aleatorizar orden de categorías
+      var catsBarajadas = shuffle(set.categorias.slice());
+      var catsHtml = catsBarajadas.map(function (cat) {
+        return '<div class="categoria-zona" data-cat="' + cat + '">'
+          + '<div class="categoria-nombre">' + cat + '</div>'
+          + '<div class="categoria-items"></div></div>';
+      }).join('');
+
+      var area = document.getElementById('gameArea');
+      area.innerHTML =
+        '<div class="clasif-container">'
+        + '<div class="clasif-titulo">' + set.titulo + '</div>'
+        + '<div class="clasif-items" id="clasifOrigen">' + itemsHtml + '</div>'
+        + '<div class="clasif-categorias">' + catsHtml + '</div>'
+        + '</div>';
+
+      // ── Drag & Drop: mouse + touch ──
+      var _dragData = null; // {idx, cat, el} para touch
+
+      function soltarEnZona(zona, idx, cat) {
+        var itemEl = document.querySelector('.clasif-item[data-idx="' + idx + '"]');
+        if (!itemEl || itemEl.draggable === false) return;
+        document.querySelectorAll('.categoria-zona').forEach(function(z) { z.classList.remove('drag-over'); });
+        if (cat === zona.dataset.cat) {
+          zona.querySelector('.categoria-items').appendChild(itemEl);
+          zona.classList.add('correcta-cat');
+          itemEl.draggable = false; itemEl.style.cursor = 'default';
+          STATE.clasifCorrectos++; STATE.puntos += 10;
+          mostrarFeedback('✅');
+          document.getElementById('statPuntos').textContent = '⭐ ' + STATE.puntos + ' pts';
+          actualizarProgreso(STATE.clasifCorrectos);
+          setTimeout(function () { zona.classList.remove('correcta-cat'); }, 600);
+          if (STATE.clasifCorrectos >= STATE.clasifTotal) setTimeout(mostrarVictoria, 600);
+        } else {
+          zona.classList.add('error-cat'); mostrarFeedback('❌');
+          setTimeout(function () { zona.classList.remove('error-cat'); }, 600);
+        }
+      }
+
+      document.querySelectorAll('.clasif-item').forEach(function (item) {
+        // ── Eventos mouse (desktop) ──
+        item.addEventListener('dragstart', function (e) {
+          e.dataTransfer.setData('text', item.dataset.idx + '|' + item.dataset.cat);
+          item.classList.add('dragging');
+        });
+        item.addEventListener('dragend', function () { item.classList.remove('dragging'); });
+
+        // ── Eventos touch (móvil) ──
+        item.addEventListener('touchstart', function (e) {
+          if (item.draggable === false) return;
+          _dragData = { idx: item.dataset.idx, cat: item.dataset.cat, el: item };
+          item.classList.add('dragging');
+          e.preventDefault();
+        }, { passive: false });
+
+        item.addEventListener('touchmove', function (e) {
+          if (!_dragData) return;
+          e.preventDefault();
+          var touch = e.touches[0];
+          // Resaltar la zona bajo el dedo
+          document.querySelectorAll('.categoria-zona').forEach(function(z) { z.classList.remove('drag-over'); });
+          var el = document.elementFromPoint(touch.clientX, touch.clientY);
+          var zona = el && el.closest('.categoria-zona');
+          if (zona) zona.classList.add('drag-over');
+        }, { passive: false });
+
+        item.addEventListener('touchend', function (e) {
+          if (!_dragData) return;
+          item.classList.remove('dragging');
+          var touch = e.changedTouches[0];
+          var el = document.elementFromPoint(touch.clientX, touch.clientY);
+          var zona = el && el.closest('.categoria-zona');
+          if (zona) soltarEnZona(zona, _dragData.idx, _dragData.cat);
+          else document.querySelectorAll('.categoria-zona').forEach(function(z) { z.classList.remove('drag-over'); });
+          _dragData = null;
+          e.preventDefault();
+        }, { passive: false });
+      });
+
+      document.querySelectorAll('.categoria-zona').forEach(function (zona) {
+        // ── Mouse ──
+        zona.addEventListener('dragover', function (e) { e.preventDefault(); zona.classList.add('drag-over'); });
+        zona.addEventListener('dragleave', function () { zona.classList.remove('drag-over'); });
+        zona.addEventListener('drop', function (e) {
+          e.preventDefault();
+          var data = e.dataTransfer.getData('text').split('|');
+          soltarEnZona(zona, data[0], data[1]);
+        });
+      });
+    }
+
+    // ══════════════════════════════════════════════════════════════
+    // 🗺️ MECÁNICA E — MARCAR ZONAS
+    // Todo o nada: el alumno debe marcar exactamente las zonas
+    // correctas. La pregunta indica si hay más de una respuesta.
+    // ══════════════════════════════════════════════════════════════
+    function renderZonas() {
+      var u = CONTENIDO[STATE.asignatura][STATE.unidadKey];
+      var pool = shuffle(u.zonas.slice()); // Usar shuffle Fisher-Yates
+      var n = NIVELES[STATE.nivelIdx].pregs[STATE.etapaIdx];
+      STATE.preguntaIdx = 0; STATE.totalPregs = Math.min(n, pool.length);
+      STATE._pool = pool.slice(0, STATE.totalPregs);
+      actualizarProgreso(0);
+      mostrarPreguntaZonas();
+    }
+
+    function mostrarPreguntaZonas() {
+      var p = STATE._pool[STATE.preguntaIdx];
+      var area = document.getElementById('gameArea');
+      STATE.zonasSelec = [];
+      actualizarProgreso(STATE.preguntaIdx);
+
+      var tieneVarias = p.zonas.length > 1;
+      var textoPregunta = tieneVarias
+        ? '¿En qué zonas vive la ' + p.especie + '? <span style="color:rgba(255,255,255,0.55);font-size:0.75rem;">(puede haber más de una)</span>'
+        : '¿En qué zona vive la ' + p.especie + '?';
+
+      var checkHtml = ZONAS_TODAS.map(function (z) {
+        return '<div class="zona-check" data-zona="' + z + '" onclick="toggleZona(this)">'
+          + '<div class="zona-circulo" id="circ_' + z.replace(/ /g, '_') + '"></div>'
+          + '<span>' + z + '</span></div>';
+      }).join('');
+
+      area.innerHTML =
+        '<div class="zonas-card">'
+        + imgHtml(p.imagen, p.especie)
+        + '<div class="zonas-pregunta">' + textoPregunta + '</div>'
+        + '<div class="zonas-opciones">' + checkHtml + '</div>'
+        + '<button class="btn-confirmar" id="btnConfirmar" onclick="confirmarZonas()" disabled>Confirmar</button>'
+        + '<div class="quiz-progreso">Pregunta ' + (STATE.preguntaIdx + 1) + ' de ' + STATE.totalPregs + '</div>'
+        + '</div>';
+    }
+
+    function toggleZona(el) {
+      if (el.classList.contains('disabled-zona')) return;
+      var zona = el.dataset.zona;
+      var idx = STATE.zonasSelec.indexOf(zona);
+      if (idx >= 0) {
+        STATE.zonasSelec.splice(idx, 1);
+        el.classList.remove('seleccionada');
+      } else {
+        STATE.zonasSelec.push(zona);
+        el.classList.add('seleccionada');
+      }
+      document.getElementById('btnConfirmar').disabled = STATE.zonasSelec.length === 0;
+    }
+
+    function confirmarZonas() {
+      if (STATE.bloqueado) return;
+      STATE.bloqueado = true;
+      var p = STATE._pool[STATE.preguntaIdx];
+      var correctas = p.zonas.slice().sort().join(',');
+      var elegidas = STATE.zonasSelec.slice().sort().join(',');
+      var acierto = (correctas === elegidas);
+
+      // Deshabilitar todos los checks
+      document.querySelectorAll('.zona-check').forEach(function (el) {
+        el.classList.add('disabled-zona');
+        if (p.zonas.indexOf(el.dataset.zona) >= 0) el.classList.add('correcta-zona');
+      });
+      document.getElementById('btnConfirmar').disabled = true;
+
+      if (acierto) {
+        STATE.puntos += 10; mostrarFeedback('✅');
+        document.getElementById('statPuntos').textContent = '⭐ ' + STATE.puntos + ' pts';
+      } else {
+        // Marcar en rojo las que marcó el alumno y eran incorrectas
+        STATE.zonasSelec.forEach(function (z) {
+          if (p.zonas.indexOf(z) < 0) {
+            var el = document.querySelector('.zona-check[data-zona="' + z + '"]');
+            if (el) el.classList.add('incorrecta-zona');
+          }
+        });
+        mostrarFeedback('❌');
+      }
+
+      setTimeout(function () {
+        STATE.preguntaIdx++;
+        STATE.bloqueado = false;
+        actualizarProgreso(STATE.preguntaIdx);
+        if (STATE.preguntaIdx >= STATE.totalPregs) mostrarVictoria();
+        else mostrarPreguntaZonas();
+      }, 1400);
+    }
+
+    // ══════════════════════════════════════════════════════════════
+    // 🛠️ HELPERS
+    // ══════════════════════════════════════════════════════════════
+    function actualizarProgreso(idx) {
+      var total = (['quiz', 'vof', 'zonas'].indexOf(STATE.mecanicaActual) >= 0) ? STATE.totalPregs
+        : (STATE.mecanicaActual === 'unir') ? STATE.unirTotal
+          : STATE.clasifTotal;
+      document.getElementById('statProgreso').textContent = '📝 ' + idx + '/' + total;
+    }
+
+    function mostrarFeedback(emoji) {
+      var el = document.getElementById('feedbackOverlay');
+      el.textContent = emoji; el.classList.add('show');
+      setTimeout(function () { el.classList.remove('show'); }, 600);
+    }
+
+    function mostrarVictoria() {
+      clearInterval(STATE.timer); STATE.gano = true;
+      var esFinal = (STATE.etapaIdx === 2); // fase 3 = última fase del juego
+
+      document.getElementById('modalIcon').textContent  = esFinal ? '🏆' : '🎉';
+      document.getElementById('modalTitle').textContent = esFinal ? '¡Juego completado!' : ('¡Fase ' + (STATE.etapaIdx + 1) + ' completada!');
+      document.getElementById('modalSub').textContent   = 'Obtuviste tus recompensas';
+      document.getElementById('nivelUpBadge').style.display = 'none';
+      document.getElementById('resCoins').textContent   = '⏳';
+      document.getElementById('resXP').textContent      = '⏳';
+      document.getElementById('resPuntaje').textContent = STATE.puntos;
+
+      var btn = document.getElementById('btnSiguiente');
+      if (esFinal) {
+        btn.textContent = '🏠 Volver al lobby';
+        btn.onclick = function () { window.location.href = '/juegos/juegos.html'; };
+      } else {
+        btn.textContent = '▶ Ir a la fase ' + (STATE.etapaIdx + 2) + ' →';
+        btn.onclick = siguienteEtapa;
+      }
+
+      document.getElementById('modalVictoria').classList.add('active');
+      enviarResultado();
+    }
+
+    function mostrarDerrota() {
+      document.getElementById('modalDerrota').classList.add('active');
+    }
+
+    function siguienteEtapa() {
+      document.getElementById('modalVictoria').classList.remove('active');
+      if (STATE.etapaIdx < 2) STATE.etapaIdx++;
+      else { STATE.etapaIdx = 0; if (STATE.nivelIdx < 9) STATE.nivelIdx++; }
+      iniciarEtapa();
+    }
+
+    function reiniciarEtapa() {
+      document.getElementById('modalDerrota').classList.remove('active');
+      iniciarEtapa();
+    }
+
+    // ══════════════════════════════════════════════════════════════
+    // 🚀 ARRANQUE
+    // ══════════════════════════════════════════════════════════════
+    document.addEventListener('clerkReady', function () {
+      cargarConfigNivel(function () { iniciarJuego(); });
+    });
+    window.addEventListener('load', function () {
+      setTimeout(function () { if (!STATE.timer) iniciarJuego(); }, 1500);
+    });
+  </script>
+</body>
+
+</html>

@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+  <title>Trivia — EduCoins</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Nunito:wght@700;800;900&display=swap"
+    rel="stylesheet" />
+  <link rel="stylesheet" href="../../shared/shared.css" />
+  <style>
+    body {
+      background: var(--bg);
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+
+    .game-topbar {
+      height: 56px;
+      background: rgba(7, 7, 26, .95);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      padding: 0 1.5rem;
+      gap: 1rem;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 100;
+    }
+
+    .game-back-btn {
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      padding: .4rem .875rem;
+      font-size: .8rem;
+      font-weight: 800;
+      cursor: pointer;
+      text-decoration: none;
+      transition: border-color .2s;
+    }
+
+    .game-back-btn:hover {
+      border-color: var(--violet);
+    }
+
+    .game-title {
+      font-family: 'Press Start 2P', monospace;
+      font-size: .6rem;
+      color: var(--green);
+      flex: 1;
+      text-align: center;
+    }
+
+    .racha-badge {
+      font-family: 'Press Start 2P', monospace;
+      font-size: .45rem;
+      color: var(--orange);
+    }
+
+    .game-wrap {
+      padding: 72px 1.5rem 2rem;
+      max-width: 720px;
+      margin: 0 auto;
+      width: 100%;
+    }
+
+    .progreso-bar {
+      height: 6px;
+      background: rgba(255, 255, 255, .08);
+      border-radius: 3px;
+      overflow: hidden;
+      margin-bottom: 1.5rem;
+    }
+
+    .progreso-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--green), var(--cyan));
+      border-radius: 3px;
+      transition: width .5s ease;
+    }
+
+    .trivia-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 2rem;
+      margin-bottom: 1.5rem;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .trivia-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, var(--green), var(--cyan));
+    }
+
+    .trivia-meta {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin-bottom: 1.25rem;
+    }
+
+    .trivia-asig {
+      font-family: 'Press Start 2P', monospace;
+      font-size: .38rem;
+      padding: .25rem .625rem;
+      border-radius: 20px;
+      background: rgba(34, 197, 94, .12);
+      color: var(--green);
+      border: 1px solid rgba(34, 197, 94, .3);
+    }
+
+    .trivia-num {
+      font-family: 'Press Start 2P', monospace;
+      font-size: .38rem;
+      color: var(--text-muted);
+      margin-left: auto;
+    }
+
+    .trivia-pregunta {
+      font-size: 1.15rem;
+      font-weight: 800;
+      color: var(--text);
+      line-height: 1.6;
+      margin-bottom: 1.75rem;
+    }
+
+    .trivia-timer {
+      margin-bottom: 1rem;
+    }
+
+    .ttimer-bar {
+      height: 8px;
+      background: rgba(255, 255, 255, .08);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+
+    .ttimer-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--green), var(--yellow));
+      border-radius: 4px;
+      transition: width .1s linear;
+    }
+
+    .ttimer-txt {
+      font-family: 'Press Start 2P', monospace;
+      font-size: .38rem;
+      color: var(--text-muted);
+      text-align: right;
+      margin-top: .3rem;
+    }
+
+    .opciones-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: .875rem;
+    }
+
+    .opcion-btn {
+      padding: 1rem 1.25rem;
+      background: var(--bg3);
+      border: 2px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text);
+      font-size: .875rem;
+      font-weight: 800;
+      cursor: pointer;
+      text-align: left;
+      transition: all .2s;
+      display: flex;
+      align-items: center;
+      gap: .75rem;
+      line-height: 1.4;
+    }
+
+    .opcion-btn:hover:not(:disabled) {
+      border-color: var(--green);
+      background: rgba(34, 197, 94, .08);
+      transform: translateX(3px);
+    }
+
+    .opcion-btn.correcta {
+      border-color: var(--green) !important;
+      background: rgba(34, 197, 94, .15) !important;
+      animation: correctaPop .3s ease;
+    }
+
+    .opcion-btn.incorrecta {
+      border-color: var(--red) !important;
+      background: rgba(239, 68, 68, .1) !important;
+    }
+
+    @keyframes correctaPop {
+      0% {
+        transform: scale(.97)
+      }
+
+      100% {
+        transform: scale(1)
+      }
+    }
+
+    .opcion-letra {
+      font-family: 'Press Start 2P', monospace;
+      font-size: .5rem;
+      color: var(--text-muted);
+      flex-shrink: 0;
+    }
+
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1rem;
+    }
+
+    .stat-mini {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: .875rem;
+      text-align: center;
+    }
+
+    .sm-label {
+      font-family: 'Press Start 2P', monospace;
+      font-size: .32rem;
+      color: var(--text-muted);
+      margin-bottom: .3rem;
+    }
+
+    .sm-val {
+      font-family: 'Press Start 2P', monospace;
+      font-size: .7rem;
+      color: white;
+    }
+
+    /* RESULTADO */
+    .resultado-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 10000;
+      background: rgba(7, 7, 26, .92);
+      backdrop-filter: blur(10px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .4s;
+    }
+
+    .resultado-overlay.active {
+      opacity: 1;
+      pointer-events: all;
+    }
+
+    .resultado-modal {
+      background: var(--bg2);
+      border: 1px solid var(--border-b);
+      border-radius: 20px;
+      padding: 2.5rem;
+      text-align: center;
+      max-width: 400px;
+      width: 90%;
+      box-shadow: 0 0 60px rgba(34, 197, 94, .2);
+    }
+
+    .resultado-titulo {
+      font-family: 'Press Start 2P', monospace;
+      font-size: .8rem;
+      color: white;
+      margin-bottom: .75rem;
+      line-height: 1.5;
+    }
+
+    .resultado-coins {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 2rem;
+      color: var(--yellow);
+      margin: .875rem 0;
+      display: block;
+    }
+
+    .resultado-sub {
+      font-size: .875rem;
+      color: var(--text-dim);
+      font-weight: 700;
+      margin-bottom: 1.5rem;
+    }
+
+    .resultado-btns {
+      display: flex;
+      gap: .75rem;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .btn-play {
+      padding: .75rem 1.5rem;
+      background: linear-gradient(135deg, var(--green), #15803d);
+      color: white;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      font-family: 'Press Start 2P', monospace;
+      font-size: .48rem;
+      transition: all .2s;
+    }
+
+    .btn-play:hover {
+      transform: translateY(-2px);
+    }
+
+    .btn-volver {
+      padding: .75rem 1.5rem;
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      cursor: pointer;
+      color: var(--text);
+      font-family: 'Press Start 2P', monospace;
+      font-size: .48rem;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      transition: border-color .2s;
+    }
+
+    .btn-volver:hover {
+      border-color: var(--violet);
+    }
+  </style>
+</head>
+
+<body>
+  <div class="game-topbar">
+    <a href="../juegos.html" class="game-back-btn">← Volver</a>
+    <span class="game-title">❓ TRIVIA</span>
+    <span class="racha-badge">🔥 Racha: <span id="rachaVal">0</span></span>
+  </div>
+
+  <div class="game-wrap">
+    <div class="progreso-bar">
+      <div class="progreso-fill" id="progresoFill"></div>
+    </div>
+
+    <div class="trivia-card" id="triviaCard">
+      <div class="trivia-meta">
+        <span class="trivia-asig" id="triviaAsig">—</span>
+        <span class="trivia-num" id="triviaNum">1/10</span>
+      </div>
+      <div class="trivia-pregunta" id="triviaPregunta">Cargando...</div>
+      <div class="trivia-timer">
+        <div class="ttimer-bar">
+          <div class="ttimer-fill" id="ttimerFill"></div>
+        </div>
+        <div class="ttimer-txt" id="ttimerTxt">15s</div>
+      </div>
+      <div class="opciones-grid" id="opcionesGrid"></div>
+    </div>
+
+    <div class="stats-row">
+      <div class="stat-mini">
+        <div class="sm-label">CORRECTAS</div>
+        <div class="sm-val" id="stCorrect">0</div>
+      </div>
+      <div class="stat-mini">
+        <div class="sm-label">RACHA MÁX</div>
+        <div class="sm-val" id="stRacha">0</div>
+      </div>
+      <div class="stat-mini">
+        <div class="sm-label">PUNTOS</div>
+        <div class="sm-val" id="stPuntos">0</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="resultado-overlay" id="resultadoOverlay">
+    <div class="resultado-modal">
+      <div class="resultado-titulo" id="resTitulo">🎉 ¡FIN!</div>
+      <span class="resultado-coins" id="resCoins">0 🪙</span>
+      <div class="resultado-sub" id="resSub">—</div>
+      <div class="resultado-btns">
+        <button class="btn-play" id="btnDenuevo">↺ Jugar de nuevo</button>
+        <a href="../juegos.html" class="btn-volver">← Lobby</a>
+      </div>
+    </div>
+  </div>
+
+  <script src="../../shared/shared.js"></script>
+  <script src="../../shared/shared.js"></script>
+  <script>
+    // ── Configuración ──────────────────────────────────────────
+    var NIVEL_ALUMNO = 5; // Cambia a 5, 6, 7 u 8 según el perfil del usuario
+    var TIEMPO_POR_PREGUNTA = 15;
+    var LETRAS = ['A', 'B', 'C', 'D'];
+    var STATE = { idx: 0, preguntas: [], correctas: 0, racha: 0, rachaMax: 0, puntos: 0, timerInt: null, tiempoLeft: TIEMPO_POR_PREGUNTA, respondiendo: false };
+
+    // ── Carga de preguntas desde TXT ───────────────────────────
+    function cargarPreguntas(callback) {
+      fetch('preguntas.txt')
+        .then(function (r) { return r.text(); })
+        .then(function (txt) {
+          var lineas = txt.trim().split('\n');
+          var todas = lineas
+            .filter(function (l) { return l.trim() !== ''; })
+            .map(function (l) {
+              var cols = l.split('\t');
+              return {
+                asig: cols[0].trim(),
+                pregunta: cols[1].trim(),
+                opciones: [cols[2].trim(), cols[3].trim(), cols[4].trim(), cols[5].trim()],
+                correcta: parseInt(cols[6].trim()),
+                nivel: parseInt(cols[7].trim())
+              };
+            })
+            .filter(function (p) { return p.nivel <= NIVEL_ALUMNO; });
+          callback(todas);
+        })
+        .catch(function (e) {
+          console.error('Error cargando preguntas:', e);
+          alert('No se pudo cargar preguntas.txt');
+        });
+    }
+
+    // ── Iniciar ────────────────────────────────────────────────
+    document.addEventListener('DOMContentLoaded', function () {
+      iniciar();
+      document.getElementById('btnDenuevo').addEventListener('click', function () {
+        document.getElementById('resultadoOverlay').classList.remove('active');
+        iniciar();
+      });
+    });
+
+    function iniciar() {
+      STATE.idx = 0; STATE.correctas = 0; STATE.racha = 0; STATE.rachaMax = 0; STATE.puntos = 0;
+      cargarPreguntas(function (todasLasPreguntas) {
+        STATE.preguntas = shuffleArr(todasLasPreguntas.slice()).slice(0, 10);
+        mostrarPregunta();
+      });
+    }
+
+    // ── El resto del código queda IGUAL que tenías ─────────────
+    function mostrarPregunta() {
+      clearInterval(STATE.timerInt);
+      STATE.respondiendo = false;
+      STATE.tiempoLeft = TIEMPO_POR_PREGUNTA;
+      var p = STATE.preguntas[STATE.idx];
+      document.getElementById('triviaAsig').textContent = p.asig;
+      document.getElementById('triviaNum').textContent = (STATE.idx + 1) + '/' + STATE.preguntas.length;
+      document.getElementById('triviaPregunta').textContent = p.pregunta;
+      document.getElementById('progresoFill').style.width = (STATE.idx / STATE.preguntas.length * 100) + '%';
+      var grid = document.getElementById('opcionesGrid');
+      grid.innerHTML = p.opciones.map(function (op, i) {
+        return '<button class="opcion-btn" data-idx="' + i + '">' +
+          '<span class="opcion-letra">' + LETRAS[i] + '</span>' + op + '</button>';
+      }).join('');
+      grid.querySelectorAll('.opcion-btn').forEach(function (btn) {
+        btn.addEventListener('click', function () { responder(parseInt(this.dataset.idx)); });
+      });
+      iniciarTimerPregunta();
+      actualizarStats();
+    }
+
+    function iniciarTimerPregunta() {
+      var fill = document.getElementById('ttimerFill');
+      var txt = document.getElementById('ttimerTxt');
+      STATE.timerInt = setInterval(function () {
+        STATE.tiempoLeft -= 0.1;
+        var pct = (STATE.tiempoLeft / TIEMPO_POR_PREGUNTA) * 100;
+        fill.style.width = Math.max(0, pct) + '%';
+        txt.textContent = Math.ceil(Math.max(0, STATE.tiempoLeft)) + 's';
+        if (STATE.tiempoLeft <= 5) fill.style.background = 'var(--red)';
+        else fill.style.background = 'linear-gradient(90deg,var(--green),var(--yellow))';
+        if (STATE.tiempoLeft <= 0 && !STATE.respondiendo) {
+          STATE.respondiendo = true;
+          clearInterval(STATE.timerInt);
+          var p = STATE.preguntas[STATE.idx];
+          document.querySelectorAll('.opcion-btn')[p.correcta].classList.add('correcta');
+          document.querySelectorAll('.opcion-btn').forEach(function (b) { b.disabled = true; });
+          STATE.racha = 0;
+          actualizarStats();
+          setTimeout(siguiente, 1400);
+        }
+      }, 100);
+    }
+
+    function responder(idx) {
+      if (STATE.respondiendo) return;
+      STATE.respondiendo = true;
+      clearInterval(STATE.timerInt);
+      var p = STATE.preguntas[STATE.idx];
+      var btns = document.querySelectorAll('.opcion-btn');
+      btns.forEach(function (b) { b.disabled = true; });
+      btns[p.correcta].classList.add('correcta');
+      if (idx === p.correcta) {
+        btns[idx].classList.add('correcta');
+        STATE.correctas++;
+        STATE.racha++;
+        STATE.rachaMax = Math.max(STATE.rachaMax, STATE.racha);
+        var bonus = STATE.racha >= 3 ? 30 : STATE.racha >= 2 ? 20 : 10;
+        var tiempo_bonus = Math.round(STATE.tiempoLeft * 2);
+        STATE.puntos += bonus + tiempo_bonus;
+        toast('✅ ¡Correcto! +' + bonus + ' pts' + (STATE.racha >= 2 ? ' 🔥×' + STATE.racha : ''), 'success');
+      } else {
+        btns[idx].classList.add('incorrecta');
+        STATE.racha = 0;
+        toast('❌ Incorrecto', 'error');
+      }
+      actualizarStats();
+      setTimeout(siguiente, 1200);
+    }
+
+    function siguiente() {
+      STATE.idx++;
+      if (STATE.idx >= STATE.preguntas.length) { terminar(); return; }
+      mostrarPregunta();
+    }
+
+    function getTokenLuego(callback) {
+      if (window.CLERK_TOKEN) { callback(window.CLERK_TOKEN); return; }
+      var tok = sessionStorage.getItem('juego_token');
+      if (tok) { callback(tok); return; }
+      var intentos = 0;
+      var iv = setInterval(function () {
+        intentos++;
+        if (window.CLERK_TOKEN) { clearInterval(iv); callback(window.CLERK_TOKEN); return; }
+        var tok2 = sessionStorage.getItem('juego_token');
+        if (tok2) { clearInterval(iv); callback(tok2); return; }
+        if (intentos >= 25) { clearInterval(iv); callback(null); }
+      }, 200);
+    }
+
+    function terminar() {
+      clearInterval(STATE.timerInt);
+      document.getElementById('progresoFill').style.width = '100%';
+      var precision = Math.round((STATE.correctas / STATE.preguntas.length) * 100);
+      var recompensa = Math.min(250, STATE.puntos);
+      document.getElementById('resTitulo').textContent = precision >= 80 ? '🌟 ¡EXCELENTE!' : precision >= 60 ? '👍 ¡BIEN HECHO!' : '📚 Sigue practicando';
+      document.getElementById('resCoins').textContent = '+' + recompensa + ' 🪙';
+      document.getElementById('resSub').textContent = STATE.correctas + '/' + STATE.preguntas.length + ' correctas | Racha máx: ' + STATE.rachaMax;
+      document.getElementById('resultadoOverlay').classList.add('active');
+      toast('+' + recompensa + ' EduCoins ganados ❓', 'coins');
+      var _sid = sessionStorage.getItem('juego_session_id');
+      var _jid = sessionStorage.getItem('juego_id');
+
+      getTokenLuego(function (_tok) {
+        if (_tok) {
+          fetch('/api/juegos', {
+            method: 'POST',
+            headers: { 'Authorization': 'Bearer ' + _tok, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'completar', juego_id: _jid, puntos: STATE.puntos, duracion_seg: STATE.preguntas.length * TIEMPO_POR_PREGUNTA, session_id: _sid })
+          }).then(function (r) { return r.json(); }).then(function (data) {
+            if (!data.ok) return;
+            toast('+' + data.monedas_ganadas + ' EduCoins y +' + data.xp_ganado + ' XP 🎉', 'coins');
+            if (data.subio_nivel) toast('⬆️ ¡SUBISTE AL NIVEL ' + data.nuevo_nivel + '!', 'success');
+            if (data.misiones_completadas && data.misiones_completadas.length) {
+              data.misiones_completadas.forEach(function (m) { toast('🎯 Misión completada: ' + m.descripcion + ' +' + m.recompensa + ' 🪙', 'success'); });
+            }
+            sessionStorage.removeItem('juego_session_id');
+            sessionStorage.removeItem('juego_id');
+            sessionStorage.removeItem('juego_token');
+          }).catch(function () { });
+        }
+      });
+    }
+
+    function actualizarStats() {
+      document.getElementById('rachaVal').textContent = STATE.racha;
+      document.getElementById('stCorrect').textContent = STATE.correctas;
+      document.getElementById('stRacha').textContent = STATE.rachaMax;
+      document.getElementById('stPuntos').textContent = STATE.puntos;
+    }
+    function shuffleArr(a) { for (var i = a.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)); var t = a[i]; a[i] = a[j]; a[j] = t; } return a; }
+  </script>
+
+</body>
+
+</html>

@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+  <title>Sinónimos — EduCoins</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Nunito:wght@700;800;900&display=swap"
+    rel="stylesheet" />
+  <link rel="stylesheet" href="../../shared/shared.css" />
+  <style>
+    body {
+      background: var(--bg);
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+
+    .game-topbar {
+      height: 56px;
+      background: rgba(7, 7, 26, .95);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      padding: 0 1.5rem;
+      gap: 1rem;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 100;
+    }
+
+    .game-back-btn {
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      padding: .4rem .875rem;
+      font-size: .8rem;
+      font-weight: 800;
+      cursor: pointer;
+      text-decoration: none;
+      transition: border-color .2s;
+    }
+
+    .game-back-btn:hover {
+      border-color: var(--violet);
+    }
+
+    .game-title {
+      font-family: 'Press Start 2P', monospace;
+      font-size: .6rem;
+      color: var(--violet-light);
+      flex: 1;
+      text-align: center;
+    }
+
+    .game-wrap {
+      padding: 72px 1.5rem 2rem;
+      max-width: 680px;
+      margin: 0 auto;
+      width: 100%;
+    }
+
+    /* TIMER GRANDE */
+    .countdown-wrap {
+      text-align: center;
+      margin-bottom: 1.5rem;
+    }
+
+    .countdown-num {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 3rem;
+      color: var(--cyan);
+      line-height: 1;
+    }
+
+    .countdown-label {
+      font-family: 'Press Start 2P', monospace;
+      font-size: .38rem;
+      color: var(--text-muted);
+      margin-top: .25rem;
+    }
+
+    .countdown-bar {
+      height: 8px;
+      background: rgba(255, 255, 255, .08);
+      border-radius: 4px;
+      overflow: hidden;
+      margin-top: .75rem;
+    }
+
+    .countdown-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--violet-light), var(--cyan));
+      border-radius: 4px;
+      transition: width .1s linear;
+    }
+
+    /* TARJETA PALABRA */
+    .palabra-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 2rem;
+      text-align: center;
+      margin-bottom: 1.25rem;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .palabra-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, var(--violet), var(--pink));
+    }
+
+    .palabra-label {
+      font-family: 'Press Start 2P', monospace;
+      font-size: .35rem;
+      color: var(--text-muted);
+      margin-bottom: .75rem;
+    }
+
+    .palabra-texto {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 1.5rem;
+      color: white;
+      margin-bottom: .5rem;
+      line-height: 1.4;
+    }
+
+    .palabra-contexto {
+      font-size: .85rem;
+      color: var(--text-dim);
+      font-weight: 700;
+      font-style: italic;
+    }
+
+    /* OPCIONES */
+    .opciones-lista {
+      display: flex;
+      flex-direction: column;
+      gap: .625rem;
+      margin-bottom: 1.25rem;
+    }
+
+    .opcion-btn {
+      padding: 1rem 1.25rem;
+      background: var(--bg3);
+      border: 2px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text);
+      font-size: .9rem;
+      font-weight: 800;
+      cursor: pointer;
+      text-align: left;
+      transition: all .15s;
+      display: flex;
+      align-items: center;
+      gap: .75rem;
+    }
+
+    .opcion-btn:hover:not(:disabled) {
+      border-color: var(--violet-light);
+      transform: translateX(4px);
+    }
+
+    .opcion-btn.correcta {
+      border-color: var(--green) !important;
+      background: rgba(34, 197, 94, .12) !important;
+    }
+
+    .opcion-btn.incorrecta {
+      border-color: var(--red) !important;
+      background: rgba(239, 68, 68, .08) !important;
+    }
+
+    .opcion-letra {
+      font-family: 'Press Start 2P', monospace;
+      font-size: .45rem;
+      color: var(--text-muted);
+      flex-shrink: 0;
+      width: 18px;
+    }
+
+    /* STATS */
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: .875rem;
+    }
+
+    .stat-mini {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: .75rem;
+      text-align: center;
+    }
+
+    .sm-label {
+      font-family: 'Press Start 2P', monospace;
+      font-size: .32rem;
+      color: var(--text-muted);
+      margin-bottom: .3rem;
+    }
+
+    .sm-val {
+      font-family: 'Press Start 2P', monospace;
+      font-size: .65rem;
+      color: white;
+    }
+
+    /* RESULTADO */
+    .resultado-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 10000;
+      background: rgba(7, 7, 26, .92);
+      backdrop-filter: blur(10px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .4s;
+    }
+
+    .resultado-overlay.active {
+      opacity: 1;
+      pointer-events: all;
+    }
+
+    .resultado-modal {
+      background: var(--bg2);
+      border: 1px solid var(--border-b);
+      border-radius: 20px;
+      padding: 2.5rem;
+      text-align: center;
+      max-width: 380px;
+      width: 90%;
+    }
+
+    .resultado-titulo {
+      font-family: 'Press Start 2P', monospace;
+      font-size: .8rem;
+      color: white;
+      margin-bottom: .75rem;
+      line-height: 1.5;
+    }
+
+    .resultado-coins {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 2rem;
+      color: var(--yellow);
+      margin: .875rem 0;
+      display: block;
+    }
+
+    .resultado-sub {
+      font-size: .875rem;
+      color: var(--text-dim);
+      font-weight: 700;
+      margin-bottom: 1.5rem;
+    }
+
+    .resultado-btns {
+      display: flex;
+      gap: .75rem;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .btn-play {
+      padding: .75rem 1.5rem;
+      background: linear-gradient(135deg, var(--violet), #6d28d9);
+      color: white;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      font-family: 'Press Start 2P', monospace;
+      font-size: .48rem;
+      transition: all .2s;
+    }
+
+    .btn-play:hover {
+      transform: translateY(-2px);
+    }
+
+    .btn-volver {
+      padding: .75rem 1.5rem;
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      cursor: pointer;
+      color: var(--text);
+      font-family: 'Press Start 2P', monospace;
+      font-size: .48rem;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      transition: border-color .2s;
+    }
+
+    .btn-volver:hover {
+      border-color: var(--violet);
+    }
+  </style>
+</head>
+
+<body>
+  <div class="game-topbar">
+    <a href="../juegos.html" class="game-back-btn">← Volver</a>
+    <span class="game-title">🔤 SINÓNIMOS</span>
+  </div>
+
+  <div class="game-wrap">
+    <div class="countdown-wrap">
+      <div class="countdown-num" id="cdNum">60</div>
+      <div class="countdown-label">SEGUNDOS RESTANTES</div>
+      <div class="countdown-bar">
+        <div class="countdown-fill" id="cdFill"></div>
+      </div>
+    </div>
+
+    <div class="palabra-card">
+      <div class="palabra-label">ENCUENTRA EL SINÓNIMO DE:</div>
+      <div class="palabra-texto" id="palabraTexto">—</div>
+      <div class="palabra-contexto" id="palabraCtx"></div>
+    </div>
+
+    <div class="opciones-lista" id="opcionesLista"></div>
+
+    <div class="stats-row">
+      <div class="stat-mini">
+        <div class="sm-label">CORRECTAS</div>
+        <div class="sm-val" id="stC">0</div>
+      </div>
+      <div class="stat-mini">
+        <div class="sm-label">RACHA</div>
+        <div class="sm-val" id="stR">🔥0</div>
+      </div>
+      <div class="stat-mini">
+        <div class="sm-label">PUNTOS</div>
+        <div class="sm-val" id="stP">0</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="resultado-overlay" id="resultadoOverlay">
+    <div class="resultado-modal">
+      <div class="resultado-titulo" id="resTitulo">🔤 FIN</div>
+      <span class="resultado-coins" id="resCoins">0 🪙</span>
+      <div class="resultado-sub" id="resSub">—</div>
+      <div class="resultado-btns">
+        <button class="btn-play" id="btnDenuevo">↺ Jugar de nuevo</button>
+        <a href="../juegos.html" class="btn-volver">← Lobby</a>
+      </div>
+    </div>
+  </div>
+
+  <script src="../../shared/shared.js"></script>
+  <script>
+    var PALABRAS = [
+      { palabra: 'FELIZ', sinonimos: ['ALEGRE', 'CONTENTO', 'DICHOSO'], distractores: ['TRISTE', 'ENOJADO', 'SOLO'] },
+      { palabra: 'RÁPIDO', sinonimos: ['VELOZ', 'ÁGIL', 'LIGERO'], distractores: ['LENTO', 'PESADO', 'TORPE'] },
+      { palabra: 'GRANDE', sinonimos: ['ENORME', 'VASTO', 'AMPLIO'], distractores: ['PEQUEÑO', 'MÍNIMO', 'CORTO'] },
+      { palabra: 'BONITO', sinonimos: ['BELLO', 'HERMOSO', 'LINDO'], distractores: ['FEO', 'HORRIBLE', 'TOSCO'] },
+      { palabra: 'DIFÍCIL', sinonimos: ['COMPLICADO', 'ARDUO', 'COMPLEJO'], distractores: ['FÁCIL', 'SIMPLE', 'SENCILLO'] },
+      { palabra: 'OSCURO', sinonimos: ['TENEBROSO', 'SOMBRÍO', 'LÓBREGO'], distractores: ['CLARO', 'BRILLANTE', 'LUMINOSO'] },
+      { palabra: 'VALIENTE', sinonimos: ['AUDAZ', 'INTRÉPIDO', 'BRAVO'], distractores: ['COBARDE', 'MIEDOSO', 'TÍMIDO'] },
+      { palabra: 'INTELIGENTE', sinonimos: ['LISTO', 'SAGAZ', 'ASTUTO'], distractores: ['TONTO', 'INGENUO', 'TORPE'] },
+      { palabra: 'ANTIGUO', sinonimos: ['VIEJO', 'AÑEJO', 'ARCAICO'], distractores: ['NUEVO', 'MODERNO', 'ACTUAL'] },
+      { palabra: 'CAMINAR', sinonimos: ['ANDAR', 'MARCHAR', 'TRANSITAR'], distractores: ['CORRER', 'VOLAR', 'NADAR'] },
+      { palabra: 'HABLAR', sinonimos: ['DECIR', 'EXPRESAR', 'CONVERSAR'], distractores: ['CALLAR', 'ESCUCHAR', 'LEER'] },
+      { palabra: 'MIRAR', sinonimos: ['VER', 'OBSERVAR', 'CONTEMPLAR'], distractores: ['IGNORAR', 'CERRAR', 'OLVIDAR'] },
+      { palabra: 'TRISTE', sinonimos: ['AFLIGIDO', 'MELANCÓLICO', 'APENADO'], distractores: ['FELIZ', 'ALEGRE', 'CONTENTO'] },
+      { palabra: 'ENOJADO', sinonimos: ['FURIOSO', 'IRRITADO', 'MOLESTO'], distractores: ['TRANQUILO', 'SERENO', 'CALMADO'] },
+      { palabra: 'FRÍO', sinonimos: ['HELADO', 'GLACIAL', 'GÉLIDO'], distractores: ['CÁLIDO', 'CALIENTE', 'TIBIO'] },
+      { palabra: 'CALIENTE', sinonimos: ['ARDIENTE', 'CÁLIDO', 'TIBIO'], distractores: ['FRÍO', 'HELADO', 'GLACIAL'] },
+      { palabra: 'LIMPIO', sinonimos: ['PULCRO', 'ASEADO', 'IMPECABLE'], distractores: ['SUCIO', 'MUGRIENTO', 'COCHINO'] },
+      { palabra: 'SUCIO', sinonimos: ['MUGRIENTO', 'MANCHADO', 'INMUNDO'], distractores: ['LIMPIO', 'PULCRO', 'ASEADO'] },
+      { palabra: 'FUERTE', sinonimos: ['ROBUSTO', 'VIGOROSO', 'POTENTE'], distractores: ['DÉBIL', 'FRÁGIL', 'ENDEBLE'] },
+      { palabra: 'DÉBIL', sinonimos: ['FRÁGIL', 'ENDEBLE', 'DELICADO'], distractores: ['FUERTE', 'ROBUSTO', 'VIGOROSO'] },
+      { palabra: 'RICO', sinonimos: ['ADINERADO', 'ACAUDALADO', 'OPULENTO'], distractores: ['POBRE', 'HUMILDE', 'INDIGENTE'] },
+      { palabra: 'POBRE', sinonimos: ['HUMILDE', 'INDIGENTE', 'NECESITADO'], distractores: ['RICO', 'ADINERADO', 'OPULENTO'] },
+      { palabra: 'ALTO', sinonimos: ['ELEVADO', 'ERGUIDO', 'ESBELTO'], distractores: ['BAJO', 'PEQUEÑO', 'ENANO'] },
+      { palabra: 'BAJO', sinonimos: ['PEQUEÑO', 'ENANO', 'ACHAPARRADO'], distractores: ['ALTO', 'ELEVADO', 'ERGUIDO'] },
+      { palabra: 'GORDO', sinonimos: ['GRUESO', 'CORPULENTO', 'ROBUSTO'], distractores: ['FLACO', 'DELGADO', 'ESBELTO'] },
+      { palabra: 'FLACO', sinonimos: ['DELGADO', 'ESBELTO', 'ENJUTO'], distractores: ['GORDO', 'GRUESO', 'CORPULENTO'] },
+      { palabra: 'JOVEN', sinonimos: ['JUVENIL', 'MOZALBETE', 'NOVEL'], distractores: ['VIEJO', 'ANCIANO', 'MAYOR'] },
+      { palabra: 'VIEJO', sinonimos: ['ANCIANO', 'MAYOR', 'VETERANO'], distractores: ['JOVEN', 'JUVENIL', 'NOVEL'] },
+      { palabra: 'BUENO', sinonimos: ['BONDADOSO', 'NOBLE', 'VIRTUOSO'], distractores: ['MALO', 'MALVADO', 'CRUEL'] },
+      { palabra: 'MALO', sinonimos: ['MALVADO', 'CRUEL', 'PERVERSO'], distractores: ['BUENO', 'BONDADOSO', 'NOBLE'] },
+      { palabra: 'LINDO', sinonimos: ['BELLO', 'BONITO', 'HERMOSO'], distractores: ['FEO', 'HORRIBLE', 'TOSCO'] },
+      { palabra: 'FEO', sinonimos: ['HORRIBLE', 'REPUGNANTE', 'GROTESCO'], distractores: ['BELLO', 'LINDO', 'HERMOSO'] },
+      { palabra: 'DULCE', sinonimos: ['AZUCARADO', 'MELOSO', 'SUAVE'], distractores: ['AMARGO', 'AGRIO', 'SALADO'] },
+      { palabra: 'AMARGO', sinonimos: ['ACRE', 'AGRIO', 'DESAGRADABLE'], distractores: ['DULCE', 'AZUCARADO', 'SUAVE'] },
+      { palabra: 'SILENCIOSO', sinonimos: ['CALLADO', 'QUIETO', 'MUDO'], distractores: ['RUIDOSO', 'BULLICIOSO', 'ESTRIDENTE'] },
+      { palabra: 'RUIDOSO', sinonimos: ['BULLICIOSO', 'ESTRIDENTE', 'ESTREPITOSO'], distractores: ['SILENCIOSO', 'CALLADO', 'QUIETO'] },
+      { palabra: 'CANSADO', sinonimos: ['AGOTADO', 'EXHAUSTO', 'RENDIDO'], distractores: ['DESCANSADO', 'ACTIVO', 'VIGOROSO'] },
+      { palabra: 'DORMIDO', sinonimos: ['ADORMECIDO', 'SOMNOLIENTO', 'ALETARGADO'], distractores: ['DESPIERTO', 'ACTIVO', 'ALERTA'] },
+      { palabra: 'LIBRE', sinonimos: ['INDEPENDIENTE', 'AUTÓNOMO', 'SUELTO'], distractores: ['PRESO', 'CAUTIVO', 'ATADO'] },
+      { palabra: 'PRESO', sinonimos: ['CAUTIVO', 'ENCARCELADO', 'PRISIONERO'], distractores: ['LIBRE', 'INDEPENDIENTE', 'SUELTO'] },
+      { palabra: 'CERCA', sinonimos: ['PRÓXIMO', 'ADYACENTE', 'CONTIGUO'], distractores: ['LEJOS', 'LEJANO', 'DISTANTE'] },
+      { palabra: 'LEJOS', sinonimos: ['DISTANTE', 'LEJANO', 'REMOTO'], distractores: ['CERCA', 'PRÓXIMO', 'ADYACENTE'] },
+      { palabra: 'COMENZAR', sinonimos: ['INICIAR', 'EMPEZAR', 'ARRANCAR'], distractores: ['TERMINAR', 'ACABAR', 'CONCLUIR'] },
+      { palabra: 'TERMINAR', sinonimos: ['ACABAR', 'CONCLUIR', 'FINALIZAR'], distractores: ['COMENZAR', 'INICIAR', 'EMPEZAR'] },
+      { palabra: 'CONSTRUIR', sinonimos: ['EDIFICAR', 'ERIGIR', 'LEVANTAR'], distractores: ['DESTRUIR', 'DEMOLER', 'DERRIBAR'] },
+      { palabra: 'DESTRUIR', sinonimos: ['DEMOLER', 'DERRIBAR', 'ARRASAR'], distractores: ['CONSTRUIR', 'EDIFICAR', 'CREAR'] },
+      { palabra: 'AYUDAR', sinonimos: ['COLABORAR', 'ASISTIR', 'SOCORRER'], distractores: ['PERJUDICAR', 'OBSTACULIZAR', 'DAÑAR'] },
+      { palabra: 'COMPRAR', sinonimos: ['ADQUIRIR', 'OBTENER', 'CONSEGUIR'], distractores: ['VENDER', 'CEDER', 'REGALAR'] },
+      { palabra: 'VENDER', sinonimos: ['COMERCIAR', 'OFRECER', 'CEDER'], distractores: ['COMPRAR', 'ADQUIRIR', 'OBTENER'] },
+      { palabra: 'CORRER', sinonimos: ['TROTAR', 'GALOPAR', 'PRECIPITARSE'], distractores: ['CAMINAR', 'DETENERSE', 'REPOSAR'] },
+      { palabra: 'SALTAR', sinonimos: ['BRINCAR', 'REBOTAR', 'BOTAR'], distractores: ['CAER', 'ARRASTRARSE', 'REPOSAR'] },
+      { palabra: 'CAER', sinonimos: ['DESPLOMARSE', 'DERRUMBARSE', 'HUNDIRSE'], distractores: ['LEVANTARSE', 'SUBIR', 'ASCENDER'] },
+      { palabra: 'SUBIR', sinonimos: ['ASCENDER', 'ESCALAR', 'TREPAR'], distractores: ['BAJAR', 'DESCENDER', 'CAER'] },
+      { palabra: 'BAJAR', sinonimos: ['DESCENDER', 'DECLINAR', 'CAER'], distractores: ['SUBIR', 'ASCENDER', 'ESCALAR'] },
+      { palabra: 'REÍR', sinonimos: ['CARCAJEAR', 'SONREÍR', 'REGOCIJARSE'], distractores: ['LLORAR', 'LAMENTARSE', 'SOLLOZAR'] },
+      { palabra: 'LLORAR', sinonimos: ['SOLLOZAR', 'LAMENTARSE', 'GEMIR'], distractores: ['REÍR', 'SONREÍR', 'ALEGRARSE'] },
+      { palabra: 'COMER', sinonimos: ['ALIMENTARSE', 'INGERIR', 'DEVORAR'], distractores: ['AYUNAR', 'NEGARSE', 'RECHAZAR'] },
+      { palabra: 'BEBER', sinonimos: ['TOMAR', 'INGERIR', 'SORBER'], distractores: ['ESCUPIR', 'RECHAZAR', 'VERTER'] },
+      { palabra: 'DORMIR', sinonimos: ['REPOSAR', 'DESCANSAR', 'YACER'], distractores: ['DESPERTAR', 'LEVANTARSE', 'ACTUAR'] },
+      { palabra: 'PENSAR', sinonimos: ['REFLEXIONAR', 'MEDITAR', 'RAZONAR'], distractores: ['IGNORAR', 'OLVIDAR', 'DISTRAERSE'] },
+      { palabra: 'RECORDAR', sinonimos: ['REMEMORAR', 'EVOCAR', 'MEMORIZAR'], distractores: ['OLVIDAR', 'IGNORAR', 'PERDER'] },
+      { palabra: 'OLVIDAR', sinonimos: ['OMITIR', 'IGNORAR', 'DESCUIDAR'], distractores: ['RECORDAR', 'REMEMORAR', 'EVOCAR'] },
+      { palabra: 'CREAR', sinonimos: ['INVENTAR', 'ORIGINAR', 'PRODUCIR'], distractores: ['DESTRUIR', 'COPIAR', 'ELIMINAR'] },
+      { palabra: 'BUSCAR', sinonimos: ['INDAGAR', 'EXPLORAR', 'INVESTIGAR'], distractores: ['IGNORAR', 'ABANDONAR', 'PERDER'] },
+      { palabra: 'ENCONTRAR', sinonimos: ['HALLAR', 'DESCUBRIR', 'LOCALIZAR'], distractores: ['PERDER', 'BUSCAR', 'IGNORAR'] },
+      { palabra: 'PERDER', sinonimos: ['EXTRAVIAR', 'DESAPARECER', 'DESPERDICIAR'], distractores: ['GANAR', 'ENCONTRAR', 'HALLAR'] },
+      { palabra: 'GANAR', sinonimos: ['TRIUNFAR', 'VENCER', 'LOGRAR'], distractores: ['PERDER', 'FRACASAR', 'CEDER'] },
+      { palabra: 'LUCHAR', sinonimos: ['COMBATIR', 'PELEAR', 'BATALLAR'], distractores: ['RENDIRSE', 'HUIR', 'CEDER'] },
+      { palabra: 'HUIR', sinonimos: ['ESCAPAR', 'EVADIRSE', 'FUGARSE'], distractores: ['QUEDARSE', 'ENFRENTAR', 'LUCHAR'] },
+      { palabra: 'AMAR', sinonimos: ['QUERER', 'ADORAR', 'APRECIAR'], distractores: ['ODIAR', 'DESPRECIAR', 'RECHAZAR'] },
+      { palabra: 'ODIAR', sinonimos: ['DETESTAR', 'ABORRECER', 'DESPRECIAR'], distractores: ['AMAR', 'QUERER', 'ADORAR'] },
+      { palabra: 'ESPERAR', sinonimos: ['AGUARDAR', 'CONFIAR', 'DESEAR'], distractores: ['RENUNCIAR', 'ABANDONAR', 'DESESPERARSE'] },
+      { palabra: 'CONOCER', sinonimos: ['SABER', 'RECONOCER', 'IDENTIFICAR'], distractores: ['IGNORAR', 'DESCONOCER', 'OLVIDAR'] },
+      { palabra: 'ENSEÑAR', sinonimos: ['INSTRUIR', 'EDUCAR', 'CAPACITAR'], distractores: ['IGNORAR', 'CONFUNDIR', 'ENGAÑAR'] },
+      { palabra: 'APRENDER', sinonimos: ['ESTUDIAR', 'ASIMILAR', 'COMPRENDER'], distractores: ['IGNORAR', 'OLVIDAR', 'DESCUIDAR'] },
+      { palabra: 'LEER', sinonimos: ['REPASAR', 'ESTUDIAR', 'DESCIFRAR'], distractores: ['IGNORAR', 'OLVIDAR', 'HABLAR'] },
+      { palabra: 'ESCRIBIR', sinonimos: ['REDACTAR', 'ANOTAR', 'REGISTRAR'], distractores: ['BORRAR', 'OMITIR', 'IGNORAR'] },
+      { palabra: 'DIBUJAR', sinonimos: ['TRAZAR', 'BOSQUEJAR', 'ESBOZAR'], distractores: ['BORRAR', 'DESTRUIR', 'IGNORAR'] },
+      { palabra: 'CANTAR', sinonimos: ['ENTONAR', 'TARAREAR', 'VOCALIZAR'], distractores: ['CALLAR', 'SILENCIAR', 'GRITAR'] },
+      { palabra: 'BAILAR', sinonimos: ['DANZAR', 'MOVERSE', 'BRINCAR'], distractores: ['QUEDARSE', 'PARARSE', 'SENTARSE'] },
+      { palabra: 'JUGAR', sinonimos: ['RECREARSE', 'DIVERTIRSE', 'ENTRETENERSE'], distractores: ['TRABAJAR', 'ESTUDIAR', 'ABURRIR'] },
+      { palabra: 'TRABAJAR', sinonimos: ['LABORAR', 'ESFORZARSE', 'PRODUCIR'], distractores: ['DESCANSAR', 'JUGAR', 'HOLGAZANEAR'] },
+      { palabra: 'DESCANSAR', sinonimos: ['REPOSAR', 'RELAJARSE', 'REPONERSE'], distractores: ['TRABAJAR', 'ESFORZARSE', 'AGOTARSE'] },
+      { palabra: 'VIAJAR', sinonimos: ['RECORRER', 'EXPLORAR', 'TRASLADARSE'], distractores: ['QUEDARSE', 'REGRESAR', 'DETENERSE'] },
+      { palabra: 'LLEGAR', sinonimos: ['ARRIBAR', 'ALCANZAR', 'APARECER'], distractores: ['PARTIR', 'SALIR', 'ALEJARSE'] },
+      { palabra: 'SALIR', sinonimos: ['PARTIR', 'MARCHARSE', 'ALEJARSE'], distractores: ['LLEGAR', 'ENTRAR', 'QUEDARSE'] },
+      { palabra: 'ENTRAR', sinonimos: ['INGRESAR', 'ACCEDER', 'PENETRAR'], distractores: ['SALIR', 'MARCHARSE', 'ALEJARSE'] },
+      { palabra: 'ABRIR', sinonimos: ['DESTAPAR', 'DESCUBRIR', 'FRANQUEAR'], distractores: ['CERRAR', 'TAPAR', 'SELLAR'] },
+      { palabra: 'CERRAR', sinonimos: ['TAPAR', 'SELLAR', 'CLAUSURAR'], distractores: ['ABRIR', 'DESTAPAR', 'FRANQUEAR'] },
+      { palabra: 'PREGUNTAR', sinonimos: ['INTERROGAR', 'CONSULTAR', 'INDAGAR'], distractores: ['RESPONDER', 'CALLAR', 'IGNORAR'] },
+      { palabra: 'RESPONDER', sinonimos: ['CONTESTAR', 'REPLICAR', 'ACLARAR'], distractores: ['PREGUNTAR', 'CALLAR', 'IGNORAR'] },
+      { palabra: 'PEDIR', sinonimos: ['SOLICITAR', 'ROGAR', 'REQUERIR'], distractores: ['RECHAZAR', 'NEGAR', 'CEDER'] },
+      { palabra: 'DAR', sinonimos: ['ENTREGAR', 'OTORGAR', 'OFRECER'], distractores: ['RECIBIR', 'QUITAR', 'RETENER'] },
+      { palabra: 'RECIBIR', sinonimos: ['ACEPTAR', 'OBTENER', 'TOMAR'], distractores: ['DAR', 'ENTREGAR', 'RECHAZAR'] },
+      { palabra: 'JUNTAR', sinonimos: ['UNIR', 'REUNIR', 'AGRUPAR'], distractores: ['SEPARAR', 'DIVIDIR', 'ALEJAR'] },
+      { palabra: 'SEPARAR', sinonimos: ['DIVIDIR', 'ALEJAR', 'APARTAR'], distractores: ['JUNTAR', 'UNIR', 'REUNIR'] },
+      { palabra: 'LLENAR', sinonimos: ['RELLENAR', 'COMPLETAR', 'COLMAR'], distractores: ['VACIAR', 'SACAR', 'RETIRAR'] },
+      { palabra: 'VACIAR', sinonimos: ['EVACUAR', 'DESOCUPAR', 'EXTRAER'], distractores: ['LLENAR', 'RELLENAR', 'COLMAR'] },
+      { palabra: 'GUARDAR', sinonimos: ['CONSERVAR', 'ALMACENAR', 'RESERVAR'], distractores: ['TIRAR', 'BOTAR', 'PERDER'] },
+      { palabra: 'TIRAR', sinonimos: ['BOTAR', 'LANZAR', 'ARROJAR'], distractores: ['GUARDAR', 'CONSERVAR', 'RECOGER'] },
+      { palabra: 'LIMPIAR', sinonimos: ['ASEAR', 'PURIFICAR', 'FREGAR'], distractores: ['ENSUCIAR', 'MANCHAR', 'CONTAMINAR'] },
+      { palabra: 'ENSUCIAR', sinonimos: ['MANCHAR', 'CONTAMINAR', 'ESTROPEAR'], distractores: ['LIMPIAR', 'ASEAR', 'PURIFICAR'] },
+      { palabra: 'ROMPER', sinonimos: ['QUEBRAR', 'FRACTURAR', 'DESTROZAR'], distractores: ['REPARAR', 'ARREGLAR', 'UNIR'] },
+      { palabra: 'REPARAR', sinonimos: ['ARREGLAR', 'RESTAURAR', 'COMPONER'], distractores: ['ROMPER', 'QUEBRAR', 'DESTRUIR'] },
+      { palabra: 'CRECER', sinonimos: ['DESARROLLARSE', 'MADURAR', 'AUMENTAR'], distractores: ['MENGUAR', 'REDUCIRSE', 'ENCOGER'] },
+      { palabra: 'NACER', sinonimos: ['SURGIR', 'ORIGINARSE', 'APARECER'], distractores: ['MORIR', 'DESAPARECER', 'EXTINGUIRSE'] },
+      { palabra: 'MORIR', sinonimos: ['FALLECER', 'PERECER', 'EXPIRAR'], distractores: ['NACER', 'VIVIR', 'SURGIR'] },
+      { palabra: 'VIVIR', sinonimos: ['EXISTIR', 'HABITAR', 'RESIDIR'], distractores: ['MORIR', 'FALLECER', 'PERECER'] },
+      { palabra: 'SUFRIR', sinonimos: ['PADECER', 'AGUANTAR', 'SOPORTAR'], distractores: ['GOZAR', 'DISFRUTAR', 'ALEGRARSE'] },
+      { palabra: 'DISFRUTAR', sinonimos: ['GOZAR', 'DELEITARSE', 'REGOCIJARSE'], distractores: ['SUFRIR', 'PADECER', 'LAMENTARSE'] },
+      { palabra: 'CALMAR', sinonimos: ['TRANQUILIZAR', 'SOSEGAR', 'APACIGUAR'], distractores: ['ALTERAR', 'AGITAR', 'IRRITAR'] },
+      { palabra: 'MOLESTAR', sinonimos: ['IRRITAR', 'FASTIDIAR', 'INCOMODAR'], distractores: ['CALMAR', 'TRANQUILIZAR', 'AGRADAR'] },
+      { palabra: 'SORPRENDER', sinonimos: ['ASOMBRAR', 'IMPRESIONAR', 'MARAVILLAR'], distractores: ['ABURRIR', 'IGNORAR', 'DECEPCIONAR'] },
+      { palabra: 'ASUSTAR', sinonimos: ['ATERRAR', 'ESPANTAR', 'ATEMORIZAR'], distractores: ['CALMAR', 'TRANQUILIZAR', 'ALENTAR'] },
+      { palabra: 'MENTIR', sinonimos: ['ENGAÑAR', 'FALSEAR', 'FINGIR'], distractores: ['DECIR', 'CONFESAR', 'SINCERARSE'] },
+      { palabra: 'CONFIAR', sinonimos: ['CREER', 'FIAR', 'ENCARGAR'], distractores: ['DESCONFIAR', 'DUDAR', 'TEMER'] },
+      { palabra: 'RESPETAR', sinonimos: ['HONRAR', 'VENERAR', 'CONSIDERAR'], distractores: ['INSULTAR', 'DESPRECIAR', 'IGNORAR'] },
+      { palabra: 'PROTEGER', sinonimos: ['DEFENDER', 'CUIDAR', 'AMPARAR'], distractores: ['ATACAR', 'DAÑAR', 'ABANDONAR'] },
+
+    ];
+
+    var DURACION = 60;
+    var STATE = { correctas: 0, racha: 0, rachaMax: 0, puntos: 0, tiempoLeft: DURACION, timerInt: null, respondiendo: false };
+
+    document.addEventListener('DOMContentLoaded', function () {
+      iniciar();
+      document.getElementById('btnDenuevo').addEventListener('click', function () {
+        document.getElementById('resultadoOverlay').classList.remove('active');
+        iniciar();
+      });
+    });
+
+    function iniciar() {
+      STATE.correctas = 0; STATE.racha = 0; STATE.rachaMax = 0; STATE.puntos = 0;
+      STATE.tiempoLeft = DURACION;
+      clearInterval(STATE.timerInt);
+
+      STATE.timerInt = setInterval(function () {
+        STATE.tiempoLeft -= 0.1;
+        var pct = (STATE.tiempoLeft / DURACION) * 100;
+        document.getElementById('cdNum').textContent = Math.ceil(Math.max(0, STATE.tiempoLeft));
+        document.getElementById('cdFill').style.width = Math.max(0, pct) + '%';
+        if (STATE.tiempoLeft <= 10) document.getElementById('cdNum').style.color = 'var(--red)';
+        if (STATE.tiempoLeft <= 0) { clearInterval(STATE.timerInt); terminar(); }
+      }, 100);
+
+      document.getElementById('cdNum').style.color = 'var(--cyan)';
+      siguientePalabra();
+    }
+
+    function siguientePalabra() {
+      STATE.respondiendo = false;
+      var p = PALABRAS[Math.floor(Math.random() * PALABRAS.length)];
+      var sinonimoCorrect = p.sinonimos[Math.floor(Math.random() * p.sinonimos.length)];
+      var opciones = shuffleArr([sinonimoCorrect, ...p.distractores.slice(0, 3)]);
+      var correctaIdx = opciones.indexOf(sinonimoCorrect);
+
+      document.getElementById('palabraTexto').textContent = p.palabra;
+      document.getElementById('palabraCtx').textContent = '';
+
+      var LETRAS = ['A', 'B', 'C', 'D'];
+      var lista = document.getElementById('opcionesLista');
+      lista.innerHTML = opciones.map(function (op, i) {
+        return '<button class="opcion-btn" data-idx="' + i + '" data-correct="' + correctaIdx + '">' +
+          '<span class="opcion-letra">' + LETRAS[i] + '</span>' + op +
+          '</button>';
+      }).join('');
+
+      lista.querySelectorAll('.opcion-btn').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          if (STATE.respondiendo) return;
+          STATE.respondiendo = true;
+          var idx = parseInt(this.dataset.idx);
+          var correct = parseInt(this.dataset.correct);
+          var btns = lista.querySelectorAll('.opcion-btn');
+          btns.forEach(function (b) { b.disabled = true; });
+          btns[correct].classList.add('correcta');
+          if (idx === correct) {
+            STATE.correctas++; STATE.racha++;
+            STATE.rachaMax = Math.max(STATE.rachaMax, STATE.racha);
+            STATE.puntos += 10 + STATE.racha * 2;
+          } else {
+            btns[idx].classList.add('incorrecta');
+            STATE.racha = 0;
+          }
+          actualizarStats();
+          setTimeout(siguientePalabra, 800);
+        });
+      });
+    }
+
+    function getTokenLuego(callback) {
+      if (window.CLERK_TOKEN) { callback(window.CLERK_TOKEN); return; }
+      var tok = sessionStorage.getItem('juego_token');
+      if (tok) { callback(tok); return; }
+      var intentos = 0;
+      var iv = setInterval(function () {
+        intentos++;
+        if (window.CLERK_TOKEN) { clearInterval(iv); callback(window.CLERK_TOKEN); return; }
+        var tok2 = sessionStorage.getItem('juego_token');
+        if (tok2) { clearInterval(iv); callback(tok2); return; }
+        if (intentos >= 25) { clearInterval(iv); callback(null); }
+      }, 200);
+    }
+
+    function terminar() {
+      var recompensa = Math.min(180, STATE.puntos);
+      document.getElementById('resTitulo').textContent = STATE.correctas >= 15 ? '🌟 ¡MAESTRO!' : STATE.correctas >= 8 ? '📚 ¡Bien hecho!' : '🔤 Sigue practicando';
+      document.getElementById('resCoins').textContent = '+' + recompensa + ' 🪙';
+      document.getElementById('resSub').textContent = STATE.correctas + ' correctas | Racha máx: ' + STATE.rachaMax;
+      document.getElementById('resultadoOverlay').classList.add('active');
+      toast('+' + recompensa + ' EduCoins ganados 🔤', 'coins');
+      var _sid = sessionStorage.getItem('juego_session_id');
+      var _jid = sessionStorage.getItem('juego_id');
+
+      getTokenLuego(function (_tok) {
+        if (_tok) {
+          fetch('/api/juegos', {
+            method: 'POST',
+            headers: { 'Authorization': 'Bearer ' + _tok, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'completar', juego_id: _jid, puntos: STATE.puntos, duracion_seg: DURACION, session_id: _sid })
+          }).then(function (r) { return r.json(); }).then(function (data) {
+            if (!data.ok) return;
+            toast('+' + data.monedas_ganadas + ' EduCoins y +' + data.xp_ganado + ' XP 🎉', 'coins');
+            if (data.subio_nivel) toast('⬆️ ¡SUBISTE AL NIVEL ' + data.nuevo_nivel + '!', 'success');
+            if (data.misiones_completadas && data.misiones_completadas.length) {
+              data.misiones_completadas.forEach(function (m) { toast('🎯 Misión completada: ' + m.descripcion + ' +' + m.recompensa + ' 🪙', 'success'); });
+            }
+            sessionStorage.removeItem('juego_session_id');
+            sessionStorage.removeItem('juego_id');
+            sessionStorage.removeItem('juego_token');
+          }).catch(function () { });
+        }
+      });
+    }
+
+    function actualizarStats() {
+      document.getElementById('stC').textContent = STATE.correctas;
+      document.getElementById('stR').textContent = '🔥' + STATE.racha;
+      document.getElementById('stP').textContent = STATE.puntos;
+    }
+    function shuffleArr(a) { for (var i = a.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)); var t = a[i]; a[i] = a[j]; a[j] = t; } return a; }
+  </script>
+</body>
+
+</html>
