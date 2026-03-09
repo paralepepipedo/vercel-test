@@ -1,5 +1,9 @@
-import { query } from '../lib/neon.js';
+import { neon } from '@neondatabase/serverless';
 
-export default function handler(req, res) {
-  res.json({ ok: true });
+export default async function handler(req) {
+  const sql = neon(process.env.DATABASE_URL);
+  const rows = await sql('SELECT 1 AS ok');
+  return new Response(JSON.stringify(rows), {
+    headers: { 'Content-Type': 'application/json' }
+  });
 }
