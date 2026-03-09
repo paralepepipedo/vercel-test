@@ -11,5 +11,5 @@ export default async function handler(request) {
   const perfil = await getPerfil(auth.clerkId);
   if (!perfil) return resError('Perfil no encontrado', 404);
 
-  return res({ ok: true, nombre: perfil.nombre });
+  return res({ test123: true, nombre: perfil.nombre, timestamp: Date.now() });
 }
