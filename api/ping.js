@@ -1,1 +1,3 @@
-module.exports = (req, res) => res.json({ ok: true });
+export default function handler(req, res) {
+  res.json({ ok: true });
+}
