@@ -1,22 +1,15 @@
-import { verificarAuth, getPerfil, resError } from '../lib/neon.js';
+import {
+  query, getPerfil, verificarAuth, res, resError
+} from '../lib/neon.js';
 
-export default async function handler(req) {
-  try {
-    const auth = await verificarAuth(req);
-    if (!auth.ok) {
-      return new Response(JSON.stringify({ error: 'No autorizado' }), {
-        status: 401,
-        headers: { 'Content-Type': 'application/json' }
-      });
-    }
-    const perfil = await getPerfil(auth.clerkId);
-    return new Response(JSON.stringify({ ok: true, perfil: perfil ? perfil.nombre : null }), {
-      headers: { 'Content-Type': 'application/json' }
-    });
-  } catch (err) {
-    return new Response(JSON.stringify({ error: err.message }), {
-      status: 500,
-      headers: { 'Content-Type': 'application/json' }
-    });
-  }
+export default async function handler(request) {
+  if (request.method === 'OPTIONS') return new Response(null, { status: 204 });
+
+  const auth = await verificarAuth(request);
+  if (!auth.ok) return resError('No autorizado', 401);
+
+  const perfil = await getPerfil(auth.clerkId);
+  if (!perfil) return resError('Perfil no encontrado', 404);
+
+  return res({ ok: true, nombre: perfil.nombre });
 }
